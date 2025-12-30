@@ -1,0 +1,5 @@
+/* Monospace fonts for code blocks */
+pre,
+code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
+}

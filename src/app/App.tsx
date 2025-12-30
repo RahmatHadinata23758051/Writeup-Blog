@@ -1,0 +1,81 @@
+import { useState, useEffect } from 'react';
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
+import { HomePage } from './components/pages/HomePage';
+import { WriteUpsPage } from './components/pages/WriteUpsPage';
+import { WriteUpDetailPage } from './components/pages/WriteUpDetailPage';
+import { AboutPage } from './components/pages/AboutPage';
+import { ProtectedDashboard } from './components/ProtectedDashboard';
+
+type Page = 'home' | 'writeups' | 'writeup-detail' | 'about' | 'dashboard';
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [selectedWriteUpId, setSelectedWriteUpId] = useState<string | null>(null);
+
+  // Add dark class to html element on mount
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page as Page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectWriteUp = (id: string) => {
+    setSelectedWriteUpId(id);
+    setCurrentPage('writeup-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToWriteUps = () => {
+    setCurrentPage('writeups');
+    setSelectedWriteUpId(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return (
+          <HomePage
+            onNavigate={handleNavigate}
+            onSelectWriteUp={handleSelectWriteUp}
+          />
+        );
+      case 'writeups':
+        return <WriteUpsPage onSelectWriteUp={handleSelectWriteUp} />;
+      case 'writeup-detail':
+        return selectedWriteUpId ? (
+          <WriteUpDetailPage
+            writeupId={selectedWriteUpId}
+            onBack={handleBackToWriteUps}
+          />
+        ) : null;
+      case 'about':
+        return <AboutPage />;
+      case 'dashboard':
+        return (
+          <ProtectedDashboard
+            onBack={() => handleNavigate('home')}
+          />
+        );
+      default:
+        return (
+          <HomePage
+            onNavigate={handleNavigate}
+            onSelectWriteUp={handleSelectWriteUp}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
+      <main className="flex-1">{renderPage()}</main>
+      <Footer />
+    </div>
+  );
+}
