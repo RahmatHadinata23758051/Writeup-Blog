@@ -1,141 +1,63 @@
+# CTF Write-Ups Blog — RBLX-Labs Segfault
 
-  # 🚩 CTF Write-Ups Blog
+CTF Write-Ups Blog adalah website statis yang digunakan untuk mendokumentasikan **official write-up Capture The Flag (CTF)** dari tim **RBLX-Labs Segfault**.  
+Repository ini berisi arsip teknis yang mencakup analisis, solusi, dan pembelajaran dari berbagai kategori challenge CTF.
 
-  This is a code bundle for CTF Write-Ups Blog. Web blog interaktif untuk berbagi write-up CTF dengan dokumentasi lengkap, analisis mendalam, dan penjelasan solusi dari berbagai kategori challenges.
+Website bersifat **read-only** untuk publik dan tidak menyediakan fitur autentikasi, komentar, atau submit konten. Seluruh write-up ditulis dan dipublikasikan secara manual oleh author.
 
-  ## ✨ Fitur Utama
+---
 
-  - **Dashboard Admin Terproteksi** - Password-protected dashboard untuk membuat dan mengelola write-ups
-  - **Multiple Categories** - Web, Crypto, Pwn, Forensics, Reverse Engineering, OSINT, Misc
-  - **Difficulty Levels** - Easy, Medium, Hard dengan visual indicators
-  - **Rich Content** - Support untuk detailed analysis, solution steps dengan code highlighting
-  - **Copy Code Feature** - Tombol copy untuk semua code blocks di setiap write-up
-  - **Dark Mode** - UI modern dengan dark theme yang elegan
-  - **Responsive Design** - Optimized untuk desktop dan mobile devices
-  - **Dynamic Statistics** - Automatic calculation dari total write-ups, points, dan categories
+## Tujuan Proyek
 
-  ## 🏆 Kategori CTF
+- Mendokumentasikan solusi CTF secara sistematis dan terstruktur
+- Menjadi arsip pembelajaran cybersecurity jangka panjang
+- Menyediakan portofolio teknis untuk keperluan akademik dan profesional
+- Menyajikan write-up dengan format konsisten dan standar teknis
 
-  - **Web** - Web exploitation, injection, authentication bypasses
-  - **Crypto** - Cryptography, encoding/decoding challenges
-  - **Pwn** - Binary exploitation, buffer overflows
-  - **Forensics** - Digital forensics, file analysis
-  - **Reverse** - Reverse engineering, binary analysis
-  - **OSINT** - Open source intelligence gathering
-  - **Misc** - Miscellaneous challenges
+---
 
-  ## 🚀 Quick Start
+## Fitur Utama
 
-  ### Installation
-  ```bash
-  npm install
-  ```
+- Write-up CTF berbasis template baku
+- Kategori challenge (Web, Crypto, Pwn, Reverse, Forensics, OSINT, dll.)
+- Metadata challenge (event, difficulty, points, tools)
+- Tampilan dark mode dengan fokus keterbacaan konten teknis
+- Code block bergaya terminal / code editor
+- Desain read-only tanpa authentication dan submission form
 
-  ### Development
-  ```bash
-  npm run dev
-  ```
-  Aplikasi akan berjalan di `http://localhost:5173`
+---
 
-  ### Production Build
-  ```bash
-  npm run build
-  ```
+## Struktur Write-Up
 
-  ## 📝 Cara Membuat Write-Up
+Setiap write-up mengikuti struktur berikut:
 
-  1. **Akses Dashboard** - Klik tombol Dashboard di navbar (atau buka localhost:5173/dashboard)
-  2. **Login** - Masukkan password (dari `VITE_DASHBOARD_PASSWORD` di .env.local)
-  3. **Generate JSON** - Isi form dengan detail write-up dan klik "Generate JSON"
-  4. **Copy & Paste** - Copy JSON yang dihasilkan
-  5. **Update Data** - Buka file `src/app/data/writeups.ts` dan paste JSON ke array writeups
-  6. **Refresh** - Refresh browser, write-up baru akan muncul secara otomatis
+- Challenge Metadata  
+  (Title, Event, Category, Difficulty, Points, Author)
+- Challenge Description
+- Tools Used
+- Analysis
+- Solution / Exploitation Steps
+- Code Snippet
+- Flag
+- Lessons Learned
 
-  ### Contoh Format Write-Up
-  ```json
-  {
-    "id": "1",
-    "title": "The Mosaic",
-    "category": "Misc",
-    "difficulty": "Medium",
-    "points": 500,
-    "date": "2025-12-30",
-    "author": "username",
-    "ctfName": "CTF Event Name",
-    "description": "Brief description",
-    "problemDescription": "Detailed problem statement",
-    "tools": ["tool1", "tool2"],
-    "analysis": "Analysis content",
-    "solution": [
-      {
-        "title": "Step 1",
-        "content": "Description",
-        "code": "optional code block"
-      }
-    ],
-    "flag": "flag{...}",
-    "lessonsLearned": "Key takeaways"
-  }
-  ```
+Struktur ini memastikan konsistensi dokumentasi dan kemudahan navigasi pembaca.
 
-  ## 🔧 Teknologi Stack
+---
 
-  - **Framework** - React 18 + TypeScript
-  - **Build Tool** - Vite
-  - **Styling** - Tailwind CSS
-  - **UI Components** - shadcn/ui
-  - **Icons** - React Icons (Bootstrap Icons)
-  - **State Management** - React Hooks
+## Model Publikasi Konten
 
-  ## 📁 Project Structure
+Website ini **tidak menggunakan CMS publik atau sistem login**.
 
-  ```
-  src/
-  ├── app/
-  │   ├── components/
-  │   │   ├── pages/          # Page components
-  │   │   ├── ui/             # shadcn/ui components
-  │   │   └── figma/          # Custom components
-  │   ├── data/
-  │   │   └── writeups.ts     # Write-up database
-  │   └── App.tsx             # Main app component
-  ├── styles/                 # CSS files
-  └── main.tsx                # Entry point
-  ```
+Alur publikasi:
+1. Write-up ditulis secara lokal menggunakan format Markdown
+2. File disimpan langsung di repository
+3. Konten dirender saat proses build
+4. Publik hanya dapat mengakses hasil akhir
 
-  ## 🔐 Environment Variables
+Pendekatan ini memastikan:
+- Konten sepenuhnya berada di bawah kontrol author
+- Tidak ada risiko spam atau konten tidak sah
+- Tidak memerlukan autentikasi pengguna
 
-  Buat file `.env.local` di root directory:
-
-  ```env
-  VITE_DASHBOARD_PASSWORD=your_secret_password
-  ```
-
-  ## 📊 Statistics
-
-  Dashboard secara otomatis menghitung:
-  - Total jumlah write-ups
-  - Total points dari semua challenges
-  - Jumlah categories yang ada
-
-  Statistik update secara real-time ketika write-up baru ditambahkan.
-
-  ## 🎨 Customization
-
-  ### Mengubah Password Dashboard
-  Edit `.env.local` dan ubah nilai `VITE_DASHBOARD_PASSWORD`
-
-  ### Mengubah Tema
-  Edit file `src/styles/theme.css` untuk customize warna dan styling
-
-  ### Menambah Category
-  Update tipe `Category` di `src/app/data/writeups.ts`
-
-  ## 📄 Lisensi
-
-  MIT License - Silakan gunakan dan modifikasi sesuai kebutuhan
-
-  ## 🤝 Kontribusi
-
-  Contributions welcome! Silakan submit issues dan pull requests.
-  
+--- 
