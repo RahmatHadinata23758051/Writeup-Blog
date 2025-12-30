@@ -1,4 +1,4 @@
-import { BsArrowLeft, BsCalendarEvent, BsTrophy, BsTools, BsFlag, BsEye, BsEyeSlash, BsListCheck, BsShield, BsLightbulb, BsPerson, BsFileText } from 'react-icons/bs';
+import { BsArrowLeft, BsCalendarEvent, BsTrophy, BsTools, BsFlag, BsEye, BsEyeSlash, BsListCheck, BsShield, BsLightbulb, BsPerson, BsFileText, BsClipboard, BsCheck } from 'react-icons/bs';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { writeups } from '../../data/writeups';
@@ -28,6 +28,7 @@ const difficultyColors: Record<string, string> = {
 export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps) {
   const [flagVisible, setFlagVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('challenge-info');
+  const [copiedCodeIndex, setCopiedCodeIndex] = useState<number | null>(null);
   const writeup = writeups.find((w) => w.id === writeupId);
 
   const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
@@ -62,6 +63,12 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
         behavior: 'smooth',
       });
     }
+  };
+
+  const handleCopyCode = (code: string, index: number) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCodeIndex(index);
+    setTimeout(() => setCopiedCodeIndex(null), 2000);
   };
 
   if (!writeup) {
@@ -260,10 +267,23 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
                     </div>
                     <p className="mb-4 text-foreground/90 ml-10 leading-relaxed">{step.content}</p>
                     {step.code && (
-                      <div className="ml-10 rounded-lg border border-border bg-secondary/50 p-4 overflow-x-auto">
-                        <pre className="text-sm text-foreground/90">
-                          <code className="font-mono">{step.code}</code>
-                        </pre>
+                      <div className="ml-10">
+                        <div className="rounded-lg border border-border bg-secondary/50 p-4 overflow-x-auto relative">
+                          <button
+                            onClick={() => handleCopyCode(step.code || '', index)}
+                            className="absolute top-2 right-2 p-2 rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+                            title="Copy code"
+                          >
+                            {copiedCodeIndex === index ? (
+                              <BsCheck className="h-4 w-4 text-primary" />
+                            ) : (
+                              <BsClipboard className="h-4 w-4 text-primary" />
+                            )}
+                          </button>
+                          <pre className="text-sm text-foreground/90">
+                            <code className="font-mono">{step.code}</code>
+                          </pre>
+                        </div>
                       </div>
                     )}
                   </div>
