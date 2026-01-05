@@ -5,7 +5,7 @@ import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Plus, Trash2, ArrowLeft } from 'lucide-react';
-import { WriteUp, Category, Difficulty } from '../../data/writeups';
+import { WriteUp, Category, Difficulty, MathFormula } from '../../data/writeups';
 
 interface WriteUpEditorPageProps {
   onBack: () => void;
@@ -28,12 +28,19 @@ export function WriteUpEditorPage({ onBack }: WriteUpEditorPageProps) {
     problemDescription: '',
     tools: [],
     analysis: '',
+    mathAnalysis: [],
     solution: [],
     flag: '',
     lessonsLearned: '',
   });
 
   const [currentTool, setCurrentTool] = useState('');
+  const [currentFormula, setCurrentFormula] = useState<Partial<MathFormula>>({
+    title: '',
+    formula: '',
+    description: '',
+    variant: 'default',
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -64,6 +71,35 @@ export function WriteUpEditorPage({ onBack }: WriteUpEditorPageProps) {
     setFormData(prev => ({
       ...prev,
       tools: (prev.tools || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const addFormula = () => {
+    if (currentFormula.formula?.trim() && currentFormula.title?.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        mathAnalysis: [...(prev.mathAnalysis || []), currentFormula as MathFormula],
+      }));
+      setCurrentFormula({
+        title: '',
+        formula: '',
+        description: '',
+        variant: 'default',
+      });
+    }
+  };
+
+  const removeFormula = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      mathAnalysis: (prev.mathAnalysis || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleFormulaChange = (field: keyof MathFormula, value: string) => {
+    setCurrentFormula(prev => ({
+      ...prev,
+      [field]: value,
     }));
   };
 
@@ -337,6 +373,94 @@ export function WriteUpEditorPage({ onBack }: WriteUpEditorPageProps) {
                   rows={4}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>📐 Mathematical Analysis (Formulas)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Formula Title</label>
+                  <Input
+                    placeholder="e.g., RSA Encryption"
+                    value={currentFormula.title || ''}
+                    onChange={(e) => handleFormulaChange('title', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">LaTeX Formula</label>
+                  <Input
+                    placeholder="e.g., c \\equiv m^e \\pmod{n}"
+                    value={currentFormula.formula || ''}
+                    onChange={(e) => handleFormulaChange('formula', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Description (Optional)</label>
+                  <Textarea
+                    placeholder="Penjelasan rumus..."
+                    value={currentFormula.description || ''}
+                    onChange={(e) => handleFormulaChange('description', e.target.value)}
+                    rows={2}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Variant Style</label>
+                  <select
+                    value={currentFormula.variant || 'default'}
+                    onChange={(e) => handleFormulaChange('variant', e.target.value)}
+                    className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+                  >
+                    <option value="default">Default (Gelap)</option>
+                    <option value="highlight">Highlight (Purple-Blue Gradient)</option>
+                    <option value="subtle">Subtle (Minimal)</option>
+                  </select>
+                </div>
+
+                <Button
+                  onClick={addFormula}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Formula
+                </Button>
+              </div>
+
+              {formData.mathAnalysis && formData.mathAnalysis.length > 0 && (
+                <div className="space-y-3 mt-6 pt-6 border-t border-border">
+                  <h4 className="font-semibold text-sm">Added Formulas ({formData.mathAnalysis.length})</h4>
+                  <div className="space-y-2">
+                    {formData.mathAnalysis.map((formula, index) => (
+                      <div key={index} className="flex items-start justify-between gap-3 p-3 bg-muted rounded-lg">
+                        <div className="flex-1 text-sm">
+                          <p className="font-semibold text-foreground">{formula.title}</p>
+                          <p className="text-muted-foreground font-mono text-xs mt-1">{formula.formula}</p>
+                          {formula.description && (
+                            <p className="text-muted-foreground text-xs mt-1">{formula.description}</p>
+                          )}
+                          <Badge className="mt-2 text-xs" variant="outline">
+                            {formula.variant}
+                          </Badge>
+                        </div>
+                        <Button
+                          onClick={() => removeFormula(index)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
