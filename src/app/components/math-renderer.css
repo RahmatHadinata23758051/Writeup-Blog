@@ -1,0 +1,264 @@
+/* KaTeX Styling untuk tampilan matematika yang lebih baik */
+
+/* Inline Math Styling */
+.math-inline {
+  display: inline;
+  font-style: normal;
+}
+
+.math-inline .katex {
+  font-size: 1.05em;
+}
+
+.math-inline .katex-html {
+  display: inline;
+}
+
+/* Block Math Styling */
+.math-block {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(148, 113, 234, 0.2);
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 6rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.math-block:hover {
+  border-color: rgba(148, 113, 234, 0.4);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
+  box-shadow: 0 0 20px rgba(148, 113, 234, 0.1);
+}
+
+.dark .math-block {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+.dark .math-block:hover {
+  border-color: rgba(168, 85, 247, 0.4);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+}
+
+.math-block .katex {
+  font-size: 1.2em;
+  margin: 0.5rem;
+}
+
+.math-block .katex-display {
+  margin: 0;
+}
+
+/* Math Block Container dengan varian */
+.math-block-container {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid;
+  transition: all 0.3s ease;
+}
+
+.math-block-container.highlight {
+  background: linear-gradient(135deg, rgba(126, 34, 206, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+  border-color: rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.08);
+}
+
+.math-block-container.highlight:hover {
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.5);
+}
+
+.math-content-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5rem;
+  padding: 0.75rem 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* KaTeX Color Improvements */
+.katex {
+  color: inherit;
+  font-size: 1.1em;
+}
+
+.katex-mathml {
+  display: none;
+}
+
+.katex-html {
+  display: inline-block;
+}
+
+.katex .base {
+  position: relative;
+  display: inline-block;
+}
+
+/* Fractions - better visibility */
+.katex .frac-line {
+  display: inline-block;
+  width: 100%;
+  height: 0.05em;
+}
+
+.katex .frax > .vlist-t {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Square roots - improved styling */
+.katex .sqrt-sign {
+  border-top: 0.08em solid currentColor;
+}
+
+/* Operators - better spacing */
+.katex .mop {
+  margin-right: 0.1em;
+  margin-left: 0.1em;
+}
+
+/* Relations - better spacing */
+.katex .mrel {
+  margin-right: 0.2222em;
+  margin-left: 0.2222em;
+}
+
+/* Delimiters */
+.katex .delimsizing {
+  display: inline-block;
+}
+
+.katex .delim-size1 > g {
+  font-family: inherit;
+}
+
+/* Subscripts dan Superscripts */
+.katex .vlist-t2 {
+  display: inline-table;
+  table-layout: fixed;
+}
+
+.katex sup, .katex sub {
+  font-size: 0.75em;
+}
+
+/* Matrix dan Array */
+.katex .mord.arraycolsep {
+  width: 0.5em;
+}
+
+.katex .mtable {
+  vertical-align: middle;
+}
+
+/* Accent marks */
+.katex .accent-body > .vlist-t {
+  text-align: center;
+}
+
+/* Scrollbar styling untuk block math */
+.math-content-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.math-content-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.math-content-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(148, 113, 234, 0.3);
+  border-radius: 3px;
+}
+
+.math-content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 113, 234, 0.5);
+}
+
+.dark .math-content-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.3);
+}
+
+.dark .math-content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .math-block {
+    padding: 1rem;
+    min-height: 5rem;
+    margin: 1rem 0;
+  }
+
+  .math-block-container {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .math-block .katex {
+    font-size: 1em;
+  }
+
+  .math-inline .katex {
+    font-size: 0.95em;
+  }
+
+  .math-content-wrapper {
+    min-height: 4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .math-block {
+    padding: 0.75rem;
+    min-height: 4rem;
+    margin: 0.75rem 0;
+  }
+
+  .math-block-container {
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+  }
+
+  .math-block .katex {
+    font-size: 0.95em;
+  }
+
+  .math-inline .katex {
+    font-size: 0.9em;
+  }
+
+  .math-content-wrapper {
+    min-height: 3rem;
+    padding: 0.5rem 0;
+  }
+}
+
+/* Print styling */
+@media print {
+  .math-block,
+  .math-block-container {
+    border-color: #ccc;
+    background: white;
+    page-break-inside: avoid;
+  }
+
+  .math-block .katex,
+  .math-block-container .katex {
+    color: #000;
+  }
+}

@@ -1,3 +1,207 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+@keyframes blobSlow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(40px, -60px) scale(1.05);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(-30px, 30px) scale(0.95);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(20px, -40px) scale(1.08);
+    opacity: 0.35;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-30px) translateX(20px);
+  }
+  50% {
+    transform: translateY(-60px) translateX(-20px);
+  }
+  75% {
+    transform: translateY(-30px) translateX(15px);
+  }
+}
+
+@keyframes moveRight {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animate-blob-slow {
+  animation: blobSlow 15s infinite;
+}
+
+.animation-delay-500 {
+  animation-delay: 0.5s;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-1500 {
+  animation-delay: 1.5s;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-3000 {
+  animation-delay: 3s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+/* ===== KaTeX Global Styling ===== */
+
+/* Light mode KaTeX colors */
+:root {
+  --katex-text-color: #0f172a;
+  --katex-border-color: rgba(148, 113, 234, 0.2);
+  --katex-bg-color: rgba(15, 23, 42, 0.8);
+}
+
+/* Dark mode KaTeX colors */
+.dark {
+  --katex-text-color: #e6e6e6;
+  --katex-border-color: rgba(168, 85, 247, 0.25);
+  --katex-bg-color: rgba(15, 23, 42, 0.9);
+}
+
+/* KaTeX global text color */
+.katex {
+  color: var(--katex-text-color) !important;
+}
+
+/* Ensure proper font rendering in KaTeX */
+.katex-display {
+  text-align: center;
+  margin: 0;
+}
+
+.katex-display > .katex {
+  display: block;
+}
+
+.katex-display > .katex > .base {
+  display: block;
+  white-space: nowrap;
+  position: relative;
+}
+
+/* Better rendering for mathematical symbols */
+.katex .mord,
+.katex .mop,
+.katex .mrel,
+.katex .mbin {
+  display: inline-block;
+}
+
+/* Improve fraction display */
+.katex .frac-line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  border: 0;
+}
+
+/* Better sqrt display */
+.katex .sqrt-sign {
+  border-top-width: 1px;
+  border-right-width: 1px;
+  border-top-style: solid;
+  border-right-style: solid;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+}
+
+/* Improve over/under symbols visibility */
+.katex .accent {
+  padding: 0 0.15em;
+}
+
+/* Better integral signs */
+.katex .mop.op-symbol {
+  position: relative;
+}
+
+/* Adjustments for mathematical operators */
+.katex .vlist-t {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Fine-tune spacing for better readability */
+.katex .sizing {
+  display: inline-block;
+}
+
+.katex .fontsize-ensurer {
+  display: inline-block;
+}
+
+/* Prevent text selection inside formulas (optional) */
+.katex-html {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Animation for formula entrance */
+@keyframes mathEntry {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.math-block,
+.math-inline {
+  animation: mathEntry 0.4s ease-out;
+}

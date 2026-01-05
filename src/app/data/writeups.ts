@@ -1,6 +1,13 @@
 export type Category = 'Web' | 'Crypto' | 'Pwn' | 'Forensics' | 'Reverse' | 'OSINT' | 'Misc';
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
+export interface MathFormula {
+  title?: string;
+  formula: string;
+  description?: string;
+  variant?: 'default' | 'highlight' | 'subtle';
+}
+
 export interface WriteUp {
   id: string;
   title: string;
@@ -13,6 +20,7 @@ export interface WriteUp {
   problemDescription: string;
   tools: string[];
   analysis: string;
+  mathAnalysis?: MathFormula[];
   solution: {
     title: string;
     content: string;
@@ -78,4 +86,76 @@ export const writeups: WriteUp[] = [{
   ],
   "flag": "ptm{1ts_ju5t_pngs_4ll_th3_w4y_d0wn}",
   "lessonsLearned": ""
+
+},
+{
+  "id": "2",
+  "title": "Shaw",
+  "category": "Crypto",
+  "difficulty": "Hard",
+  "points": 0,
+  "date": "2025-12-28",
+  "author": "CTF Team",
+  "ctfName": "INTECHFEST",
+  "description": "ElGamal encryption over LCG with Pohlig-Hellman and LLL lattice attack",
+  "problemDescription": "Server runs ElGamal encryption using a Linear Congruential Generator (LCG) for random number generation. The server accepts a custom 512-bit prime modulus and uses a truncated LCG (256-bit output XORed with unknown constant) to generate ephemeral keys. Goal: Recover the initial seed and secret constant.",
+  "tools": [
+    "SageMath",
+    "pwntools",
+    "Python",
+    "Pohlig-Hellman",
+    "LLL Reduction"
+  ],
+  "analysis": "The challenge contains three critical vulnerabilities:\n\n1. Custom Prime Selection: Server accepts any prime from client, enabling smooth prime exploitation for Pohlig-Hellman DLP.\n\n2. Linear Structure: LCG has fully linear structure despite truncation, making it vulnerable to lattice attacks (LLL). The relationship S_i = A^i * S_0 + sum(A^j * B) can be expressed as system of linear equations.\n\n3. Modular Ambiguity: Seed is 512-bit but modulo is also 512-bit, creating multiple valid candidates (s, s+M) that must be verified.",
+  "mathAnalysis": [
+    {
+      "title": "ElGamal Encryption Schema",
+      "formula": "c_1 = G^r \\pmod{P}, \\quad c_2 = Y^r \\cdot m \\pmod{P}",
+      "description": "Where c₁ is the ephemeral key and c₂ is the encrypted message",
+      "variant": "highlight"
+    },
+    {
+      "title": "LCG State Evolution",
+      "formula": "S_i \\equiv A^i S_0 + \\sum_{j=0}^{i-1} A^j B \\pmod{M}",
+      "description": "The state at iteration i can be expressed as a linear combination of initial seed and parameters",
+      "variant": "default"
+    },
+    {
+      "title": "Output Truncation",
+      "formula": "r_i = (S_{i+1} \\gg 256) \\oplus c",
+      "description": "Top 256 bits are removed (right shift), result XORed with unknown constant c",
+      "variant": "default"
+    },
+    {
+      "title": "Pohlig-Hellman Algorithm",
+      "formula": "\\text{If } P-1 = \\prod p_i^{e_i} \\text{, then } \\log_G c_1 \\equiv \\sum r_i P_i^{-1} (P-1)/p_i^{e_i} \\pmod{P}",
+      "description": "Recover exponent by solving DLP on each prime power factor separately",
+      "variant": "default"
+    }
+  ],
+  "solution": [
+    {
+      "title": "Generate Ultra-Smooth Prime",
+      "content": "Create a 512-bit prime where P-1 = 2 × 3 × 5 × 7 × ... (product of small primes). This reduces DLP complexity from exp(sqrt(n)) to polynomial time."
+    },
+    {
+      "title": "Extract LCG Parameters",
+      "content": "Query server for LCG multiplier A, increment B, and generator G. These remain constant throughout."
+    },
+    {
+      "title": "Recover r via Pohlig-Hellman",
+      "content": "For each encryption, get c1 and solve discrete_log(c1, G) mod P using Pohlig-Hellman. This recovers the ephemeral exponent r used in that round."
+    },
+    {
+      "title": "LLL Lattice Reduction",
+      "content": "Build lattice from known/unknown parts of multiple r values. Each r_i = known_part XOR c_i. The linearity of LCG creates exploitable linear relationships. LLL finds short vectors containing unknown bits."
+    },
+    {
+      "title": "Verify & Submit Seed",
+      "content": "Recover candidates from LLL. Check both s and s+M for modular ambiguity. Verify locally by generating subsequent LCG states, then submit to server."
+    }
+  ],
+  "flag": "INTECHFEST{964114fd72f319375a5c7fb3081a02b7}",
+  "lessonsLearned": "Never allow clients to choose cryptographic parameters (especially primes). Always use safe primes (p = 2q+1). LCG is cryptographically broken - linear structure enables lattice attacks. Truncation alone doesn't guarantee security; underlying generator must be strong. Pohlig-Hellman breaks DLP if p-1 has only small factors."
+
 }];

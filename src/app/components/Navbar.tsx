@@ -16,7 +16,7 @@ export function Navbar({ currentPage, onNavigate }: NavbarProps) {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <nav className="sticky top-0 z-50 border-b border-border/30 bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}

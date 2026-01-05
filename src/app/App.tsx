@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { AnimatedBackground } from './components/AnimatedBackground';
 import { HomePage } from './components/pages/HomePage';
 import { WriteUpsPage } from './components/pages/WriteUpsPage';
 import { WriteUpDetailPage } from './components/pages/WriteUpDetailPage';
 import { AboutPage } from './components/pages/AboutPage';
+import { FormulaDemoPage } from './components/pages/FormulaDemoPage';
 import { ProtectedDashboard } from './components/ProtectedDashboard';
 
-type Page = 'home' | 'writeups' | 'writeup-detail' | 'about' | 'dashboard';
+type Page = 'home' | 'writeups' | 'writeup-detail' | 'about' | 'formula-demo' | 'dashboard';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -55,6 +57,8 @@ export default function App() {
         ) : null;
       case 'about':
         return <AboutPage />;
+      case 'formula-demo':
+        return <FormulaDemoPage />;
       case 'dashboard':
         return (
           <ProtectedDashboard
@@ -72,10 +76,13 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
-      <main className="flex-1">{renderPage()}</main>
-      <Footer />
-    </div>
+    <>
+      <AnimatedBackground />
+      <div className="relative flex min-h-screen flex-col">
+        <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
+        <main className="flex-1">{renderPage()}</main>
+        <Footer />
+      </div>
+    </>
   );
 }

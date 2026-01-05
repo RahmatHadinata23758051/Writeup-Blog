@@ -1,6 +1,7 @@
 import { BsArrowLeft, BsCalendarEvent, BsTrophy, BsTools, BsFlag, BsEye, BsEyeSlash, BsListCheck, BsShield, BsLightbulb, BsPerson, BsFileText, BsClipboard, BsCheck } from 'react-icons/bs';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { MathBlock } from '../MathRenderer';
 import { writeups } from '../../data/writeups';
 import { useState, useEffect, useRef } from 'react';
 
@@ -245,7 +246,24 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
             >
               <div className="rounded-lg border border-border bg-card p-6">
                 <h2 className="mb-4 text-foreground">Analysis</h2>
-                <p className="text-foreground/90 leading-relaxed">{writeup.analysis}</p>
+                <p className="text-foreground/90 leading-relaxed mb-6">{writeup.analysis}</p>
+                
+                {writeup.mathAnalysis && writeup.mathAnalysis.length > 0 && (
+                  <div className="space-y-4 mt-8 pt-6 border-t border-border">
+                    <h3 className="text-foreground font-semibold text-sm uppercase tracking-wide">Mathematical Analysis</h3>
+                    <div className="space-y-4">
+                      {writeup.mathAnalysis.map((formula, index) => (
+                        <MathBlock
+                          key={index}
+                          title={formula.title}
+                          formula={formula.formula}
+                          description={formula.description}
+                          variant={formula.variant as 'default' | 'highlight' | 'subtle' | undefined}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 
