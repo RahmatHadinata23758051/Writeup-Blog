@@ -113,6 +113,96 @@ export function WriteUpEditorPage({ onBack }: WriteUpEditorPageProps) {
         </div>
 
         <div className="space-y-8">
+          {/* Formula Template Guide */}
+          <Card className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                📐 Template: Menambahkan Rumus Matematika
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Tambahkan rumus matematika di section Analysis. Gunakan format JSON di bawah untuk field <code className="bg-muted px-2 py-1 rounded text-xs">mathAnalysis</code>:
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Template JSON:</h4>
+                  <div className="bg-muted p-4 rounded-lg overflow-x-auto">
+                    <pre className="text-xs font-mono whitespace-pre-wrap break-words">
+{`"mathAnalysis": [
+  {
+    "title": "Nama Rumus",
+    "formula": "a^2 + b^2 = c^2",
+    "description": "Penjelasan rumus ini",
+    "variant": "highlight"
+  },
+  {
+    "title": "Rumus Kedua",
+    "formula": "E = mc^2",
+    "description": "Persamaan relativitas Einstein",
+    "variant": "default"
+  }
+]`}
+                    </pre>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Panduan LaTeX & Variant:</h4>
+                  <div className="space-y-3 text-sm">
+                    <div className="bg-muted/50 p-3 rounded">
+                      <p className="font-semibold text-xs uppercase mb-1">LaTeX Syntax:</p>
+                      <ul className="space-y-1 text-xs list-disc list-inside">
+                        <li><code className="bg-muted px-1 rounded">\\frac{'a}{b}'</code> = Pecahan</li>
+                        <li><code className="bg-muted px-1 rounded">\\sqrt{'x}'</code> = Akar kuadrat</li>
+                        <li><code className="bg-muted px-1 rounded">^2</code> = Pangkat/Superscript</li>
+                        <li><code className="bg-muted px-1 rounded">_i</code> = Subscript</li>
+                        <li><code className="bg-muted px-1 rounded">\\pmod{'n}'</code> = Modulo</li>
+                        <li><code className="bg-muted px-1 rounded">\\equiv</code> = Kongruen</li>
+                        <li><code className="bg-muted px-1 rounded">\\sum</code> = Sigma/Jumlah</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-muted/50 p-3 rounded">
+                      <p className="font-semibold text-xs uppercase mb-1">Variant (Styling):</p>
+                      <ul className="space-y-1 text-xs">
+                        <li><code className="bg-yellow-900/50 px-2 py-1 rounded">"default"</code> - Background gelap biasa</li>
+                        <li><code className="bg-purple-900/50 px-2 py-1 rounded">"highlight"</code> - Gradient purple-blue (penting!)</li>
+                        <li><code className="bg-slate-900/50 px-2 py-1 rounded">"subtle"</code> - Styling minimal</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Contoh Rumus Umum:</h4>
+                  <div className="space-y-2 text-xs">
+                    <div className="bg-muted/50 p-2 rounded font-mono">
+                      <p><span className="text-blue-400">RSA Encryption:</span> c \\equiv m^e \\pmod{'n}'</p>
+                    </div>
+                    <div className="bg-muted/50 p-2 rounded font-mono">
+                      <p><span className="text-blue-400">DLP:</span> g^x \\equiv h \\pmod{'p}'</p>
+                    </div>
+                    <div className="bg-muted/50 p-2 rounded font-mono">
+                      <p><span className="text-blue-400">Integral:</span> \\int_0^{\\pi} \\sin(x) dx</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/20 border border-blue-500/50 p-3 rounded text-sm">
+                <p className="font-semibold mb-1">💡 Tips:</p>
+                <ul className="space-y-1 text-xs list-disc list-inside">
+                  <li>Selalu gunakan backslash ganda (<code className="bg-muted px-1 rounded">\\\\</code>) untuk escape di JSON</li>
+                  <li>Test rumus dengan copy-paste ke <a href="https://www.desmos.com/" target="_blank" className="text-blue-400 hover:underline">Desmos</a></li>
+                  <li>Gunakan <code className="bg-muted px-1 rounded">"highlight"</code> untuk rumus utama yang penting</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Informasi Dasar</CardTitle>
