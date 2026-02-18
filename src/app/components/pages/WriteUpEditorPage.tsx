@@ -192,13 +192,13 @@ export function WriteUpEditorPage({ onBack }: WriteUpEditorPageProps) {
                     <div className="bg-muted/50 p-3 rounded">
                       <p className="font-semibold text-xs uppercase mb-1">LaTeX Syntax:</p>
                       <ul className="space-y-1 text-xs list-disc list-inside">
-                        <li><code className="bg-muted px-1 rounded">\\frac{'a}{b}'</code> = Pecahan</li>
-                        <li><code className="bg-muted px-1 rounded">\\sqrt{'x}'</code> = Akar kuadrat</li>
+                        <li><code className="bg-muted px-1 rounded">{'\\frac{a}{b}'}</code> = Pecahan</li>
+                        <li><code className="bg-muted px-1 rounded">{'\\sqrt{x}'}</code> = Akar kuadrat</li>
                         <li><code className="bg-muted px-1 rounded">^2</code> = Pangkat/Superscript</li>
                         <li><code className="bg-muted px-1 rounded">_i</code> = Subscript</li>
-                        <li><code className="bg-muted px-1 rounded">\\pmod{'n}'</code> = Modulo</li>
-                        <li><code className="bg-muted px-1 rounded">\\equiv</code> = Kongruen</li>
-                        <li><code className="bg-muted px-1 rounded">\\sum</code> = Sigma/Jumlah</li>
+                        <li><code className="bg-muted px-1 rounded">{'\\pmod{n}'}</code> = Modulo</li>
+                        <li><code className="bg-muted px-1 rounded">{'\\equiv'}</code> = Kongruen</li>
+                        <li><code className="bg-muted px-1 rounded">{'\\sum'}</code> = Sigma/Jumlah</li>
                       </ul>
                     </div>
 
@@ -217,13 +217,13 @@ export function WriteUpEditorPage({ onBack }: WriteUpEditorPageProps) {
                   <h4 className="text-sm font-semibold mb-2">Contoh Rumus Umum:</h4>
                   <div className="space-y-2 text-xs">
                     <div className="bg-muted/50 p-2 rounded font-mono">
-                      <p><span className="text-blue-400">RSA Encryption:</span> c \\equiv m^e \\pmod{'n}'</p>
+                      <p><span className="text-blue-400">RSA Encryption:</span> {'c \\equiv m^e \\pmod{n}'}</p>
                     </div>
                     <div className="bg-muted/50 p-2 rounded font-mono">
-                      <p><span className="text-blue-400">DLP:</span> g^x \\equiv h \\pmod{'p}'</p>
+                      <p><span className="text-blue-400">DLP:</span> {'g^x \\equiv h \\pmod{p}'}</p>
                     </div>
                     <div className="bg-muted/50 p-2 rounded font-mono">
-                      <p><span className="text-blue-400">Integral:</span> \\int_0^{\\pi} \\sin(x) dx</p>
+                      <p><span className="text-blue-400">Integral:</span> {'\\int_0^{\\pi} \\sin(x) dx'}</p>
                     </div>
                   </div>
                 </div>

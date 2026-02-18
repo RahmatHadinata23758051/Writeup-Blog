@@ -1,11 +1,15 @@
 import { BsArrowRight, BsLightningCharge } from 'react-icons/bs';
 import { Button } from './ui/button';
+import { writeups } from '../data/writeups';
 
 interface HeroProps {
   onNavigate: (page: string) => void;
 }
 
 export function Hero({ onNavigate }: HeroProps) {
+  const writeUpCount = writeups.length;
+  const categoryCount = new Set(writeups.map(w => w.category)).size;
+
   return (
     <div className="relative overflow-hidden border-b border-border bg-card">
       {/* Grid background pattern */}
@@ -53,18 +57,14 @@ export function Hero({ onNavigate }: HeroProps) {
           </div>
 
           {/* Stats */}
-          <div className="mt-16 grid grid-cols-3 gap-4 sm:gap-8">
+          <div className="mt-16 grid grid-cols-2 gap-4 sm:gap-8 max-w-md mx-auto">
             <div className="rounded-lg border border-border bg-card/50 p-4">
-              <div className="text-2xl sm:text-3xl text-primary">6</div>
+              <div className="text-2xl sm:text-3xl text-primary">{writeUpCount}</div>
               <div className="mt-1 text-sm text-muted-foreground">Write-Ups</div>
             </div>
             <div className="rounded-lg border border-border bg-card/50 p-4">
-              <div className="text-2xl sm:text-3xl text-primary">6</div>
+              <div className="text-2xl sm:text-3xl text-primary">{categoryCount}</div>
               <div className="mt-1 text-sm text-muted-foreground">Categories</div>
-            </div>
-            <div className="rounded-lg border border-border bg-card/50 p-4">
-              <div className="text-2xl sm:text-3xl text-primary">1,680</div>
-              <div className="mt-1 text-sm text-muted-foreground">Points</div>
             </div>
           </div>
         </div>

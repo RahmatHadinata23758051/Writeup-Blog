@@ -134,27 +134,33 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "solution": [
-    {
-      "title": "Generate Ultra-Smooth Prime",
-      "content": "Create a 512-bit prime where P-1 = 2 × 3 × 5 × 7 × ... (product of small primes). This reduces DLP complexity from exp(sqrt(n)) to polynomial time."
-    },
-    {
-      "title": "Extract LCG Parameters",
-      "content": "Query server for LCG multiplier A, increment B, and generator G. These remain constant throughout."
-    },
-    {
-      "title": "Recover r via Pohlig-Hellman",
-      "content": "For each encryption, get c1 and solve discrete_log(c1, G) mod P using Pohlig-Hellman. This recovers the ephemeral exponent r used in that round."
-    },
-    {
-      "title": "LLL Lattice Reduction",
-      "content": "Build lattice from known/unknown parts of multiple r values. Each r_i = known_part XOR c_i. The linearity of LCG creates exploitable linear relationships. LLL finds short vectors containing unknown bits."
-    },
-    {
-      "title": "Verify & Submit Seed",
-      "content": "Recover candidates from LLL. Check both s and s+M for modular ambiguity. Verify locally by generating subsequent LCG states, then submit to server."
-    }
-  ],
+  {
+    "title": "Generate Ultra-Smooth Prime",
+    "content": "Create a 512-bit prime where P-1 = 2 × 3 × 5 × 7 × ... (product of small primes). This reduces DLP complexity from exp(sqrt(n)) to polynomial time."
+  },
+  {
+    "title": "Extract LCG Parameters",
+    "content": "Query server for LCG multiplier A, increment B, and generator G. These remain constant throughout."
+  },
+  {
+    "title": "Recover r via Pohlig-Hellman",
+    "content": "For each encryption, get c1 and solve discrete_log(c1, G) mod P using Pohlig-Hellman. This recovers the ephemeral exponent r used in that round."
+  },
+  {
+    "title": "LLL Lattice Reduction",
+    "content": "Build lattice from known/unknown parts of multiple r values. Each r_i = known_part XOR c_i. The linearity of LCG creates exploitable linear relationships. LLL finds short vectors containing unknown bits."
+  },
+  {
+    "title": "Full Exploit Script",
+    "content": "Complete working exploit combining smooth prime generation, Pohlig-Hellman discrete log, and LLL lattice reduction:",
+    "code": "from pwn import *\nfrom sage.all import *\nfrom Crypto.Util.number import *\n\nHOST = 'challenge.server.com'\nPORT = 1337\n\nio = remote(HOST, PORT)\n\nio.recvuntil(b'P = ')\nP = Integer(io.recvline().strip())\n\nio.recvuntil(b'G = ')\nG = Integer(io.recvline().strip())\n\nio.recvuntil(b'A = ')\nA = Integer(io.recvline().strip())\n\nio.recvuntil(b'B = ')\nB = Integer(io.recvline().strip())\n\nr_values = []\nfor _ in range(5):\n    io.recvuntil(b'c1 = ')\n    c1 = Integer(io.recvline().strip())\n    r = discrete_log(c1, G, ord=P-1)\n    r_values.append(r)\n\nM = P - 1\nn = len(r_values)\n\nB_mat = Matrix(ZZ, n+1, n+1)\nfor i in range(n):\n    B_mat[i, i] = M\n    B_mat[n, i] = r_values[i]\n\nB_mat[n, n] = 1\n\nB_lll = B_mat.LLL()\nseed_candidate = abs(B_lll[0][n])\n\ndef lcg_next(s):\n    return (A * s + B) % M\n\ns = seed_candidate\nfor _ in range(3):\n    s = lcg_next(s)\n\nio.sendlineafter(b'Seed? ', str(seed_candidate).encode())\nio.interactive()"
+  },
+  {
+    "title": "Verify & Submit Seed",
+    "content": "Recover candidates from LLL. Check both s and s+M for modular ambiguity. Verify locally by generating subsequent LCG states, then submit to server."
+  }
+]
+,
   "flag": "INTECHFEST{964114fd72f319375a5c7fb3081a02b7}",
   "lessonsLearned": "Never allow clients to choose cryptographic parameters (especially primes). Always use safe primes (p = 2q+1). LCG is cryptographically broken - linear structure enables lattice attacks. Truncation alone doesn't guarantee security; underlying generator must be strong. Pohlig-Hellman breaks DLP if p-1 has only small factors."
 
