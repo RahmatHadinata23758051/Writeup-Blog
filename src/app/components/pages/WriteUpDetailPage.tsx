@@ -87,6 +87,7 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
     { id: 'tools', label: 'Tools Used' },
     { id: 'analysis', label: 'Analysis' },
     { id: 'solution', label: 'Exploitation & Solution' },
+    ...(writeup.terminalOutputs ? [{ id: 'terminal-output', label: 'Execution Output' }] : []),
     { id: 'flag', label: 'Flag' },
     { id: 'lessons', label: 'Lessons Learned' },
   ];
@@ -308,6 +309,37 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
                 ))}
               </div>
             </section>
+
+            {/* Terminal Output */}
+            {writeup.terminalOutputs && writeup.terminalOutputs.length > 0 && (
+              <section
+                id="terminal-output"
+                ref={(el) => (sectionsRef.current['terminal-output'] = el)}
+                className="mb-12 scroll-mt-24"
+              >
+                <h2 className="mb-6 text-foreground">Execution Output</h2>
+                <div className="space-y-6">
+                  {writeup.terminalOutputs.map((terminal, index) => (
+                    <div key={index} className="rounded-lg border border-border bg-card p-6 overflow-hidden">
+                      <div className="mb-3">
+                        <p className="text-sm text-muted-foreground mb-2">Command:</p>
+                        <div className="rounded-md border border-border bg-secondary/50 p-3 overflow-x-auto">
+                          <code className="font-mono text-sm text-foreground">$ {terminal.command}</code>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Output:</p>
+                        <div className="rounded-md border border-border bg-gray-950 p-4 overflow-x-auto">
+                          <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap break-words">
+                            <code>{terminal.output}</code>
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Flag */}
             <section

