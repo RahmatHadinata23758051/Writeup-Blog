@@ -188,12 +188,20 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
               ref={(el) => (sectionsRef.current['challenge-info'] = el)}
               className="mb-12 scroll-mt-24"
             >
-              <div className="rounded-lg border border-border bg-card p-6">
+              <div className="rounded-lg border border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-6">
                 <h2 className="mb-4 text-foreground flex items-center gap-2">
                   <BsShield className="h-5 w-5 text-primary" />
                   Challenge Description
                 </h2>
-                <p className="text-foreground/90 leading-relaxed">{writeup.problemDescription}</p>
+                <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
+                  {writeup.problemDescription.split('**').map((text, idx) => 
+                    idx % 2 === 0 ? (
+                      <span key={idx}>{text}</span>
+                    ) : (
+                      <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
+                    )
+                  )}
+                </p>
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                     <div>
@@ -245,9 +253,20 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
               ref={(el) => (sectionsRef.current['analysis'] = el)}
               className="mb-12 scroll-mt-24"
             >
-              <div className="rounded-lg border border-border bg-card p-6">
-                <h2 className="mb-4 text-foreground">Analysis</h2>
-                <p className="text-foreground/90 leading-relaxed mb-6">{writeup.analysis}</p>
+              <h2 className="mb-6 text-foreground flex items-center gap-2">
+                <BsShield className="h-5 w-5 text-primary" />
+                Analysis
+              </h2>
+              <div className="rounded-lg border border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-6">
+                <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
+                  {writeup.analysis.split('**').map((text, idx) => 
+                    idx % 2 === 0 ? (
+                      <span key={idx}>{text}</span>
+                    ) : (
+                      <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
+                    )
+                  )}
+                </p>
                 
                 {writeup.mathAnalysis && writeup.mathAnalysis.length > 0 && (
                   <div className="space-y-4 mt-8 pt-6 border-t border-border">
@@ -284,10 +303,18 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
                       </div>
                       <h3 className="text-foreground pt-0.5">{step.title}</h3>
                     </div>
-                    <p className="mb-4 text-foreground/90 ml-10 leading-relaxed">{step.content}</p>
+                    <p className="mb-4 text-foreground/85 ml-10 leading-relaxed whitespace-pre-wrap">
+                      {step.content.split('**').map((text, idx) => 
+                        idx % 2 === 0 ? (
+                          <span key={idx}>{text}</span>
+                        ) : (
+                          <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
+                        )
+                      )}
+                    </p>
                     {step.code && (
                       <div className="ml-10">
-                        <div className="rounded-lg border border-border bg-secondary/50 p-4 overflow-x-auto relative">
+                        <div className="rounded-lg border border-border bg-gray-950 p-4 overflow-x-auto relative">
                           <button
                             onClick={() => handleCopyCode(step.code || '', index)}
                             className="absolute top-2 right-2 p-2 rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
@@ -299,8 +326,8 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
                               <BsClipboard className="h-4 w-4 text-primary" />
                             )}
                           </button>
-                          <pre className="text-sm text-foreground/90">
-                            <code className="font-mono">{step.code}</code>
+                          <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap break-words">
+                            <code>{step.code}</code>
                           </pre>
                         </div>
                       </div>
@@ -388,12 +415,20 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
               ref={(el) => (sectionsRef.current['lessons'] = el)}
               className="mb-12 scroll-mt-24"
             >
-              <div className="rounded-lg border border-border bg-card p-6">
-                <h2 className="mb-4 text-foreground flex items-center gap-2">
-                  <BsLightbulb className="h-5 w-5 text-primary" />
-                  Lessons Learned
-                </h2>
-                <p className="text-foreground/90 leading-relaxed">{writeup.lessonsLearned}</p>
+              <h2 className="mb-6 text-foreground flex items-center gap-2">
+                <BsLightbulb className="h-5 w-5 text-primary" />
+                Lessons Learned
+              </h2>
+              <div className="rounded-lg border border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-6">
+                <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
+                  {writeup.lessonsLearned.split('**').map((text, idx) => 
+                    idx % 2 === 0 ? (
+                      <span key={idx}>{text}</span>
+                    ) : (
+                      <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
+                    )
+                  )}
+                </p>
               </div>
             </section>
 
