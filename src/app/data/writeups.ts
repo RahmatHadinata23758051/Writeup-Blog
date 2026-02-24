@@ -729,4 +729,71 @@ export const writeups: WriteUp[] = [{
   "flag": "FlagY{d65441712f1d145acbad77b9d78c87be}",
   "lessonsLearned": "**SQL Injection Prevention** - Never use string interpolation in SQL queries. Always use prepared statements with parameter binding to prevent SQL Injection attacks. Treated untrusted input as data, not code.\n\n**Database Extension Security** - Database extension features like load_extension() must be disabled in production environments. Restrict extension loading only to trusted administrators in controlled environments with proper auditing.\n\n**File Upload Validation** - File upload validation must not depend on a single defense layer. Implement multiple validation layers: extension whitelist, magic bytes verification, MIME type checking, and disable script execution in upload directories with proper server configuration.\n\n**Principle of Least Privilege** - Enable only the functionality required and disable everything unnecessary. SQLite enable_load_extension should be disabled by default in production deployments. Review all enabled features regularly.\n\n**Stateless Application Design** - Even though Flask is stateless, side effects from library loading can persist through the file system. Audit all initialization code in loaded extensions for unintended consequences and security implications.\n\n**Defense in Depth** - Multiple individually minor vulnerabilities can combine to create critical RCE. Secure development requires comprehensive security testing across all components and threat modeling of vulnerability chains."
 
+}, {
+  "id": "12",
+  "title": "Zippy",
+  "category": "Forensics",
+  "difficulty": "Medium",
+  "points": 0,
+  "date": "2026-02-24",
+  "author": "nata",
+  "ctfName": "Vulnby CTF",
+  "description": "A forensic challenge leveraging NTFS Alternate Data Streams (ADS) as a hiding mechanism for archive passwords. The challenge combines archive cryptography (AES-256), file format analysis, and cross-OS filesystem limitations.",
+  "problemDescription": "Challenge riddle: 'How much data is lost during compression? Dont keep the lock and key at the same place'. Two encrypted archive files are provided: locked_files.zip (AES-256 encrypted) and locked_files.rar (RAR5 format). The password for the ZIP archive is intentionally hidden in a Windows NTFS Alternate Data Stream (ADS) within the RAR file, creating a cross-OS filesystem challenge when working on Linux systems.",
+  "tools": [
+    "7z (p7zip-rar plugin)",
+    "RAR5 format",
+    "NTFS Alternate Data Streams",
+    "Linux Ext4",
+    "AES-256 encryption",
+    "Archive analysis",
+    "Hex dump utilities"
+  ],
+  "analysis": "The challenge presents a sophisticated use of Windows NTFS Alternate Data Streams (ADS) to hide sensitive data:\n\n**Understanding Alternate Data Streams (ADS)**\n\nNTFS Alternate Data Streams are a feature of the Windows NTFS filesystem that allow files to have multiple data streams attached to them. This is leveraged for metadata (e.g., file icons, zone information), but can also be exploited to hide data:\n\n```\nMain Stream: locked_files.zip (203 bytes) - the actual encrypted ZIP file\nADS Stream: locked_files.zip:forgotpassword (32 bytes) - password hidden in stream\n```\n\n**The Trap: OS Limitations**\n\nLinux filesystems (Ext4) do not natively support NTFS Alternate Data Streams. When the RAR file is extracted on Linux using standard tools (unrar, 7z without proper configuration), the extractor attempts to read the ADS but fails with:\n\n```\nERROR: Unsupported Method : locked_files.zip:forgotpassword\n```\n\nThis forces solver analysis of the riddle 'how much data is lost during compression' leading down false paths involving bruteforce attacks, Known-Plaintext Attack (KPA), or theoretical compression ratio analysis instead of the actual solution.\n\n**Critical Observation for Success**\n\nUsing `7z l locked_files.rar` (list without extracting), the ADS is revealed in the file listing:\n\n```\nAlternate Streams: 1\nAlternate Streams Size: 32\n```\n\nThis critical hint indicates data exists beyond the visible file. The challenge requires recognizing this signature and using 7z with proper RAR5 support to extract the stream despite Linux filesystem limitations.",
+  "solution": [
+    {
+      "title": "Phase 1: Reconnaissance & Discovery",
+      "content": "**Initial Analysis**\n\nStart by examining both provided files to understand their structure and encryption:\n\n```bash\n# Check ZIP file contents and encryption\n7z l locked_files.zip\nType = zip\nPhysical Size = 203 bytes\nFile: flag.txt (37 bytes) - AES-256 encrypted\n\n# Check RAR file contents\n7z l locked_files.rar\nType = Rar5\nPath = locked_files.zip (203 bytes - compressed: 194 bytes)\nAlternate Streams: 1\nAlternate Streams Size: 32 bytes\n```\n\n**Critical Finding**: The presence of 'Alternate Streams: 1' with a 32-byte size is the key indicator. This anomaly doesn't appear in standard file managers and requires specialized archive tools to detect.\n\n**Riddle Analysis**\n\nInitial interpretation of 'How much data is lost during compression?' leads to false assumptions about compression ratios or data loss calculations. The real meaning becomes clear after discovering the ADS: data loss refers to losing track of hidden streams when using incompatible extraction tools on different operating systems."
+    },
+    {
+      "title": "Phase 2: The Trap (False Path)",
+      "content": "**Common Mistakes**\n\nAfter discovering the ADS stream name `:forgotpassword`, solvers naturally assume it contains the password. However, attempting to extract it using standard Linux tools fails:\n\n```bash\n# Attempt 1: Using unrar\nunrar x locked_files.rar\nERROR: Unsupported Method : locked_files.zip:forgotpassword\n\n# Attempt 2: Using basic 7z\n7z x locked_files.rar\nReturns 0-byte placeholder file instead of actual stream content\n```\n\n**Bruteforce Rabbit Hole**\n\nFailing to extract the stream leads to hypothesis that 'forgotpassword' is itself a password hint. Solvers attempt:\n- MD5 hash of 'forgotpassword'\n- Variations and permutations\n- Dictionary-based attacks\n- Logic-based guessing from metadata\n\nAll attempts fail with: `ERROR: Wrong password : flag.txt`\n\n**Why Standard Tools Fail**\n\nLinux Ext4 filesystem has no concept of alternate data streams. When tools encounter a stream in RAR metadata:\n- Some tools ignore the stream entirely\n- Some create empty files\n- Some throw unsupported format errors\n\nThe solution requires tools with explicit RAR5 support *and* the ability to forcefully extract all data despite OS limitations."
+    },
+    {
+      "title": "Phase 3: Breaking Through OS Limitations",
+      "content": "**The p7zip-rar Plugin**\n\nThe key is using 7z with the p7zip-rar plugin, which provides full RAR5 format support. This tool can extract ADS metadata even though the Linux filesystem cannot natively store streams:\n\n```bash\n# Install p7zip-rar for RAR5 support\nsudo apt-get install p7zip-rar\n\n# Extract with interactive prompt (forces full extraction)\n7z x locked_files.rar\n\nWould you like to replace the existing file:\n  Path: ./locked_files.zip\nwith the file from archive?\n? (Y)es / (N)o / (A)lways / (S)kip all / (Q)uit? y\n\n# Critical output\nAlternate Streams: 1\nAlternate Streams Size: 32\n```\n\n**Extracting the Hidden Stream**\n\nOnce extracted, the ADS content can be read using cat with the ADS path notation:\n\n```bash\ncat \"locked_files.zip:forgotpassword\"\n8d364896e034aabe3fc9fd2e05fb1cbe\n```\n\nThis is the MD5 hash of the password, which serves as the password for the AES-256 encrypted ZIP file!"
+    },
+    {
+      "title": "Phase 4: Final Exploitation",
+      "content": "**Decrypting the ZIP Archive**\n\nWith the password extracted from the hidden ADS stream, decrypt and extract the actual flag:\n\n```bash\n7z x locked_files.zip -p8d364896e034aabe3fc9fd2e05fb1cbe\n\n7-Zip 23.01 (x64)\nPath = locked_files.zip\nType = zip\n\nWould you like to replace the existing file:\n  Path: ./flag.txt\n  Size: 0 bytes\nwith the file from archive:\n  Path: flag.txt\n  Size: 37 bytes\n? (Y)es / (N)o / (A)lways / (S)kip all / (Q)uit? y\n\nEverything is Ok\nSize: 37\nCompressed: 203\n```\n\n**Reading the Flag**\n\n```bash\ncat flag.txt\nVBD{c99a11a53a3748269e3f86d7ac38df11}\n```"
+    },
+    {
+      "title": "Technical Deep Dive: NTFS ADS Exploitation",
+      "content": "**Why ADS for Hiding Data?**\n\nADS exploitation is particularly effective because:\n1. Hidden by default in Windows Explorer\n2. Not visible in standard file listings\n3. Survive file copies on NTFS systems (but lost on non-NTFS)\n4. Difficult to detect without specialized tools\n\n**ADS in RAR Format**\n\nRAR5 format explicitly preserves NTFS metadata including ADS:\n- RAR5 headers store ADS information\n- File size discrepancies become visible when analyzing archive structure\n- 7z reports 'Alternate Streams' in detailed listing\n\n**Cross-OS Filesystem Compatibility**\n\n```\nNTFS (Windows): Stores ADS natively - transparent access\nExt4 (Linux): No ADS support\n  ├─ Can extract ADS metadata from RAR\n  ├─ Cannot store ADS on Ext4 filesystem\n  ├─ Tools must handle data differently (shell redirection, special paths)\n  └─ Name collision avoidance using colon notation\n```\n\n**7z ADS Handling**\n\n7z preserves ADS through special notation:\n- Stores extracted ADS files with colon in filename\n- Filesystem access via `cat filename:streamname` (shell interprets colon)\n- Creates no separate file entries on Ext4"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "7z l locked_files.rar",
+      "output": "7-Zip 23.01 (x64) : Copyright (c) 1999-2023 Igor Pavlov : 2023-06-20\n 64-bit locale=C.UTF-8 Threads:12 OPEN_MAX:10240\n\nScanning the drive for archives:\n1 file, 357 bytes (1 KiB)\n\nPath = locked_files.rar\nType = Rar5\n   Date      Time    Attr         Size   Compressed  Name\n------------------- ----- ------------ ------------  ------------------------\n2026-02-24 22:52:38 ....A          203          194  locked_files.zip\n------------------- ----- ------------ ------------  ------------------------\n2026-02-24 22:52:38                203          194  1 files\n2026-02-24 22:52:38                 32           39  1 alternate streams\n2026-02-24 22:52:38                235          233  2 streams"
+    },
+    {
+      "command": "7z x locked_files.rar",
+      "output": "7-Zip 23.01 (x64) : Copyright (c) 1999-2023 Igor Pavlov : 2023-06-20\n 64-bit locale=C.UTF-8 Threads:12 OPEN_MAX:10240\n\nScanning the drive for archives:\n1 file, 357 bytes (1 KiB)\n\nExtracting archive: locked_files.rar\n--\nPath = locked_files.rar\nType = Rar5\nPhysical Size = 357\nSolid = -\nBlocks = 2\nEncrypted = -\nMultivolume = -\nVolumes = 1\n\nWould you like to replace the existing file:\n  Path:     ./locked_files.zip\n  Size:     203 bytes (1 KiB)\n  Modified: 2026-02-24 22:52:38\nwith the file from archive:\n  Path:     locked_files.zip\n  Size:     203 bytes (1 KiB)\n  Modified: 2026-02-24 22:52:38\n? (Y)es / (N)o / (A)lways / (S)kip all / A(u)to rename all / (Q)uit? y\n\nEverything is Ok\n\nFiles: 1\nAlternate Streams: 1\nAlternate Streams Size: 32\nSize:       203\nCompressed: 357"
+    },
+    {
+      "command": "cat \"locked_files.zip:forgotpassword\"",
+      "output": "8d364896e034aabe3fc9fd2e05fb1cbe"
+    },
+    {
+      "command": "7z x locked_files.zip -p8d364896e034aabe3fc9fd2e05fb1cbe",
+      "output": "7-Zip 23.01 (x64) : Copyright (c) 1999-2023 Igor Pavlov : 2023-06-20\n 64-bit locale=C.UTF-8 Threads:12 OPEN_MAX:10240\n\nScanning the drive for archives:\n1 file, 203 bytes (1 KiB)\n\nExtracting archive: locked_files.zip\n--\nPath = locked_files.zip\nType = zip\nPhysical Size = 203\n\nWould you like to replace the existing file:\n  Path:     ./flag.txt\n  Size:     0 bytes\n  Modified: 2026-02-24 20:52:38\nwith the file from archive:\n  Path:     flag.txt\n  Size:     37 bytes (1 KiB)\n  Modified: 2026-02-24 20:52:38\n? (Y)es / (N)o / (N)o to All / (Y)es to All / Auto Rename / (Q)uit? y\n\nEverything is Ok\n\nSize:       37\nCompressed: 203"
+    },
+    {
+      "command": "cat flag.txt",
+      "output": "VBD{c99a11a53a3748269e3f86d7ac38df11}"
+    }
+  ],
+  "flag": "VBD{c99a11a53a3748269e3f86d7ac38df11}",
+  "lessonsLearned": "**NTFS Alternate Data Streams as a Security Concern** - While ADS are useful for metadata, they represent a significant security risk when not properly understood. Data can be hidden in plain sight without triggering standard file analysis tools. Always examine archive metadata closely, especially size discrepancies and tool-specific information fields.\n\n**Cross-OS Filesystem Compatibility** - File formats and filesystem features do not translate across operating systems. Archives created on Windows with NTFS-specific metadata may behave unexpectedly on Linux systems. Understanding these limitations is crucial for forensic analysis and incident response.\n\n**Archive Tool Capabilities Matter** - Not all archive extraction tools are equal. Standard unrar may fail where 7z with p7zip-rar succeeds. Always verify your tools support the specific archive format VERSION and include native metadata handling. The choice of tool can be the difference between finding evidence and missing it.\n\n**Riddle Misdirection** - CTF riddles often point to the vulnerability category but can misdirect the approach. 'How much data is lost' initially suggests compression analysis rather than hidden data discovery. Critical thinking about multiple interpretations of hints is necessary.\n\n**Metadata Analysis** - The 'Alternate Streams: 1' field in 7z output was the breakthrough indicator. Forensic analysis requires attention to every detail of tool output, including fields that may seem unimportant at first glance. Extract and examine all metadata.\n\n**Defense in Depth for Data Protection** - The challenge combines multiple security layers: archive encryption (AES-256), password isolation (ADS), format complexity (RAR5), and OS-level hiding. While this creates challenge difficulty, it demonstrates why strong data protection requires multiple mechanisms working together."
 }];
