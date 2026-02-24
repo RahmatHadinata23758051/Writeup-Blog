@@ -8,7 +8,7 @@ import { WriteUpDetailPage } from './components/pages/WriteUpDetailPage';
 import { AboutPage } from './components/pages/AboutPage';
 import { FormulaDemoPage } from './components/pages/FormulaDemoPage';
 import { ProtectedDashboard } from './components/ProtectedDashboard';
-import { useSEO } from './hooks/useSEO';
+import { updateMetaTags } from './utils/seoManager';
 
 type Page = 'home' | 'writeups' | 'writeup-detail' | 'about' | 'formula-demo' | 'dashboard';
 
@@ -23,27 +23,20 @@ export default function App() {
 
   // Update SEO meta tags based on current page
   useEffect(() => {
-    switch (currentPage) {
-      case 'home':
-        useSEO(undefined, 'home');
-        break;
-      case 'writeups':
-        useSEO(undefined, 'writeups');
-        break;
-      case 'about':
-        useSEO(undefined, 'about');
-        break;
-      case 'formula-demo':
-        useSEO({
-          title: 'Formula Demo - Interactive Mathematical Visualization',
-          description: 'Interactive formula demonstration page showcasing KaTeX mathematical rendering and visualization.',
-          type: 'website',
-        });
-        break;
-      case 'dashboard':
-      case 'writeup-detail':
-        // Will be handled by respective page components
-        break;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Update meta tags for each page
+    const pageTitle = currentPage === 'home' ? 'home' 
+                    : currentPage === 'writeups' ? 'writeups'
+                    : currentPage === 'about' ? 'about'
+                    : 'home';
+    
+    if (currentPage === 'formula-demo') {
+      updateMetaTags({
+        title: 'Formula Demo - Interactive Mathematical Visualization',
+        description: 'Interactive formula demonstration page showcasing KaTeX mathematical rendering and visualization.',
+        type: 'website',
+      });
     }
   }, [currentPage]);
 
