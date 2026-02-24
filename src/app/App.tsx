@@ -8,6 +8,7 @@ import { WriteUpDetailPage } from './components/pages/WriteUpDetailPage';
 import { AboutPage } from './components/pages/AboutPage';
 import { FormulaDemoPage } from './components/pages/FormulaDemoPage';
 import { ProtectedDashboard } from './components/ProtectedDashboard';
+import { useSEO } from './hooks/useSEO';
 
 type Page = 'home' | 'writeups' | 'writeup-detail' | 'about' | 'formula-demo' | 'dashboard';
 
@@ -19,6 +20,32 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
+
+  // Update SEO meta tags based on current page
+  useEffect(() => {
+    switch (currentPage) {
+      case 'home':
+        useSEO(undefined, 'home');
+        break;
+      case 'writeups':
+        useSEO(undefined, 'writeups');
+        break;
+      case 'about':
+        useSEO(undefined, 'about');
+        break;
+      case 'formula-demo':
+        useSEO({
+          title: 'Formula Demo - Interactive Mathematical Visualization',
+          description: 'Interactive formula demonstration page showcasing KaTeX mathematical rendering and visualization.',
+          type: 'website',
+        });
+        break;
+      case 'dashboard':
+      case 'writeup-detail':
+        // Will be handled by respective page components
+        break;
+    }
+  }, [currentPage]);
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page as Page);

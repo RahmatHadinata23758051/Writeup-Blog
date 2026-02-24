@@ -1,0 +1,33 @@
+# robots.txt for CTF Write-Ups website
+# Allows search engine crawlers to index the site
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+
+# Specific rules for Googlebot
+User-agent: Googlebot
+Allow: /
+
+# Specific rules for Bingbot
+User-agent: Bingbot
+Allow: /
+
+# Specific rules for Slurp (Yahoo)
+User-agent: Slurp
+Allow: /
+
+# Disallow bad bots
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: DotBot
+Disallow: /
+
+# Crawl-delay for polite crawling
+User-agent: *
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://rblxlabs.vercel.app/sitemap.xml
