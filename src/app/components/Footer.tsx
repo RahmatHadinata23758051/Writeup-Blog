@@ -45,7 +45,7 @@ export function Footer() {
             <h4 className="mb-4 text-sm text-foreground">Connect</h4>
             <div className="flex gap-4">
               <a
-                href="https://github.com"
+                href="https://github.com/RahmatHadinata23758051"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-md border border-border bg-card p-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
@@ -53,7 +53,7 @@ export function Footer() {
                 <BsGithub className="h-5 w-5" />
               </a>
               <a
-                href="https://linkedin.com"
+                href="https://www.linkedin.com/in/rahmat-hadinata-iet/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-md border border-border bg-card p-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
@@ -61,7 +61,7 @@ export function Footer() {
                 <BsLinkedin className="h-5 w-5" />
               </a>
               <a
-                href="mailto:contact@example.com"
+                href="mailto:rhnata25@gmail.com"
                 className="rounded-md border border-border bg-card p-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
               >
                 <BsEnvelopeFill className="h-5 w-5" />
