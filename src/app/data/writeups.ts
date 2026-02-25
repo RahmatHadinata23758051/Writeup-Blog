@@ -876,4 +876,167 @@ export const writeups: WriteUp[] = [{
   ],
   "flag": "FlagY{58048b5df459c83d2f498e5c060453d3}",
   "lessonsLearned": "**Format String Exploitation Precision** - Format string attacks require careful offset calculation and understanding of stack layout. Each write operation must be crafted to align with target memory locations and respect size constraints (128-byte limit in this case).\n\n**Partial RELRO Weakness** - Partial RELRO makes the GOT writable during program execution. This enables GOT hijacking, a powerful technique for redirecting control flow. Always prefer Full RELRO when possible to prevent such attacks.\n\n**Intel CET Awareness** - Modern CPU protections like Intel CET (SHSTK and IBT) require exploit developers to respect instruction boundaries. Landing at the correct function entry point (endbr64) is mandatory; jumping mid-function will cause immediate termination.\n\n**Multi-Stage Writes** - When dealing with size constraints, breaking large overwrites into multiple smaller writes (%hn for 2-byte writes) allows fitting exploits within payload limits while still achieving arbitrary writes.\n\n**Static Addresses for Exploitation** - Absence of PIE made this exploit straightforward. With PIE enabled, information disclosure (format string leak) would be needed first to locate win() before overwriting GOT.\n\n**Payload Alignment** - Careful padding and alignment of pointers in payload is essential. The format string and GOT pointers must be positioned precisely at the correct offsets for %11$hn, %12$hn, %13$hn to reference them correctly.\n\n**Defense in Depth Failure** - While Intel CET provides good protection against arbitrary control flow, it must work alongside other mitigations. No stack canary + Partial RELRO + static addresses = exploitable despite modern protections. Multiple complementary security layers are necessary."
+},
+{
+  "id": "14",
+  "title": "Normal El-Gamal (Elliptic Curve)",
+  "category": "Crypto",
+  "difficulty": "Hard",
+  "points": 0,
+  "date": "2025-02-26",
+  "author": "CTF Team",
+  "ctfName": "Flagyard CTF",
+  "description": "Elliptic Curve El-Gamal implementation with hidden parameters and decryption filter. Exploit parameter recovery via oracle encryption and ciphertext malleability attack to bypass security checks.",
+  "problemDescription": "An Oracle service (running at tcp.flagyard.com:30910) provides encryption and decryption menus for El-Gamal cryptography on Elliptic Curves (ECC). A target ciphertext representing a flag is given at connection startup. The challenge involves two main obstacles: (1) All curve parameters (a, b, p) are hidden, and (2) A strict filter prevents direct decryption of the flag ciphertext by checking that the decryption result matches the original plaintext flag.",
+  "tools": [
+    "pwntools",
+    "Python",
+    "Elliptic Curve Math",
+    "Number Theory (GCD)",
+    "Ciphertext Malleability"
+  ],
+  "analysis": "The vulnerability chain relies on two critical weaknesses in the implementation.\n\n**1. Parameter Recovery via Oracle Encryption**\n\nThe server provides an encryption oracle that accepts arbitrary plaintexts. By encrypting known values and collecting the resulting elliptic curve points, we reconstruct curve parameters using algebraic relationships.\n\nFor a point (x, y) on the curve y² ≡ x³ + ax + b (mod p), we define:\nv_i = y_i² - x_i³ ≡ ax_i + b (mod p)\n\nUsing multiple points, we eliminate unknowns and compute differences. The modulus p is recovered via GCD of these differences. Once p is known, a and b follow through linear equation solving.\n\n**2. Ciphertext Malleability Attack**\n\nElliptic Curve El-Gamal encrypts as: C₁ = kG and C₂ = kA + M, where k is random, G is the generator, A = xG is the public key, and x is the private key.\n\nThe scheme lacks integrity protection. By adding a known point P_pad to C₂, we create: C₂' = C₂ + P_pad\n\nWhen the server decrypts (C₁, C₂'), it computes:\nM' = C₂' - xC₁ = (kA + M + P_pad) - kA = M + P_pad\n\nSince M' ≠ M_flag, the server's filter is bypassed. We recover the original message locally:\nM = M' - P_pad",
+  "mathAnalysis": [
+    {
+      "title": "Elliptic Curve Point Addition",
+      "formula": "\\text{On } y^2 = x^3 + ax + b \\pmod{p} :\\\\n \\\\n m = \\begin{cases} \\frac{3x_1^2 + a}{2y_1} \\pmod{p} & \\text{if } P = Q \\\\\\\\ \\frac{y_2 - y_1}{x_2 - x_1} \\pmod{p} & \\text{if } P \\neq Q \\end{cases}\\\\n \\\\n x_3 = m^2 - x_1 - x_2 \\pmod{p} \\quad y_3 = m(x_1 - x_3) - y_1 \\pmod{p}",
+      "description": "Core EC arithmetic used in both encryption and decryption"
+    },
+    {
+      "title": "Parameter Recovery via GCD",
+      "formula": "\\text{Given points } (x_1, y_1), (x_2, y_2), (x_3, y_3) \\text{ on curve } y^2 = x^3 + ax + b \\pmod{p}:\\\\n \\\\n v_i = y_i^2 - x_i^3\\\\n \\\\n k = (v_1 - v_2)(x_2 - x_3) - (v_2 - v_3)(x_1 - x_2)\\\\n \\\\n p = \\gcd(k_1, k_2, \\ldots, k_n)",
+      "description": "Algebraic technique to recover the modulus $p$"
+    },
+    {
+      "title": "El-Gamal Decryption Formula",
+      "formula": "\\text{Given ciphertext } (C_1, C_2) \\text{ and private key } x:\\\\n \\\\n M = C_2 - xC_1",
+      "description": "Where $x$ is the private key (scalar), multiplication is point doubling/addition"
+    },
+    {
+      "title": "Malleability Relation",
+      "formula": "\\text{Original: } M = C_2 - xC_1\\\\n \\\\n \\text{Modified: } M' = (C_2 + P_{\\text{pad}}) - xC_1 = M + P_{\\text{pad}}\\\\n \\\\n \\text{Recovery: } M = M' - P_{\\text{pad}}",
+      "description": "Demonstrates how adding a known point to ciphertext shifts plaintext additively"
+    }
+  ],
+  "solution": [
+    {
+      "title": "Step 1: Receive Target Ciphertext",
+      "content": "Connect to the online oracle and extract the flag ciphertext from the initial response. Parse the coordinates $(C_{1x}, C_{1y}, C_{2x}, C_{2y})$ which represent two points on the hidden curve."
+    },
+    {
+      "title": "Step 2: Collect Curve Points from Encryption Oracle",
+      "content": "Use the encryption menu (option 1) to encrypt small integers (1, 2, 3, ...). Each encryption returns a ciphertext $(C_1, C_2)$ consisting of two valid curve points. Collect at least 5 unique points with distinct x-coordinates to ensure reliable parameter recovery."
+    },
+    {
+      "title": "Step 3: Reconstruct Curve Equation",
+      "content": "For each collected point $(x, y)$, compute $v = y^2 - x^3$. Using three consecutive points, form the equation $k = (v_1 - v_2)(x_2 - x_3) - (v_2 - v_3)(x_1 - x_2)$ and collect multiple $k$ values. Take the GCD of all $k$ values to recover the modulus $p$.",
+      "code": "# From collected points, recover modulus\nvs = [y**2 - x**3 for x, y in unique_points]\nKs = []\n\nfor i in range(len(unique_points) - 2):\n    v1, v2, v3 = vs[i], vs[i+1], vs[i+2]\n    x1, x2, x3 = unique_points[i][0], unique_points[i+1][0], unique_points[i+2][0]\n    k = (v1 - v2)*(x2 - x3) - (v2 - v3)*(x1 - x2)\n    Ks.append(abs(k))\n\np = Ks[0]\nfor k in Ks[1:]:\n    p = math.gcd(p, k)"
+    },
+    {
+      "title": "Step 4: Recover Curve Parameters a and b",
+      "content": "Using any two distinct points $(x_1, y_1)$ and $(x_2, y_2)$ along with the recovered modulus $p$, solve for $a$ and $b$ using linear equations derived from the curve equation.",
+      "code": "# Recover a and b using linear system\nx1, y1 = unique_points[0]\nx2, y2 = unique_points[1]\nv1, v2 = vs[0], vs[1]\n\n# From v1 = ax1 + b and v2 = ax2 + b\na = (v1 - v2) * pow(x1 - x2, -1, p) % p\nb = (v1 - a * x1) % p"
+    },
+    {
+      "title": "Step 5: Craft Malleability Payload",
+      "content": "Select a known curve point $P_{pad}$ from ones we collected (e.g., unique_points[2]). Add this point to $C_2$ of the target ciphertext using elliptic curve addition to create $C_2' = C_2 + P_{pad}$.",
+      "code": "def ec_add(P, Q, a, p):\n    if P == (0, 0): return Q\n    if Q == (0, 0): return P\n    x1, y1 = P\n    x2, y2 = Q\n    if x1 == x2:\n        return (0, 0) if y1 != y2 else ec_double(P, a, p)\n    \n    m = (y2 - y1) * pow(x2 - x1, -1, p) % p\n    x3 = (m**2 - x1 - x2) % p\n    y3 = (m * (x1 - x3) - y1) % p\n    return (x3, y3)\n\n# Craft modified ciphertext\nP_pad = unique_points[2]\nC2_prime = ec_add(C2_target, P_pad, a, p)"
+    },
+    {
+      "title": "Step 6: Bypass Decryption Filter",
+      "content": "Send the modified ciphertext $(C_1, C_2')$ to the decryption oracle. Since $M' \\neq$ target flag $M$, the server's equality check is bypassed and it decrypts successfully, returning the modified plaintext $M'$."
+    },
+    {
+      "title": "Step 7: Recover Original Plaintext",
+      "content": "Subtract the padding point locally: $M = M' - P_{pad}$ using elliptic curve subtraction. Convert the resulting point's x-coordinate to the integer flag by removing the byte-length encoding prefix applied by the server.",
+      "code": "def ec_sub(P, Q, a, p):\n    x, y = Q\n    return ec_add(P, (x, (-y) % p), a, p)\n\n# Recover original message\nM_target = ec_sub(M_prime, P_pad, a, p)\n\n# Convert point to flag integer\nflag_int = M_target[0] >> 8  # Remove length prefix\nflag = long_to_bytes(flag_int)\nprint(f\"FLAG: {flag.decode()}\")"
+    },
+    {
+      "title": "Complete Exploit Script",
+      "content": "Full working Python script that orchestrates parameter recovery, malleability attack, and flag extraction.",
+      "code": "from pwn import *\nimport math\nfrom Crypto.Util.number import long_to_bytes\n\ndef inverse(n, p):\n    return pow(n, -1, p)\n\ndef ec_add(P, Q, a, p):\n    if P == (0, 0): return Q\n    if Q == (0, 0): return P\n    x1, y1 = P\n    x2, y2 = Q\n    if x1 == x2 and y1 != y2:\n        return (0, 0)\n    \n    if P == Q:\n        m = (3 * x1**2 + a) * inverse(2 * y1, p) % p\n    else:\n        m = (y2 - y1) * inverse(x2 - x1, p) % p\n        \n    x3 = (m**2 - x1 - x2) % p\n    y3 = (m * (x1 - x3) - y1) % p\n    return (x3, y3)\n\ndef ec_sub(P, Q, a, p):\n    x, y = Q\n    return ec_add(P, (x, -y % p), a, p)\n\ndef main():\n    host = 'tcp.flagyard.com'\n    port = 30910\n    \n    r = remote(host, port)\n    r.recvuntil(b\"ct=(\")\n    ct_data = r.recvuntil(b\")\")[:-1].decode()\n    c1x, c1y, c2x, c2y = [int(x) for x in ct_data.split(', ')]\n    C1_target = (c1x, c1y)\n    C2_target = (c2x, c2y)\n    log.info(\"Target CT received.\")\n\n    points = [(c1x, c1y), (c2x, c2y)]\n\n    log.info(\"Collecting points from oracle...\")\n    for i in range(1, 6):\n        r.recvuntil(b\">>\")\n        r.sendline(b\"1\")\n        r.recvuntil(b\"plaintext>> \")\n        r.sendline(str(i).encode())\n        \n        line = r.recvline().decode().strip()\n        if line.startswith('('):\n            pts = [int(x) for x in line[1:-1].split(', ')]\n            points.append((pts[0], pts[1]))\n            points.append((pts[2], pts[3]))\n\n    unique_points = []\n    seen_x = set()\n    for pt in points:\n        if pt[0] not in seen_x:\n            unique_points.append(pt)\n            seen_x.add(pt[0])\n            \n    vs = [y**2 - x**3 for x, y in unique_points]\n    Ks = []\n    \n    for i in range(len(unique_points) - 2):\n        v1, v2, v3 = vs[i], vs[i+1], vs[i+2]\n        x1, x2, x3 = unique_points[i][0], unique_points[i+1][0], unique_points[i+2][0]\n        k = (v1 - v2)*(x2 - x3) - (v2 - v3)*(x1 - x2)\n        Ks.append(abs(k))\n\n    p = Ks[0]\n    for k in Ks[1:]:\n        p = math.gcd(p, k)\n\n    for i in range(2, 5000):\n        while p % i == 0 and p > i:\n            p //= i\n\n    log.success(f\"Recovered Modulus (p): {p}\")\n\n    x1, y1 = unique_points[0]\n    x2, y2 = unique_points[1]\n    v1, v2 = vs[0], vs[1]\n\n    a = (v1 - v2) * inverse(x1 - x2, p) % p\n    b = (v1 - a * x1) % p\n    log.success(f\"Recovered parameter a: {a}\")\n    log.success(f\"Recovered parameter b: {b}\")\n\n    P_pad = unique_points[2] \n    C2_prime = ec_add(C2_target, P_pad, a, p)\n\n    log.info(\"Sending bypass payload to Decryption Oracle...\")\n    r.recvuntil(b\">>\")\n    r.sendline(b\"2\")\n    r.recvuntil(b\"ciphertext>> \")\n    payload = f\"{C1_target[0]},{C1_target[1]},{C2_prime[0]},{C2_prime[1]}\"\n    r.sendline(payload.encode())\n\n    res = r.recvline().decode().strip()\n    if \"m=\" in res:\n        parts = res.split(\"m=\")[1].split()\n        M_prime_x = int(parts[0])\n        M_prime_y = int(parts[1])\n        M_prime = (M_prime_x, M_prime_y)\n\n        M_target = ec_sub(M_prime, P_pad, a, p)\n        flag_int = M_target[0] >> 8\n        flag = long_to_bytes(flag_int)\n        \n        print(\"\\n\" + \"=\"*60)\n        print(f\"[+] FLAG: {flag.decode(errors='ignore')}\")\n        print(\"=\"*60 + \"\\n\")\n\n    r.close()\n\nif __name__ == \"__main__\":\n    main()"
+    }
+  ],
+  "flag": "FlagY{717ad4d6a4d37fee8b2e6ebdfaf1d1f5}",
+  "lessonsLearned": "**Hidden Parameter Assumption ≠ Security** - Concealing cryptographic parameters from the user does not strengthen the system if an encryption oracle is available. Parameters can be recovered through algebraic manipulation of plaintext-ciphertext pairs.\n\n**Integrity vs Confidentiality** - El-Gamal provides confidentiality but lacks built-in integrity guarantees. Without authenticated encryption (MAC/digital signature), ciphertexts remain malleable and can be transformed in predictable ways.\n\n**Oracle Access is Dangerous** - Encryption oracles that accept arbitrary plaintexts are high-risk. Carefully restrict oracle functionality to prevent parameter leakage and plaintext recovery attacks.\n\n**Filter Bypass via Transformation** - Security checks based on input-output equality can often be bypassed through homomorphic or malleable properties. Ensure checks operate on cryptographically authenticated values, not raw plaintexts.\n\n**Elliptic Curve Algebra** - Understanding point addition and scalar multiplication operations is crucial for ECC security analysis. Malleability often arises from the group structure itself.\n\n**Defense Strategy** - Use authenticated encryption schemes (ECIES with HMAC or similar), implement proper input validation, never rely on parameter obscurity, and prefer standardized cryptographic parameters with known security properties."
+},
+{
+  "id": "15",
+  "title": "CU29",
+  "category": "Crypto",
+  "difficulty": "Medium",
+  "points": 0,
+  "date": "2025-02-26",
+  "author": "CTF Team",
+  "ctfName": "Flagyard CTF",
+  "description": "RSA challenge exploiting partial bit leakage of p+q combined with Coppersmith attack. Additional trap parameters including non-coprime exponent and fake small d value redirect inexperienced players. The name 'CU29' hints at Copper (Coppersmith).",
+  "problemDescription": "Given standard RSA parameters (modulus n, public exponent e=23) along with a ciphertext c. The server leaks pq = (p+q) >> 200, providing the 313 most significant bits (MSBs) of the sum p+q. Additionally, a parameter ee (claimed to be the inversion of a small random d) is provided as a distraction. The challenge requires recovering the two prime factors p and q, then decrypting the message despite e being non-coprime with φ(n).",
+  "tools": [
+    "SageMath",
+    "gmpy2",
+    "Coppersmith Attack",
+    "Polynomial Root Finding",
+    "Chinese Remainder Theorem"
+  ],
+  "analysis": "The challenge exploits four related vulnerabilities:\n\n**1. Partial Bit Leakage:** The server leaks 313 bits (MSBs) of p+q by right-shifting 200 bits. This provides a strong initial approximation p_approx of the actual prime factor p. The missing 200 bits can be recovered using Coppersmith's method since they represent a 'small' unknown value relative to p.\n\n**2. Coppersmith Attack on Modular Polynomial:** Given p ≈ p_approx with error x₀ < 2^200, we construct f(x) = x + p_approx. Since f(x₀) ≡ 0 (mod p), and x₀ is small, Coppersmith's algorithm efficiently finds x₀. Once recovered, exact factorization follows: p = p_approx + x₀ and q = n/p.\n\n**3. Trap Parameter ee:** The small d value and its inversion ee are red herrings designed to mislead toward Boneh-Durfee or Wiener attacks. However, the bit leakage of p+q is sufficient for direct factorization, making these advanced attacks unnecessary.\n\n**4. Non-Coprime RSA and CRT:** Since e = 23 and gcd(e, φ(n)) > 1, standard RSA decryption d ≡ e^(-1) (mod φ(n)) fails. Instead, decrypt separately modulo p and q, finding all e-th roots via field operations, then combine all candidate pairs via Chinese Remainder Theorem to recover the plaintext.",
+  "mathAnalysis": [
+    {
+      "title": "RSA Factors from Sum Approximation",
+      "formula": "x^2 - Sx + n = 0 \\text{ where } S = p + q\\quad p, q = \\frac{S \\pm \\sqrt{S^2 - 4n}}{2}\\quad \\tilde{p} = \\frac{S_{\\text{approx}} + \\sqrt{S_{\\text{approx}}^2 - 4n}}{2}",
+      "description": "Initial approximation of p using MSBs of p+q"
+    },
+    {
+      "title": "Coppersmith Polynomial",
+      "formula": "f(x) = x + \\tilde{p} \\text{ where } |e_0| < 2^{200}\\quad f(e_0) \\equiv 0 \\pmod{p}\\quad |e_0| < N^{\\beta^2/d} \\text{ with } \\beta = 0.5, d = 1",
+      "description": "Recover lost LSBs using SageMath small_roots()"
+    },
+    {
+      "title": "Non-Coprime Decryption with CRT",
+      "formula": "\\gcd(e, \\phi(n)) \\neq 1 \\text{ decrypt separately}\\quad m_p^e \\equiv c \\pmod{p}\\quad m_q^e \\equiv c \\pmod{q}\\quad m \\equiv m_p \\cdot q \\cdot (q^{-1} \\bmod p) + m_q \\cdot p \\cdot (p^{-1} \\bmod q) \\pmod{n}",
+      "description": "Recover plaintext from multiple candidate roots using Chinese Remainder Theorem"
+    },
+    {
+      "title": "e-th Root Computation in Modular Fields",
+      "formula": "m^e \\equiv c_p \\pmod{p} \\Rightarrow m \\equiv c_p^{1/e} \\pmod{p}\\quad \\text{All } e\\text{-th roots via SageMath } \\texttt{nth\\_root(e, all=True)}",
+      "description": "Find all modular e-th roots for CRT combination"
+    }
+  ],
+  "solution": [
+    {
+      "title": "Step 1: Reconstruct p+q Approximate Value",
+      "content": "The leaked pq value represents (p+q) >> 200. Restore the approximate sum by left-shifting 200 bits: S_approx = pq_val << 200"
+    },
+    {
+      "title": "Step 2: Compute Initial p Approximation",
+      "content": "Using the quadratic formula, compute: D = S_approx² - 4n, then Δ = √D. The initial approximation is: p_approx = (S_approx + Δ) / 2"
+    },
+    {
+      "title": "Step 3: Apply Coppersmith's Algorithm",
+      "content": "Create polynomial f(x) = x + p_approx in the ring Z_n[x]. Call SageMath's small_roots() to find the LSBs error x₀. The bound X = 2^205 accounts for ~200 missing bits plus tolerance.",
+      "code": "PR.<x> = PolynomialRing(Zmod(n))\nf = x + p_approx\nroots = f.small_roots(X=2^205, beta=0.5, epsilon=0.03)\np_diff = int(roots[0])\np = p_approx + p_diff\nq = n // p"
+    },
+    {
+      "title": "Step 4: Compute e-th Roots Modulo p and q",
+      "content": "Since gcd(e, φ(n)) > 1, decrypt separately modulo each prime. Find all e-th roots of c modulo p and q using nth_root() method which returns all solutions.",
+      "code": "P_ring = Zmod(p)\nQ_ring = Zmod(q)\ncp = P_ring(c)\ncq = Q_ring(c)\nmp_roots = cp.nth_root(e, all=True)\nmq_roots = cq.nth_root(e, all=True)"
+    },
+    {
+      "title": "Step 5: Combine Roots Via CRT",
+      "content": "For each pair (m_p, m_q) from the Cartesian product of root sets, use the Chinese Remainder Theorem to recover candidate plaintexts m. Check which candidate contains the flag marker 'FlagY{'.",
+      "code": "for mp in mp_roots:\n    for mq in mq_roots:\n        m = crt([int(mp), int(mq)], [p, q])\n        flag_candidate = long_to_bytes(int(m))\n        if b\"FlagY{\" in flag_candidate:\n            print(flag_candidate.decode())"
+    },
+    {
+      "title": "Complete Exploit Script (SageMath)",
+      "content": "Full working script using SageMath for Coppersmith attack and CRT-based decryption with multiple root candidates.",
+      "code": "import gmpy2\nfrom Crypto.Util.number import long_to_bytes\n\nn = 74400198359942513862730376031146135802606791991588575465056163121555925617314946580878695576381159966669035646513358312316295727962048929334491638793366454990554957760082895721209907599102882541383389817613899931138405942694622063421798336056156478661669460226638891433547765658851966477956365621503055329677\ne = 23\nc = 67093879684168042482911544476248580360412038370701084199780323275036434279521774982225923057805337317989111708384627608827582845935869416467560399759225810925388294903783674263633367996837459206550597542374370661621276546154790021615738055122556152562693170717804941676044793478893041430142032267013836633841\npq_val = 10742021914074381086319674056236928469987565979831767505178443989041183736389136816846636592297\n\nprint(\"[*] Stage 1: Building p approximation from MSB...\")\nS_approx = pq_val << 200\nD = S_approx**2 - 4*n\nisqrt_D = int(gmpy2.isqrt(int(D)))\np_approx = (S_approx + isqrt_D) // 2\n\nprint(\"[*] Stage 2: Running Coppersmith small_roots...\")\nPR.<x> = PolynomialRing(Zmod(n))\nf = x + p_approx\nroots = f.small_roots(X=2^205, beta=0.5, epsilon=0.03)\n\np_diff = int(roots[0])\np = int(p_approx + p_diff)\nq = n // p\nassert p * q == n\nprint(\"[+] Factorization Success!\")\n\nprint(\"\\n[*] Stage 3: Decryption with CRT (non-coprime e=23)...\")\nP_ring = Zmod(p)\nQ_ring = Zmod(q)\ncp = P_ring(c)\ncq = Q_ring(c)\nmp_roots = cp.nth_root(e, all=True)\nmq_roots = cq.nth_root(e, all=True)\n\nprint(f\"[*] Found {len(mp_roots)} roots mod p and {len(mq_roots)} roots mod q\")\nprint(\"[*] Testing CRT combinations...\")\n\nfor mp in mp_roots:\n    for mq in mq_roots:\n        m = crt([int(mp), int(mq)], [p, q])\n        flag_candidate = long_to_bytes(int(m))\n        if b\"FlagY{\" in flag_candidate:\n            print(\"\\n\" + \"=\"*60)\n            print(f\"[+] FLAG: {flag_candidate.decode(errors='ignore')}\")\n            print(\"=\"*60 + \"\\n\")"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "sage solve.sage",
+      "output": "[*] Tahap 1: Membangun aproksimasi p dari MSB (p+q)...\n[*] Tahap 2: Menjalankan Coppersmith small_roots...\n[+] Factoring Berhasil!\n\n[*] Tahap 3: Dekripsi CRT dengan eksponen e=23...\n[*] Menguji semua kombinasi CRT untuk mencari flag...\n\n============================================================\n[+] FLAG: FlagY{1_b17_7h15_w45_fun_n0nc0pr1m3_4nd_c0pp3r5m17h_mul71v4r1473_4774ck}\n============================================================"
+    }
+  ],
+  "flag": "FlagY{1_b17_7h15_w45_fun_n0nc0pr1m3_4nd_c0pp3r5m17h_mul71v4r1473_4774ck}",
+  "lessonsLearned": "**Partial Bit Leakage is Critical** - Leaking even the MSBs of sensitive values like p+q creates exploitable approximations. Combined with Coppersmith's algorithm, 200 missing bits can be recovered efficiently. Always protect prime sums and related values.\n\n**Coppersmith's Theorem is Powerful** - When you have an approximation within 2^(1/d) relative error, polynomial root finding in modular arithmetic recovers the exact value. This breaks RSA with partial p or q leakage.\n\n**Non-Coprime Exponents Break RSA** - The standard decryption formula d ≡ e^(-1) (mod φ(n)) fails when gcd(e, φ(n)) ≠ 1. Secure RSA requires e to be coprime with φ(n). Use safe primes or validate this condition.\n\n**Red Herrings in CTF** - Parameters like small d and ee were designed to distract from the real vulnerability (bit leakage). Focus on information that servers shouldn't leak rather than chasing advanced attacks when simpler ones work.\n\n**CRT for Multiple Candidates** - When decryption yields multiple valid plaintexts (due to non-coprimality), CRT efficiently combines n candidates into n checks. Brute-forcing with a recognizable marker (like 'FlagY{') quickly identifies the correct plaintext.\n\n**Defense Strategy** - Never leak (p+q) >> k for any small k. Use coprime exponents (e.g., e = 65537). Implement proper input validation to ensure gcd(e, φ(n)) = 1 before accepting RSA keys."
 }];
