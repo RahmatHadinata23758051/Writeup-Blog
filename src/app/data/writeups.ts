@@ -1039,4 +1039,82 @@ export const writeups: WriteUp[] = [{
   ],
   "flag": "FlagY{1_b17_7h15_w45_fun_n0nc0pr1m3_4nd_c0pp3r5m17h_mul71v4r1473_4774ck}",
   "lessonsLearned": "**Partial Bit Leakage is Critical** - Leaking even the MSBs of sensitive values like p+q creates exploitable approximations. Combined with Coppersmith's algorithm, 200 missing bits can be recovered efficiently. Always protect prime sums and related values.\n\n**Coppersmith's Theorem is Powerful** - When you have an approximation within 2^(1/d) relative error, polynomial root finding in modular arithmetic recovers the exact value. This breaks RSA with partial p or q leakage.\n\n**Non-Coprime Exponents Break RSA** - The standard decryption formula d ≡ e^(-1) (mod φ(n)) fails when gcd(e, φ(n)) ≠ 1. Secure RSA requires e to be coprime with φ(n). Use safe primes or validate this condition.\n\n**Red Herrings in CTF** - Parameters like small d and ee were designed to distract from the real vulnerability (bit leakage). Focus on information that servers shouldn't leak rather than chasing advanced attacks when simpler ones work.\n\n**CRT for Multiple Candidates** - When decryption yields multiple valid plaintexts (due to non-coprimality), CRT efficiently combines n candidates into n checks. Brute-forcing with a recognizable marker (like 'FlagY{') quickly identifies the correct plaintext.\n\n**Defense Strategy** - Never leak (p+q) >> k for any small k. Use coprime exponents (e.g., e = 65537). Implement proper input validation to ensure gcd(e, φ(n)) = 1 before accepting RSA keys."
+},
+{
+  "id": "16",
+  "title": "Moving Supersingular",
+  "category": "Crypto",
+  "difficulty": "Hard",
+  "points": 0,
+  "date": "2025-02-26",
+  "author": "CTF Team",
+  "ctfName": "Flagyard CTF",
+  "description": "Elliptic Curve Cryptography challenge exploiting supersingular curve via Tate pairing reduction and Index Calculus attack. Demonstrates why supersingular curves are forbidden in modern cryptography standards.",
+  "problemDescription": "Server implements a flag encryption system using Elliptic Curve Cryptography with a supersingular curve over GF(p). Each 12-byte flag chunk is encrypted as Q = s⋅G where s is the secret scalar and Q is the transmitted point. Task: recover all scalar values s (solving the ECDLP) for each flag segment using the MOV Attack.",
+  "tools": [
+    "SageMath",
+    "Pairing-Based Cryptography",
+    "Tate Pairing",
+    "MOV Attack",
+    "Index Calculus",
+    "Discrete Logarithm",
+    "Python 3"
+  ],
+  "analysis": "The challenge exploits a critical weakness in supersingular elliptic curves related to embedding degree and pairing technology as described in the MOV (Menezes-Okamoto-Vanstone) attack from 1993.\n\n**Vulnerability Chain:**\n\n1. **Supersingular Curve Detection**: The hint \"i like to move it, move it\" directly references the MOV Attack name. The curve is supersingular with embedding degree k = 2.\n\n2. **Small Embedding Degree**: Supersingular curves have embedding degree k = 2 (for curves in characteristic > 3). This means ECDLP on a 96-bit curve can be reduced to DLP on a 192-bit extension field GF(p²), which is vastly easier to solve.\n\n3. **Weak Modulus**: The 96-bit modulus p is far too small. Even 192 bits post-reduction is vulnerable to Index Calculus attacks on finite fields.\n\n**The MOV Attack in Three Steps:**\n\n1. **Pairing Computation**: Apply the Tate pairing φ to convert ECDLP into a DLP problem. The pairing is bilinear: e(sG, P) = e(G, P)^s\n2. **Field Extension**: The pairing result lives in GF(p²) where DLP can be solved much faster. The field size is only 192 bits, making Index Calculus feasible.\n3. **Discrete Log Recovery**: Use .log() in SageMath (which applies Index Calculus internally) to recover the scalar s.",
+  "mathAnalysis": [
+    {
+      "title": "Supersingular Curve Property",
+      "formula": "E: y^2 = x^3 + ax + b \\pmod{p} \\text{ is supersingular if trace } t \\equiv 0 \\pmod{p}",
+      "description": "Defining characteristic: the trace of Frobenius is zero modulo p"
+    },
+    {
+      "title": "Embedding Degree Definition",
+      "formula": "k \\text{ is the minimal positive integer such that } n \\mid (p^k - 1)\\\\nFor supersingular curves: k \\in \\{1, 2\\}",
+      "description": "Supersingular curves have exceptionally small embedding degrees, making MOV attacks feasible"
+    },
+    {
+      "title": "Tate Pairing Bilinearity",
+      "formula": "e(sG, P) = e(G, P)^s \\\\ \\text{If } Q = sG: \\ e(Q, P) = u^s \\in \\mathbb{F}_{p^2}^*",
+      "description": "The core property enabling ECDLP reduction to DLP in the extension field"
+    }
+  ],
+  "solution": [
+    {
+      "title": "Step 1: Identify Curve Parameters",
+      "content": "Extract the elliptic curve parameters (p, a, b) provided in the challenge. Verify the curve is supersingular using SageMath's .is_supersingular() method."
+    },
+    {
+      "title": "Step 2: Setup Curve and Generator",
+      "content": "Initialize the elliptic curve E over GF(p) with the given coefficients. Identify the generator point G and compute its order n.",
+      "code": "E = EllipticCurve(GF(p), [a, b])\nG = E.gens()[0]\nn = G.order()"
+    },
+    {
+      "title": "Step 3: Create Field Extension GF(p²)",
+      "content": "Create the quadratic extension field GF(p²) where pairing results live. Extend the curve to E₂ over the extension field.",
+      "code": "K2.<z> = GF(p^2)\nE2 = E.base_extend(K2)\nG2 = E2(G)"
+    },
+    {
+      "title": "Step 4: Find Auxiliary Pairing Point",
+      "content": "Select a random point P_aux on the extended curve E₂ such that the pairing e(G, P_aux) ≠ 1 and has order n.",
+      "code": "while True:\n    P_aux = E2.random_point()\n    u = G2.tate_pairing(P_aux, n, 2)\n    if u != 1 and u^n == 1:\n        break"
+    },
+    {
+      "title": "Step 5: MOV Attack - Convert ECDLP to DLP",
+      "content": "For each challenge point Q, compute the Tate pairing v = e(Q, P_aux). The relationship v = u^s holds where u = e(G, P_aux). Solve for s using standard DLP.",
+      "code": "def solve_dlp(Q_challenge):\n    Q_ext = E2(Q_challenge)\n    v = Q_ext.tate_pairing(P_aux, n, 2)\n    return v.log(u)"
+    },
+    {
+      "title": "Step 6: Recover All Flag Segments",
+      "content": "Apply the DLP solver to each challenge point. Convert each recovered scalar s_i to a 12-byte value and concatenate all segments to recover the flag. Complete solve script:",
+      "code": "#!/usr/bin/env sage\n# MOV Attack on Supersingular Elliptic Curve\n# Challenge: Flagyard CTF - Moving Supersingular\n\n# Input parameters from challenge\np = 71323803796758910290373490389\na = 0\nb = 1\n\n# Step 1: Setup curve\nprint(\"[*] Setting up elliptic curve...\")\nE = EllipticCurve(GF(p), [a, b])\nprint(f\"[*] Apakah Supersingular? {E.is_supersingular()}\")\n\n# Get generator point\nG = E.gens()[0]\nn = G.order()\nprint(f\"[*] Order grup n: {n}\")\nprint(f\"[*] Karakteristik p: {p}\")\n\n# Step 2: Create extension field GF(p^2)\nprint(f\"[*] Setting up extension field GF(p^2)...\")\nK2.<z> = GF(p^2)\nE2 = E.base_extend(K2)\nG2 = E2(G)\n\n# Step 3: Find auxiliary point for pairing\nprint(f\"[*] Finding auxiliary point for pairing...\")\nwhile True:\n    P_aux = E2.random_point()\n    u = G2.tate_pairing(P_aux, n, 2)\n    if u != 1 and u^n == 1:\n        print(f\"[+] Pairing base 'u' found. Starting DLP...\")\n        break\n\n# Step 4: Define DLP solver\ndef solve_dlp(Q_challenge, description=\"\"):\n    Q_ext = E2(Q_challenge)\n    v = Q_ext.tate_pairing(P_aux, n, 2)\n    print(f\"[*] Solving for {description}...\")\n    s = v.log(u)\n    label = description.replace('Q', 's')\n    print(f\"[+] Found {label}: {s}\")\n    return s\n\n# Challenge points from problem\nQ1 = E(...)  # Challenge point 1\nQ2 = E(...)  # Challenge point 2\n\n# Step 5: Solve for all secret scalars\ns1 = solve_dlp(Q1, \"Q1\")\ns2 = solve_dlp(Q2, \"Q2\")\n\n# Step 6: Recover flag\nfrom Crypto.Util.number import long_to_bytes\nflag_bytes = long_to_bytes(int(s1)).rjust(12, b'\\x00') + long_to_bytes(int(s2)).rjust(12, b'\\x00')\nflag = flag_bytes.decode().strip()\nprint(f\"\\n[!] FLAG: {flag}\")"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "sage solve.sage",
+      "output": "[*] Order grup n: 71323803796758910290373490390\n[*] Karakteristik p: 71323803796758910290373490389\n[*] Apakah Supersingular? True\n[*] Setting up extension field GF(p^2)...\n[*] Finding auxiliary point for pairing...\n[+] Pairing base 'u' found. Starting DLP...\n[*] Solving for Q1...\n[+] Found s1: 21794974652023851764645458515\n[*] Solving for Q2...\n[+] Found s2: 32629396274699578950030687489\n\n[!] FLAG: FlagY{SuperSingle_M0Vs}"
+    }
+  ],
+  "flag": "FlagY{SuperSingle_M0Vs}",
+  "lessonsLearned": "**Supersingular Curves Are Cryptographically Broken** - Supersingular curves must never be used for standard ECDLP-based encryption due to their small embedding degrees. The MOV Attack has been known since 1993 and reduces security dramatically. Use ordinary curves (non-supersingular) for any discrete logarithm-based cryptography.\n\n**Embedding Degree Determines Security** - The embedding degree k directly impacts ECDLP difficulty. For standard curves, k should be very large (effectively infinite). Supersingular curves have k ≤ 2, making them unsuitable for signature schemes or key agreement.\n\n**Pairing Technology is Double-Edged** - While pairings enable powerful cryptographic schemes (IBE, attribute-based encryption), they also enable attacks on weak curves. Modern pairing-friendly curves are specifically constructed to resist MOV and related attacks.\n\n**96-bit Modulus is Insufficient** - Even without pairing reduction, a 96-bit modulus is far too weak for cryptography. The resulting 192-bit DLP is easily solved by Index Calculus. Modern standards require minimum 256-bit keys.\n\n**Hint Analysis is Important** - The challenge hint \"i like to move it, move it\" directly pointed to the MOV Attack. CTF hints often contain cryptographic references worth investigating.\n\n**Index Calculus Threat** - Index Calculus breaks finite field DLP when the field size reaches practical limits (~192 bits). Always use cryptographically substantial field sizes.\n\n**Defense Strategy** - Use ordinary elliptic curves with large embedding degree. Implement proper parameter validation. Use standardized curves from NIST or RFC 5639 that have been vetted for security properties."
 }];
