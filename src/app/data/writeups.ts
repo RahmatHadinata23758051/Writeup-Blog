@@ -1230,34 +1230,34 @@ export const writeups: WriteUp[] = [{
     "pwntools",
     "gdb"
   ],
-  "analysis": "RogueCart adalah tantangan binary exploitation yang melibatkan 3 vulnerability utama yang bersifat interkoneksi:\n\n1. **Use-After-Free (UAF)**: Fungsi servicePanel() membebaskan object serviceShuttle tapi tidak me-null-kan pointer global, sehingga pointer tetap valid (dangling pointer).\n\n2. **Type/State Confusion via Reallocation**: Memory chunk yang di-free dari serviceShuttle di-reuse oleh maintenanceBlob karena size sama (0x40) dan tcache LIFO. Input attacker dapat menimpa field dari object lama.\n\n3. **Trusted Pointer Dereference**: Function puts(serviceShuttle->relay) menggunakan pointer yang sudah di-overwrite oleh attacker tanpa validasi.\n\n4. **Information Leak**: Program mengeluarkan alamat heap serviceShuttle di awal via [ SHUTTLE HANDLE: 0x... ], memudahkan attacker menghitung offset ke vaultChunk dimana flag disimpan.",
+  "analysis": "RogueCart is a binary exploitation challenge involving 3 interconnected vulnerabilities:\n\n1. **Use-After-Free (UAF)**: The servicePanel() function frees the serviceShuttle object but fails to null the global pointer, leaving a dangling pointer that remains accessible.\n\n2. **Type/State Confusion via Reallocation**: The memory chunk freed from serviceShuttle is reused by maintenanceBlob because both have identical size (0x40) and tcache uses LIFO. Attacker input can overwrite fields of the old object.\n\n3. **Trusted Pointer Dereference**: The puts(serviceShuttle->relay) function uses a pointer that has been overwritten by the attacker without any validation.\n\n4. **Information Leak**: The program outputs the heap address of serviceShuttle at startup via [ SHUTTLE HANDLE: 0x... ], allowing the attacker to calculate the exact offset to vaultChunk where the flag is stored.",
   "solution": [
     {
       "title": "Step 1: Enumerate Binary Properties",
-      "content": "Gunakan checksec dan file untuk memahami protections dan arsitektur binary. Binary adalah 64-bit ELF yang dinamis linked tanpa PIE, tapi memiliki Canary dan NX protection."
+      "content": "Use checksec and file to understand the binary's protections and architecture. The binary is a 64-bit ELF, dynamically linked without PIE, but with Stack Canary and NX enabled."
     },
     {
       "title": "Step 2: Observe Program Behavior",
-      "content": "Jalankan binary dan identifikasi menu interaktif. Program menampilkan leak pointer heap di awal ([ SHUTTLE HANDLE: 0x... ]) yang merupakan alamat dari object serviceShuttle di heap.",
+      "content": "Run the binary and identify the interactive menu. The program displays a heap pointer leak at startup ([ SHUTTLE HANDLE: 0x... ]) which is the address of the serviceShuttle object.",
       "code": "1. Jettison shuttle\n2. Load maintenance blob\n3. Broadcast distress relay\n4. Exit"
     },
     {
       "title": "Step 3: Map Heap Layout",
-      "content": "Analisis fungsi primeShuttle() untuk memahami urutan alokasi. Semua allocation memiliki size 0x40 bytes, yang berarti stride glibc adalah 0x50. Vaultchunk (yang berisi flag) dialokasikan 3 chunk sebelum serviceShuttle.",
-      "code": "Urutan alokasi:\nvaultChunk (0x40) - heap offset 0x00\nspacerA (0x40) - heap offset 0x50\nspacerB (0x40) - heap offset 0xA0\nserviceShuttle (0x40) - heap offset 0xF0\nserviceShuttle->relay (0x40) - heap offset 0x140\n\nFormula offset:\nvaultChunk = shuttle_handle - 3*0x50 = shuttle_handle - 0xF0"
+      "content": "Analyze the primeShuttle() function to understand the allocation order. All allocations have size 0x40 bytes, meaning the glibc chunk stride is 0x50. The vaultChunk (containing the flag) is allocated 3 chunks before serviceShuttle.",
+      "code": "Allocation order:\nvaultChunk (0x40) - heap offset 0x00\nspacerA (0x40) - heap offset 0x50\nspacerB (0x40) - heap offset 0xA0\nserviceShuttle (0x40) - heap offset 0xF0\nserviceShuttle->relay (0x40) - heap offset 0x140\n\nOffset formula:\nvaultChunk = shuttle_handle - 3*0x50 = shuttle_handle - 0xF0"
     },
     {
       "title": "Step 4: Analyze Vulnerability Chain",
-      "content": "Menu option 1 memanggil free(serviceShuttle) tapi tidak men-null pointer globalnya. Menu option 2 melakukan malloc(0x40) untuk maintenanceBlob yang akan direuse chunk yang sama (tcache LIFO). Input disini bisa menimpa field pointer di offset 0x20 (relay pointer)."
+      "content": "Menu option 1 calls free(serviceShuttle) but fails to null the global pointer. Menu option 2 performs malloc(0x40) for maintenanceBlob which will reuse the same chunk (tcache LIFO). The attacker's input can overwrite the pointer field at offset 0x20 (relay pointer)."
     },
     {
       "title": "Step 5: Craft Exploitation Payload",
-      "content": "Payload harus 64 byte dengan pointer hijack di offset 0x20. Pointer tersebut di-overwrite dengan alamat vaultChunk agar puts(serviceShuttle->relay) mencetak isi flag.",
-      "code": "payload = b'A' * 0x20 + p64(vaultChunk)\npayload = payload.ljust(0x40, b'B')\n\nNote: Little-endian matters untuk pointer 64-bit"
+      "content": "The payload must be 64 bytes with a pointer hijack at offset 0x20. This pointer is overwritten with vaultChunk's address so that puts(serviceShuttle->relay) prints the flag contents.",
+      "code": "payload = b'A' * 0x20 + p64(vaultChunk)\npayload = payload.ljust(0x40, b'B')\n\nNote: Little-endian byte order matters for 64-bit pointers"
     },
     {
       "title": "Step 6: Execute Attack",
-      "content": "Urutan eksekusi:\n1. Baca leak pointer dari output awal\n2. Hitung vaultChunk = shuttle_handle - 0xF0\n3. Kirim menu option 1 (free serviceShuttle)\n4. Kirim menu option 2 dengan payload yang berisi pointer hijack\n5. Kirim menu option 3 untuk print distress relay (yang kini menunjuk ke vaultChunk dengan flag)"
+      "content": "Execution sequence:\n1. Read the leaked pointer from initial output\n2. Calculate vaultChunk = shuttle_handle - 0xF0\n3. Send menu option 1 (free serviceShuttle)\n4. Send menu option 2 with payload containing the pointer hijack\n5. Send menu option 3 to print distress relay (now pointing to vaultChunk with the flag)"
     }
   ],
   "terminalOutputs": [
@@ -1271,5 +1271,5 @@ export const writeups: WriteUp[] = [{
     }
   ],
   "flag": "jctf{r09U3_cART_hE4p_H!j4Ck}",
-  "lessonsLearned": "**Use-After-Free Requires Null-Pointers**: Setelah free(), pointer harus di-null immediately. Biarkan saja pointer dangling adalah kesalahan fatal yang memungkinkan UAF. ALWAYS null after free().\n\n**Same-Size Allocation Reuse adalah Primitive UAF**: Ketika dua object dialokasikan dengan ukuran sama, tcache akan langsung me-reuse freed chunk. Ini adalah stepping stone untuk hijacking pointer fields.\n\n**Pointer Validation Missing**: Object tidak memiliki magic number atau version field untuk validasi sebelum dereference. Trusted pointer dereference tanpa checks adalah critical bug.\n\n**Information Leak Enables ASLR Bypass**: Leak alamat heap object menghilangkan uncertainty tentang layout heap. Tanpa leak, attacker hanya bisa guess offset relatif.\n\n**Heap Stride Calculation Critical**: Memahami glibc allocation strategy (0x40 user size → 0x50 stride) memungkinkan attacker menghitung offset antar chunk dengan presisi. Reverse engineer heap layout dengan teliti.\n\n**Little-Endian Byte Order**: Ketika menulis pointer 64-bit, urutan byte penting. Gunakan helper function seperti p64() dari pwntools untuk menghindari kesalahan manual.\n\n**Menu Lifecycle Not Enforced**: Aplikasi tidak memvalidasi bahwa object masih valid sebelum menggunakannya di branch menu lain. Implement state machine untuk lifecycle management.\n\n**Partial RELRO Insufficient**: Canary dan NX ada, tapi ASLR tidak sepenuhnya enabled (No PIE). Combination dari leak + UAF masih sangat powerful meskipun ada protections parsial."
+  "lessonsLearned": "**Always Null Pointers After Free**: After freeing memory, set the pointer to NULL immediately. Leaving dangling pointers is a critical mistake that enables UAF attacks. ALWAYS null after free().\n\n**Same-Size Allocations Enable Reuse**: When two objects are allocated with identical sizes, tcache immediately reuses freed chunks. This is the foundation for hijacking pointer fields in heap exploitation.\n\n**Missing Pointer Validation**: The object lacks magic numbers or version fields for pre-dereference validation. Trusted pointer dereference without checks is a critical vulnerability.\n\n**Information Leaks Break ASLR**: Leaking heap object addresses removes uncertainty about heap layout. Without leaks, attackers can only guess relative offsets.\n\n**Understand Heap Stride Calculations**: Understanding glibc's allocation strategy (0x40 user size → 0x50 stride) allows attackers to calculate inter-chunk offsets precisely. Reverse-engineer heap layout carefully.\n\n**Little-Endian Byte Order Matters**: When writing 64-bit pointers, byte order is critical. Use helper functions like p64() from pwntools to avoid manual encoding errors.\n\n**Lifecycle Enforcement is Essential**: The application doesn't validate that objects remain valid before using them in different menu branches. Implement proper state machines for object lifecycle management.\n\n**Partial Protections Are Insufficient**: While Canary and NX are present, full ASLR is not enabled (No PIE). Combining information leaks with UAF remains extremely powerful despite partial protections."
 }];
