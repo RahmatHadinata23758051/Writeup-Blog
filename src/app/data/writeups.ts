@@ -1209,4 +1209,67 @@ export const writeups: WriteUp[] = [{
   ],
   "flag": "HTB{m4th_m4st3r_0r_pur3_g3niu5?}",
   "lessonsLearned": "**RSA Parameter Generation** - Custom RSA implementations must never use weak key generation. Ensuring p and q have specific algebraic structures (like a²g+1) creates exploitable patterns. Always use FIPS-approved key generation.\n\n**Small Prime Factors Enable Factorization** - ECM (Elliptic Curve Method) efficiently factors numbers with small prime factors. The 70-bit limit on factors makes complete factorization feasible. Always use cryptographically strong prime generation (no artificial constraints).\n\n**Curve Parameter Confidentiality** - Elliptic curve parameters (a, b, p) should not be recoverable from point samples. The algebraic elimination technique demonstrates how three carefully chosen points can leak the entire curve structure.\n\n**Smooth Orders Are Security Disasters** - A smooth g_order (where g_order - 1 has only small prime factors) is vulnerable to Pohlig-Hellman decomposition. Always verify that the group order has at least one prime factor with significant size (>2^100).\n\n**Oracle Queries Leak Information** - Providing oracle access to encryption under multiple exponents is dangerous. Each query potentially extracts cryptographic material. Minimize oracle interactions and randomize responses.\n\n**BSGS is Essential for Medium Primes** - When the group structure is decomposed to medium-sized prime powers (~10⁸), naive linear search becomes infeasible. Baby-step Giant-step reduces O(q) to O(√q), making what seemed impossible become practical.\n\n**Chinese Remainder Theorem Unifies Solutions** - CRT elegantly combines partial solutions from each prime power factor into the final answer. Understanding modular arithmetic at this level is critical for advanced cryptanalysis.\n\n**Layered Vulnerabilities Compound** - MadMath is hard not because any single vulnerability is extreme, but because three moderate vulnerabilities chain together. Security depends on every layer being strong."
+},
+{
+  "id": "18",
+  "title": "RogueCart",
+  "category": "Pwn",
+  "difficulty": "Medium",
+  "points": 0,
+  "date": "2026-03-15",
+  "author": "CTF Team",
+  "ctfName": "JerseyCTF",
+  "description": "Heap exploitation challenge involving use-after-free vulnerability and pointer hijacking to leak flag from protected memory region.",
+  "problemDescription": "A rescue shuttle has drifted off-course, and its onboard maintenance systems are behaving strangely. The control interface still responds, but corrupted diagnostics suggest the distress relay is pointing somewhere it shouldn't. You've gained access to the shuttle's recovery console. Analyze the binary, manipulate the maintenance systems, and recover whatever message is buried in the wreckage before the link dies.",
+  "tools": [
+    "checksec",
+    "file",
+    "strings",
+    "nm",
+    "objdump",
+    "pwntools",
+    "gdb"
+  ],
+  "analysis": "RogueCart adalah tantangan binary exploitation yang melibatkan 3 vulnerability utama yang bersifat interkoneksi:\n\n1. **Use-After-Free (UAF)**: Fungsi servicePanel() membebaskan object serviceShuttle tapi tidak me-null-kan pointer global, sehingga pointer tetap valid (dangling pointer).\n\n2. **Type/State Confusion via Reallocation**: Memory chunk yang di-free dari serviceShuttle di-reuse oleh maintenanceBlob karena size sama (0x40) dan tcache LIFO. Input attacker dapat menimpa field dari object lama.\n\n3. **Trusted Pointer Dereference**: Function puts(serviceShuttle->relay) menggunakan pointer yang sudah di-overwrite oleh attacker tanpa validasi.\n\n4. **Information Leak**: Program mengeluarkan alamat heap serviceShuttle di awal via [ SHUTTLE HANDLE: 0x... ], memudahkan attacker menghitung offset ke vaultChunk dimana flag disimpan.",
+  "solution": [
+    {
+      "title": "Step 1: Enumerate Binary Properties",
+      "content": "Gunakan checksec dan file untuk memahami protections dan arsitektur binary. Binary adalah 64-bit ELF yang dinamis linked tanpa PIE, tapi memiliki Canary dan NX protection."
+    },
+    {
+      "title": "Step 2: Observe Program Behavior",
+      "content": "Jalankan binary dan identifikasi menu interaktif. Program menampilkan leak pointer heap di awal ([ SHUTTLE HANDLE: 0x... ]) yang merupakan alamat dari object serviceShuttle di heap.",
+      "code": "1. Jettison shuttle\n2. Load maintenance blob\n3. Broadcast distress relay\n4. Exit"
+    },
+    {
+      "title": "Step 3: Map Heap Layout",
+      "content": "Analisis fungsi primeShuttle() untuk memahami urutan alokasi. Semua allocation memiliki size 0x40 bytes, yang berarti stride glibc adalah 0x50. Vaultchunk (yang berisi flag) dialokasikan 3 chunk sebelum serviceShuttle.",
+      "code": "Urutan alokasi:\nvaultChunk (0x40) - heap offset 0x00\nspacerA (0x40) - heap offset 0x50\nspacerB (0x40) - heap offset 0xA0\nserviceShuttle (0x40) - heap offset 0xF0\nserviceShuttle->relay (0x40) - heap offset 0x140\n\nFormula offset:\nvaultChunk = shuttle_handle - 3*0x50 = shuttle_handle - 0xF0"
+    },
+    {
+      "title": "Step 4: Analyze Vulnerability Chain",
+      "content": "Menu option 1 memanggil free(serviceShuttle) tapi tidak men-null pointer globalnya. Menu option 2 melakukan malloc(0x40) untuk maintenanceBlob yang akan direuse chunk yang sama (tcache LIFO). Input disini bisa menimpa field pointer di offset 0x20 (relay pointer)."
+    },
+    {
+      "title": "Step 5: Craft Exploitation Payload",
+      "content": "Payload harus 64 byte dengan pointer hijack di offset 0x20. Pointer tersebut di-overwrite dengan alamat vaultChunk agar puts(serviceShuttle->relay) mencetak isi flag.",
+      "code": "payload = b'A' * 0x20 + p64(vaultChunk)\npayload = payload.ljust(0x40, b'B')\n\nNote: Little-endian matters untuk pointer 64-bit"
+    },
+    {
+      "title": "Step 6: Execute Attack",
+      "content": "Urutan eksekusi:\n1. Baca leak pointer dari output awal\n2. Hitung vaultChunk = shuttle_handle - 0xF0\n3. Kirim menu option 1 (free serviceShuttle)\n4. Kirim menu option 2 dengan payload yang berisi pointer hijack\n5. Kirim menu option 3 untuk print distress relay (yang kini menunjuk ke vaultChunk dengan flag)"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "checksec --file=roguecart",
+      "output": "[*] '/path/to/roguecart'\n    Arch:     amd64-64-little\n    RELRO:    Partial RELRO\n    Stack:    Canary found\n    NX:       NX enabled\n    PIE:      No PIE"
+    },
+    {
+      "command": "python3 exploit.py",
+      "output": "[*] Connecting to remote...\n[*] Leak: serviceShuttle @ 0x561e25c62310\n[*] Calculated vaultChunk @ 0x561e25c621c0\n[*] Executing UAF chain...\n[*] Menu 1: Free serviceShuttle\n[*] Menu 2: Reallocate + Overwrite relay pointer\n[*] Menu 3: Print hijacked relay (points to vaultChunk)\n[ DISTRESS RELAY ]\njctf{r09U3_cART_hE4p_H!j4Ck}\n[+] Flag captured!"
+    }
+  ],
+  "flag": "jctf{r09U3_cART_hE4p_H!j4Ck}",
+  "lessonsLearned": "**Use-After-Free Requires Null-Pointers**: Setelah free(), pointer harus di-null immediately. Biarkan saja pointer dangling adalah kesalahan fatal yang memungkinkan UAF. ALWAYS null after free().\n\n**Same-Size Allocation Reuse adalah Primitive UAF**: Ketika dua object dialokasikan dengan ukuran sama, tcache akan langsung me-reuse freed chunk. Ini adalah stepping stone untuk hijacking pointer fields.\n\n**Pointer Validation Missing**: Object tidak memiliki magic number atau version field untuk validasi sebelum dereference. Trusted pointer dereference tanpa checks adalah critical bug.\n\n**Information Leak Enables ASLR Bypass**: Leak alamat heap object menghilangkan uncertainty tentang layout heap. Tanpa leak, attacker hanya bisa guess offset relatif.\n\n**Heap Stride Calculation Critical**: Memahami glibc allocation strategy (0x40 user size → 0x50 stride) memungkinkan attacker menghitung offset antar chunk dengan presisi. Reverse engineer heap layout dengan teliti.\n\n**Little-Endian Byte Order**: Ketika menulis pointer 64-bit, urutan byte penting. Gunakan helper function seperti p64() dari pwntools untuk menghindari kesalahan manual.\n\n**Menu Lifecycle Not Enforced**: Aplikasi tidak memvalidasi bahwa object masih valid sebelum menggunakannya di branch menu lain. Implement state machine untuk lifecycle management.\n\n**Partial RELRO Insufficient**: Canary dan NX ada, tapi ASLR tidak sepenuhnya enabled (No PIE). Combination dari leak + UAF masih sangat powerful meskipun ada protections parsial."
 }];
