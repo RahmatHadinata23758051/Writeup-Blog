@@ -1277,4 +1277,70 @@ export const writeups: WriteUp[] = [{
   ],
   "flag": "jctf{r09U3_cART_hE4p_H!j4Ck}",
   "lessonsLearned": "**Always Null Pointers After Free**: After freeing memory, set the pointer to NULL immediately. Leaving dangling pointers is a critical mistake that enables UAF attacks. ALWAYS null after free().\n\n**Same-Size Allocations Enable Reuse**: When two objects are allocated with identical sizes, tcache immediately reuses freed chunks. This is the foundation for hijacking pointer fields in heap exploitation.\n\n**Missing Pointer Validation**: The object lacks magic numbers or version fields for pre-dereference validation. Trusted pointer dereference without checks is a critical vulnerability.\n\n**Information Leaks Break ASLR**: Leaking heap object addresses removes uncertainty about heap layout. Without leaks, attackers can only guess relative offsets.\n\n**Understand Heap Stride Calculations**: Understanding glibc's allocation strategy (0x40 user size → 0x50 stride) allows attackers to calculate inter-chunk offsets precisely. Reverse-engineer heap layout carefully.\n\n**Little-Endian Byte Order Matters**: When writing 64-bit pointers, byte order is critical. Use helper functions like p64() from pwntools to avoid manual encoding errors.\n\n**Lifecycle Enforcement is Essential**: The application doesn't validate that objects remain valid before using them in different menu branches. Implement proper state machines for object lifecycle management.\n\n**Partial Protections Are Insufficient**: While Canary and NX are present, full ASLR is not enabled (No PIE). Combining information leaks with UAF remains extremely powerful despite partial protections."
+},
+{
+  "id": "19",
+  "title": "Shall We Play a Game?",
+  "category": "Pwn",
+  "difficulty": "Medium",
+  "points": 0,
+  "date": "2026-03-10",
+  "author": "CTF Team",
+  "ctfName": "JerseyCTF",
+  "description": "Tic-tac-toe arcade game with hidden shellcode embedded in PNG file. Challenge involves extracting dual payload blobs from sprite configuration and decoding steganographic data.",
+  "problemDescription": "A suspicious arcade game was left by the original developer on the system. It runs a simple tic-tac-toe game, but something feels off. After analyzing the binary, you discover it intentionally executes hidden code at game end. The developer left hints about sprite rendering (SPRT) and the PNG file is larger than expected. Dig into the binary, extract the hidden payload descriptors, and flip the right switch to find the real flag.",
+  "tools": [
+    "checksec",
+    "file",
+    "nm",
+    "strings",
+    "objdump",
+    "Python",
+    "struct module",
+    "regex"
+  ],
+  "analysis": "This challenge combines several steganographic and binary analysis techniques:\n\n1. **Hidden Code Execution Path**: The render_board_optimized function intentionally maps RWX memory pages and executes bytecode extracted from the PNG file data. This is not a vulnerability in the traditional sense but rather intentional obfuscation.\n\n2. **Dual Payload Mechanism**: The sprite_config structure in the binary's .rodata section stores 8 chunk descriptors (offset, size pairs). The first 4 descriptors point to a decoy payload that prints the fake 'pwned' message. The second 4 descriptors point to the real hidden flag payload.\n\n3. **Steganographic Asset Storage**: Malicious payload bytes are stored in the PNG file's trailing data after the IEND chunk. This is technically valid PNG format since data after IEND is ignored by PNG readers but preserved in the file.\n\n4. **XOR Encryption**: The actual messages within the shellcode blobs are XOR-encrypted with key 0x80. Each payload blob has a 0x35 byte shellcode prologue followed by encrypted message text at offset 0x35.\n\n5. **SPRT Magic**: The sprite_config structure begins with 'SPRT' magic bytes (0x53, 0x50, 0x52, 0x54) followed by version, count, reserved fields, then 8 entries of (offset, size) pairs.",
+  "solution": [
+    {
+      "title": "Step 1: Inspect Binary and Identify Mitigations",
+      "content": "Use checksec and file to identify protections. The binary is PIE with NX enabled but no stack canary. The binary is not stripped, making function symbols visible for analysis."
+    },
+    {
+      "title": "Step 2: Locate Hidden Execution Path",
+      "content": "Reverse the render_board_optimized function in the binary. Key operations:\n1. Open board.png\n2. Read chunks from PNG using sprite_config descriptors\n3. Allocate RWX memory with mmap(PROT_READ|PROT_WRITE|PROT_EXEC)\n4. Copy blob bytes into RWX page\n5. Execute blob with call rbx"
+    },
+    {
+      "title": "Step 3: Find SPRT Sprite Configuration",
+      "content": "Search the .rodata section for the SPRT magic bytes. This structure contains:\n- Magic: 'SPRT' (4 bytes)\n- Version: 0x01000000 in little-endian\n- Count: number of entries (8 in this case)\n- Reserved: padding\n- Entries: 8 pairs of (offset, size) in little-endian 32-bit values"
+    },
+    {
+      "title": "Step 4: Extract Descriptor Pairs",
+      "content": "Parse the 8 (offset, size) pairs from sprite_config:\n- Entries 0-3: Decoy payload descriptors\n- Entries 4-7: Real flag payload descriptors\n\nEach entry points to a location in board.png where shellcode blob data is stored."
+    },
+    {
+      "title": "Step 5: Read PNG Trailing Data",
+      "content": "The board.png file contains a valid PNG image followed by custom payload data after the IEND chunk. Use the descriptors to extract specific byte ranges from the file at the specified offsets with specified sizes."
+    },
+    {
+      "title": "Step 6: Decode Shellcode Blobs",
+      "content": "Each blob has structure:\n- Bytes 0x00-0x34: x86_64 shellcode prologue\n- Bytes 0x35+: XOR-encrypted message (each byte XOR 0x80)\n\nDecode by: message = bytes(b ^ 0x80 for b in blob[0x35:])"
+    },
+    {
+      "title": "Complete Solver Script",
+      "content": "Full Python script to extract and decode both payloads:",
+      "code": "#!/usr/bin/env python3\nfrom pathlib import Path\nimport re\nimport struct\n\nBIN_PATH = Path('tictactoe')\nPNG_PATH = Path('board.png')\n\n\ndef extract_sprite_entries(binary: bytes):\n    \"\"\"\n    Parse sprite_config from the embedded rodata pattern:\n    b'SPRT' + ver + count + reserved + 8*(off,size)\n    \"\"\"\n    m = re.search(b'SPRT\\x01\\x00\\x00\\x00', binary)\n    if not m:\n        raise RuntimeError('sprite_config magic not found in binary')\n\n    base = m.start()\n    magic, ver, count, reserved = struct.unpack_from('<4sIII', binary, base)\n    if magic != b'SPRT':\n        raise RuntimeError('invalid sprite_config magic')\n\n    entries = []\n    off = base + 16\n\n    # There are two descriptor sets in this challenge asset:\n    # 4 entries (decoy) + 4 entries (real flag payload)\n    for i in range(8):\n        chunk_off, chunk_size = struct.unpack_from('<II', binary, off + i * 8)\n        entries.append((chunk_off, chunk_size))\n\n    return {\n        'base': base,\n        'version': ver,\n        'count': count,\n        'reserved': reserved,\n        'entries': entries,\n    }\n\n\ndef decode_shell_blob(blob: bytes) -> str:\n    \"\"\"\n    Payload format:\n      - x86_64 shellcode prologue (0x35 bytes)\n      - encrypted message, each byte XOR 0x80\n    \"\"\"\n    if len(blob) <= 0x35:\n        return ''\n    msg = bytes(b ^ 0x80 for b in blob[0x35:])\n    return msg.decode('latin1', errors='ignore')\n\n\ndef main():\n    binary = BIN_PATH.read_bytes()\n    png = PNG_PATH.read_bytes()\n\n    print('[*] Loading binary and PNG file...')\n    sc = extract_sprite_entries(binary)\n    entries = sc['entries']\n    \n    print(f'[+] sprite_config found at offset: {hex(sc[\"base\"])}')\n    print(f'[+] version: {sc[\"version\"]}, count: {sc[\"count\"]}')\n    print(f'[+] Found {len(entries)} descriptor entries')\n    print()\n\n    # Extract the two payload blobs\n    decoy_blob = b''.join(png[o:o + s] for (o, s) in entries[:4])\n    flag_blob = b''.join(png[o:o + s] for (o, s) in entries[4:8])\n\n    print(f'[*] Decoy blob size: {len(decoy_blob)} bytes')\n    print(f'[*] Flag blob size: {len(flag_blob)} bytes')\n    print()\n\n    # Decode the messages\n    decoy_text = decode_shell_blob(decoy_blob)\n    flag_text = decode_shell_blob(flag_blob)\n\n    print('[*] === DECOY PAYLOAD ===')\n    print(decoy_text.strip() or '<empty>')\n    print()\n    print('[*] === HIDDEN PAYLOAD ===')\n    print(flag_text.strip() or '<empty>')\n    print()\n\n    # Extract flag\n    m = re.search(r'jctf\\{[^}]+\\}', flag_text)\n    if not m:\n        raise RuntimeError('flag pattern not found')\n\n    flag = m.group(0)\n    print(f'[+] FLAG: {flag}')\n    return flag\n\n\nif __name__ == '__main__':\n    main()"
+    }
+  ],
+  "terminalOutputs": [
+    {
+      "command": "checksec --file=tictactoe",
+      "output": "[*] '/path/to/tictactoe'\n    Arch:     amd64-64-little\n    RELRO:    Partial RELRO\n    Stack:    No canary found\n    NX:       NX enabled\n    PIE:      PIE enabled"
+    },
+    {
+      "command": "python3 solver.py",
+      "output": "[*] Loading binary and PNG file...\n[+] sprite_config found at offset: 0x5a60\n[+] version: 1, count: 8\n[+] Found 8 descriptor entries\n\n[*] Decoy blob size: 256 bytes\n[*] Flag blob size: 256 bytes\n\n[*] === DECOY PAYLOAD ===\n[!] Oh no, you've been pwned!\n[!] This system has been compromised.\n\n[*] === HIDDEN PAYLOAD ===\n[*] jctf{6r3371N65_Pr0F3550r_F41K3N}\n\n[+] FLAG: jctf{6r3371N65_Pr0F3550r_F41K3N}"
+    }
+  ],
+  "flag": "jctf{6r3371N65_Pr0F3550r_F41K3N}",
+  "lessonsLearned": "**Steganography in Legitimate Formats**: PNG and other container formats allow data after official end markers (IEND for PNG). This provides a convenient hiding place for malicious data while keeping the file format-compliant.\n\n**RWX Memory Execution is Dangerous**: Mapping memory as both writable and executable defeats the purpose of NX protection. Avoid mmap(PROT_EXEC|PROT_WRITE) unless absolutely necessary, and validate source data strictly.\n\n**Magic Bytes Enable Parsing**: The 'SPRT' magic marker makes the sprite_config structure easy to locate and parse. Always use magic bytes and versioning for data structures to enable robust parsing.\n\n**Dual Payload Pattern for Obfuscation**: Storing decoy and real payloads side-by-side confuses analysts. Implement integrity checks and use signed/authenticated data structures.\n\n**Symbol Stripping is Critical**: The binary was not stripped, making function names visible. Always strip release binaries and use symbol encryption for sensitive code paths.\n\n**Simple XOR is Not Encryption**: XOR with a fixed key (0x80) provides zero real security. Use proper cryptographic algorithms if confidentiality is a goal.\n\n**Binary Analysis Requires Multiple Tools**: Understanding this challenge required checksec, file, nm, strings, objdump, and custom Python parsing. Comprehensive tooling and methodical analysis is essential.\n\n**File Format Knowledge Matters**: Understanding PNG structure (chunks, IEND marker) was crucial to realize where the payload data was hidden. Deep knowledge of formats used in your system is valuable for security analysis."
 }];
