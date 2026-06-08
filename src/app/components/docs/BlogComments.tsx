@@ -16,7 +16,7 @@ export function BlogComments({ postId }: BlogCommentsProps) {
     const script = document.createElement('script');
     script.src = 'https://utteranc.es/client.js';
     script.setAttribute('repo', 'RahmatHadinata23758051/Writeup-Blog');
-    script.setAttribute('issue-term', 'pathname');
+    script.setAttribute('issue-term', postId);  // unique per post, works with hash routing
     script.setAttribute('theme', 'github-light');
     script.setAttribute('crossorigin', 'anonymous');
     script.async = true;
