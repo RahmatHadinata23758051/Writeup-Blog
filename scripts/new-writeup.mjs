@@ -88,7 +88,7 @@ const output = `{
   difficulty: "${difficulty}",
   points: ${points},
   date: "${date}",
-  author: "rhnataiet23-art",
+  author: "Nattt",
   tags: [],
 
   description: "TODO: short TL;DR of the solve.",

@@ -20,7 +20,7 @@ export const writeupTemplate: Writeup = {
   difficulty: 'Medium',
   points: 500,
   date: '2026-06-08',
-  author: 'rhnataiet23-art',
+  author: 'Nattt',
   tags: ['tag-1', 'tag-2'],
 
   description: 'Short TL;DR of the challenge solution.',

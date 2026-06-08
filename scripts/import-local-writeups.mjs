@@ -84,7 +84,7 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
     difficulty: "Medium", // default
     points: 0, // default
     date: new Date().toISOString().slice(0, 10), // default
-    author: "rhnataiet23-art", // default
+    author: "Nattt", // default
     ctfName: eventName,
     tags: [],
     description: "",
