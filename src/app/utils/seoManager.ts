@@ -95,23 +95,23 @@ const DOMAIN = 'https://rblxlabs.vercel.app';
 
 export const pageConfigs = {
   home: {
-    title: 'CTF Write-Ups - Official Solutions by RBLX-Labs Segfault',
-    description: 'Dokumentasi lengkap CTF write-ups dari tim RBLX-Labs Segfault. Jelajahi solusi challenge web, crypto, pwn, reverse engineering, forensics, OSINT dan lainnya dengan analisis mendalam.',
-    keywords: 'CTF, capture the flag, writeup, cybersecurity, hacking, web security, cryptography, pwn, reverse engineering, forensics, OSINT',
+    title: 'Nattt - CTF Writeups',
+    description: 'Dokumentasi lengkap CTF write-ups. Jelajahi solusi challenge web, crypto, pwn, reverse engineering dengan analisis mendalam.',
+    keywords: 'CTF, capture the flag, writeup, cybersecurity, hacking, web security, cryptography, pwn, reverse engineering',
     type: 'website' as const,
   },
   
   writeups: {
-    title: 'Semua Write-Ups CTF - RBLX-Labs Segfault',
-    description: 'Koleksi lengkap write-up Capture The Flag dengan solusi, analisis, dan pembelajaran dari berbagai kategori challenge cybersecurity.',
+    title: 'Semua Write-Ups CTF - Nattt',
+    description: 'Koleksi lengkap write-up Capture The Flag dengan solusi, analisis, dan pembelajaran.',
     keywords: 'CTF writeup, solusi challenge, capture the flag solutions, cybersecurity writeups',
     type: 'website' as const,
   },
   
   about: {
-    title: 'Tentang - CTF Write-Ups RBLX-Labs Segfault',
-    description: 'Pelajari tentang tim RBLX-Labs Segfault, misi mendokumentasikan solusi CTF, dan kontribusi kami ke komunitas cybersecurity.',
-    keywords: 'RBLX-Labs Segfault, tim CTF, cybersecurity team',
+    title: 'Tentang - Nattt',
+    description: 'Misi mendokumentasikan solusi CTF, dan kontribusi kami ke komunitas cybersecurity.',
+    keywords: 'Nattt, tim CTF, cybersecurity team',
     type: 'website' as const,
   },
 };
@@ -128,7 +128,7 @@ export const generateWriteupMeta = (writeup: {
   id: string;
 }): SEOMeta => {
   return {
-    title: `${writeup.title} (${writeup.category}/${writeup.difficulty}) - CTF WriteUp`,
+    title: `${writeup.title} (${writeup.category}/${writeup.difficulty}) - Nattt`,
     description: writeup.description || `Solusi CTF challenge ${writeup.title} dari ${writeup.ctfName}. Kategori: ${writeup.category}, Tingkat Kesulitan: ${writeup.difficulty}. Ditulis oleh ${writeup.author}.`,
     keywords: `${writeup.title}, ${writeup.category}, ${writeup.ctfName}, CTF writeup, ${writeup.difficulty} difficulty, cybersecurity`,
     author: writeup.author,
@@ -154,7 +154,7 @@ export const generateWriteupSchema = (writeup: any) => {
     dateModified: writeup.date,
     publisher: {
       '@type': 'Organization',
-      name: 'RBLX-Labs Segfault',
+      name: 'Nattt',
       logo: {
         '@type': 'ImageObject',
         url: 'https://ctfwriteups.example.com/logo.png',
@@ -170,8 +170,8 @@ export const generateOrganizationSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'CTF Write-Ups - RBLX-Labs Segfault',
-    description: 'Dokumentasi resmi CTF write-ups dari tim RBLX-Labs Segfault',
+    name: 'Nattt',
+    description: 'Dokumentasi resmi CTF write-ups dari Nattt',
     url: DOMAIN,
     logo: `${DOMAIN}/logo.png`,
     contactPoint: {

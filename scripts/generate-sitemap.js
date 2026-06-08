@@ -5,29 +5,17 @@
  * Generate dynamic sitemap.xml and robots.txt for SEO
  * 
  * Usage: 
- *   node generate-sitemap.js
- *   npx node generate-sitemap.js
+ *   npx tsx scripts/generate-sitemap.js
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { writeups } from '../src/app/data/writeups.ts';
+import { getEventSlug } from '../src/app/data/docsTree.ts';
 
-// Writeups data - fetched from source
-const writeups = [
-  { id: '1', title: 'The Mosaic', date: '2025-12-30', category: 'Misc' },
-  { id: '2', title: 'Shaw', date: '2025-12-28', category: 'Crypto' },
-  { id: '3', title: 'Blazingly Fast Memory Unsafe', date: '2025-02-24', category: 'Pwn' },
-  { id: '4', title: '(In)Secure Vault - 2', date: '2025-02-24', category: 'Reverse' },
-  { id: '5', title: 'Metared Cine Festival Level 2', date: '2025-02-24', category: 'Pwn' },
-  { id: '6', title: '1.5x-engineer 1', date: '2025-02-24', category: 'Forensics' },
-  { id: '7', title: 'Sloppy Admin 1', date: '2025-02-24', category: 'Crypto' },
-  { id: '8', title: 'Wordler Solver 1', date: '2025-02-24', category: 'Misc' },
-  { id: '9', title: 'Pooking', date: '2025-02-24', category: 'Web' },
-  { id: '10', title: 'Meme Upload Service', date: '2025-02-24', category: 'Web' },
-  { id: '11', title: 'Subscriber', date: '2025-02-24', category: 'Web' },
-  { id: '12', title: 'Zippy', date: '2026-02-24', category: 'Forensics' },
-  { id: '13', title: 'GOT me', date: '2026-02-25', category: 'Pwn' },
-];
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const BASE_URL = process.env.SITE_URL || 'https://rblxlabs.vercel.app';
 
@@ -39,42 +27,40 @@ const staticPages = [
     changefreq: 'weekly',
     priority: 1.0,
   },
-  {
-    loc: `${BASE_URL}/about`,
-    lastmod: new Date().toISOString().split('T')[0],
-    changefreq: 'monthly',
-    priority: 0.8,
-  },
-  {
-    loc: `${BASE_URL}/writeups`,
-    lastmod: new Date().toISOString().split('T')[0],
-    changefreq: 'weekly',
-    priority: 0.9,
-  },
 ];
+
+/**
+ * Generate event entries for sitemap
+ */
+function generateEventEntries() {
+  const events = new Set();
+  const entries = [];
+
+  for (const writeup of writeups) {
+    const eventName = writeup.ctfName || 'Uncategorized CTF';
+    if (!events.has(eventName)) {
+      events.add(eventName);
+      const eventSlug = getEventSlug(eventName);
+      entries.push({
+        loc: `${BASE_URL}/#/event/${eventSlug}`,
+        lastmod: formatDate(writeup.date),
+        changefreq: 'weekly',
+        priority: 0.9,
+      });
+    }
+  }
+  return entries;
+}
 
 /**
  * Generate writeup entries for sitemap
  */
 function generateWriteupEntries() {
   return writeups.map((writeup) => ({
-    loc: `${BASE_URL}/writeup/${writeup.id}`,
+    loc: `${BASE_URL}/#/writeup/${writeup.id}`,
     lastmod: formatDate(writeup.date),
     changefreq: 'never',
     priority: 0.8,
-  }));
-}
-
-/**
- * Generate category entries for sitemap
- */
-function generateCategoryEntries() {
-  const categories = new Set(writeups.map((w) => w.category.toLowerCase()));
-  return Array.from(categories).map((category) => ({
-    loc: `${BASE_URL}/category/${category}`,
-    lastmod: new Date().toISOString().split('T')[0],
-    changefreq: 'monthly',
-    priority: 0.7,
   }));
 }
 
@@ -168,8 +154,8 @@ Sitemap: ${BASE_URL}/sitemap.xml
 function main() {
   console.log('🗺️  Generating sitemap and robots.txt...\n');
 
-  const __dirname = path.resolve(__dirname || '.');
-  const publicDir = path.join(__dirname, 'public');
+  // Output to public folder (so it gets copied to build output by Vite)
+  const publicDir = path.resolve(__dirname, '../public');
 
   // Ensure public directory exists
   if (!fs.existsSync(publicDir)) {
@@ -179,8 +165,8 @@ function main() {
   // Combine all sitemap entries
   const allEntries = [
     ...staticPages,
+    ...generateEventEntries(),
     ...generateWriteupEntries(),
-    ...generateCategoryEntries(),
   ];
 
   // Remove duplicates and sort by priority (descending)
@@ -188,24 +174,33 @@ function main() {
     new Map(allEntries.map((e) => [e.loc, e])).values()
   ).sort((a, b) => b.priority - a.priority || a.loc.localeCompare(b.loc));
 
-  // Generate and write sitemap
+  // Generate and write sitemap to public folder
   const sitemapXml = generateSitemapXml(uniqueEntries);
   const sitemapPath = path.join(publicDir, 'sitemap.xml');
   fs.writeFileSync(sitemapPath, sitemapXml, 'utf-8');
   console.log(`✅ Sitemap generated at: ${sitemapPath}`);
   console.log(`   Total URLs: ${uniqueEntries.length}`);
 
-  // Generate and write robots.txt
+  // Generate and write robots.txt to public folder
   const robotsTxt = generateRobotsTxtContent();
   const robotsPath = path.join(publicDir, 'robots.txt');
   fs.writeFileSync(robotsPath, robotsTxt, 'utf-8');
   console.log(`✅ Robots.txt generated at: ${robotsPath}`);
 
+  // Also write to dist/ output folder if it exists (so they are available immediately without rebuilding)
+  const distDir = path.resolve(__dirname, '../dist');
+  if (fs.existsSync(distDir)) {
+    fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapXml, 'utf-8');
+    fs.writeFileSync(path.join(distDir, 'robots.txt'), robotsTxt, 'utf-8');
+    console.log(`✅ Copy of files written directly to ${distDir}`);
+  }
+
   // Print statistics
+  const uniqueEventsCount = new Set(writeups.map((w) => w.ctfName || 'Uncategorized CTF')).size;
   console.log(`\n📊 Statistics:`);
   console.log(`   - Static pages: ${staticPages.length}`);
-  console.log(`   - Writeup pages: ${writeups.length}`);
-  console.log(`   - Category pages: ${new Set(writeups.map((w) => w.category)).size}`);
+  console.log(`   - Event pages: ${uniqueEventsCount}`);
+  console.log(`   - Writeup sections: ${writeups.length}`);
   console.log(`   - Total URLs in sitemap: ${uniqueEntries.length}`);
   console.log(`\n✨ All files generated successfully!`);
 }
