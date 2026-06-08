@@ -6,8 +6,11 @@ import { DocsSearch } from './components/docs/DocsSearch';
 import { DocsHomePage } from './components/pages/DocsHomePage';
 import { DocsEventPage } from './components/pages/DocsEventPage';
 import { DocsWriteupPage } from './components/pages/DocsWriteupPage';
+import { DocsBlogListPage } from './components/pages/DocsBlogListPage';
+import { DocsBlogPostPage } from './components/pages/DocsBlogPostPage';
 import { buildDocsTree } from './data/docsTree';
 import { writeups } from './data/writeups';
+import { blogPosts } from './data/blog';
 import { validateWriteups } from './data/validateWriteups';
 import { ctftimeProfile } from './data/ctftimeProfile';
 
@@ -60,7 +63,12 @@ function getWriteupTocItems(writeup: typeof writeups[0]) {
   return items;
 }
 
-type DocsView = { type: 'home' } | { type: 'event'; eventSlug: string } | { type: 'writeup'; writeupId: string };
+type DocsView =
+  | { type: 'home' }
+  | { type: 'event'; eventSlug: string }
+  | { type: 'writeup'; writeupId: string }
+  | { type: 'blog-list' }
+  | { type: 'blog-post'; postId: string };
 
 export default function App() {
   const [docsView, setDocsView] = useState<DocsView>({ type: 'home' });
@@ -82,6 +90,12 @@ export default function App() {
 
       if (parts[0] === 'event' && parts[1]) {
         setDocsView({ type: 'event', eventSlug: parts[1] });
+      } else if (parts[0] === 'blog') {
+        if (parts[1]) {
+          setDocsView({ type: 'blog-post', postId: parts.slice(1).join('/') });
+        } else {
+          setDocsView({ type: 'blog-list' });
+        }
       } else if (parts[0] === 'writeup' && parts[1]) {
         const writeupId = parts.slice(1).join('/');
 
@@ -128,6 +142,10 @@ export default function App() {
       window.location.hash = `#/event/${view.eventSlug}`;
     } else if (view.type === 'writeup') {
       window.location.hash = `#/writeup/${view.writeupId}`;
+    } else if (view.type === 'blog-list') {
+      window.location.hash = '#/blog';
+    } else if (view.type === 'blog-post') {
+      window.location.hash = `#/blog/${view.postId}`;
     }
   };
 
@@ -176,9 +194,9 @@ export default function App() {
   if (docsView.type === 'event') {
     activeEvent = docsTree.find((e) => e.slug === docsView.eventSlug);
     if (!activeEvent) {
-      updateMetaTags({ title: 'Event Not Found - Nattt' });
+      updateMetaTags({ title: 'Event Not Found - Nattt', description: 'Event not found on Nattt write-ups.' });
     } else {
-      updateMetaTags({ title: `${activeEvent.name} - Nattt` });
+      updateMetaTags({ title: `${activeEvent.name} - Nattt`, description: `Writeups for ${activeEvent.name} event.` });
     }
   } else if (docsView.type === 'writeup') {
     for (const event of docsTree) {
@@ -193,9 +211,29 @@ export default function App() {
       if (activeWriteupNode) break;
     }
     if (activeWriteupNode) {
-      updateMetaTags({ title: `${activeWriteupNode.title} - Nattt` });
+      updateMetaTags({ title: `${activeWriteupNode.title} - Nattt`, description: activeWriteupNode.description || `Read writeup for ${activeWriteupNode.title}.` });
     } else {
-      updateMetaTags({ title: 'Writeup Not Found - Nattt' });
+      updateMetaTags({ title: 'Writeup Not Found - Nattt', description: 'Writeup not found on Nattt.' });
+    }
+  } else if (docsView.type === 'blog-list') {
+    updateMetaTags({
+      title: 'Blog - Nattt',
+      description: 'Insights, Tutorials & CTF Adventures by Nattt.',
+    });
+  } else if (docsView.type === 'blog-post') {
+    const post = blogPosts.find((p) => p.id === docsView.postId);
+    if (post) {
+      updateMetaTags({
+        title: `${post.title} - Nattt Blog`,
+        description: post.excerpt,
+        type: 'article',
+        author: post.author,
+      });
+    } else {
+      updateMetaTags({
+        title: 'Blog Post Not Found - Nattt',
+        description: 'The requested blog post was not found.',
+      });
     }
   } else {
     updateMetaTags({ title: 'Nattt', description: 'Nattt CTF Writeups Collection' });
@@ -203,8 +241,8 @@ export default function App() {
 
   // Generate TOC based on view
   const tocItems = useMemo(() => {
-    if (docsView.type === 'home') {
-      return []; // Return empty array so DocsLayout collapses the right side on Home
+    if (docsView.type === 'home' || docsView.type === 'blog-list') {
+      return []; // Return empty array so DocsLayout collapses the right side on Home/Blog List
     } else if (docsView.type === 'event' && activeEvent) {
       const items: Array<{ id: string; label: string; depth?: number }> = [];
 
@@ -226,6 +264,21 @@ export default function App() {
       return items;
     } else if (docsView.type === 'writeup' && activeWriteupNode) {
       return getWriteupTocItems(activeWriteupNode.original);
+    } else if (docsView.type === 'blog-post') {
+      const activePost = blogPosts.find((p) => p.id === docsView.postId);
+      if (activePost) {
+        // Find headers in content (e.g. ## Header or ### Header)
+        const headerMatches = activePost.content.matchAll(/^(#{2,3})\s+(.*)$/gm);
+        return Array.from(headerMatches).map((match) => {
+          const depth = match[1].length - 1; // 1 for ## (depth 1), 2 for ### (depth 2)
+          const label = match[2].trim();
+          const id = label
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+          return { id, label, depth };
+        });
+      }
     }
     return [];
   }, [docsView, activeEvent, activeWriteupNode]);
@@ -240,6 +293,24 @@ export default function App() {
     } else if (docsView.type === 'writeup') {
       if (!activeWriteupNode) return <div className="p-8 text-center text-[var(--docs-text)]">Writeup not found.</div>;
       return <DocsWriteupPage writeup={activeWriteupNode.original} />;
+    } else if (docsView.type === 'blog-list') {
+      return (
+        <DocsBlogListPage
+          posts={blogPosts}
+          onPostClick={(postId) => handleNavigate({ type: 'blog-post', postId })}
+        />
+      );
+    } else if (docsView.type === 'blog-post') {
+      const activePost = blogPosts.find((p) => p.id === docsView.postId);
+      if (!activePost) return <div className="p-8 text-center text-[var(--docs-text)]">Blog post not found.</div>;
+      return (
+        <DocsBlogPostPage
+          post={activePost}
+          posts={blogPosts}
+          onPostClick={(postId) => handleNavigate({ type: 'blog-post', postId })}
+          onBackClick={() => handleNavigate({ type: 'blog-list' })}
+        />
+      );
     }
     // default to home
     return (
@@ -274,7 +345,9 @@ export default function App() {
             tree={docsTree}
             activeEventSlug={activeEvent?.slug}
             activeWriteupId={activeWriteupNode?.id}
+            isBlogActive={docsView.type === 'blog-list' || docsView.type === 'blog-post'}
             onHomeClick={() => handleNavigate({ type: 'home' })}
+            onBlogClick={() => handleNavigate({ type: 'blog-list' })}
             onEventClick={(eventSlug) => handleNavigate({ type: 'event', eventSlug })}
             onWriteupClick={(writeupId) => handleNavigate({ type: 'writeup', writeupId })}
           />

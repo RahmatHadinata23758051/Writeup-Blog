@@ -9,6 +9,8 @@ interface DocsSidebarProps {
   onHomeClick?: () => void;
   onEventClick?: (eventSlug: string) => void;
   onWriteupClick?: (writeupId: string) => void;
+  isBlogActive?: boolean;
+  onBlogClick?: () => void;
   mode?: 'tree' | 'events-only';
 }
 
@@ -41,6 +43,8 @@ export function DocsSidebar({
   onHomeClick,
   onEventClick,
   onWriteupClick,
+  isBlogActive,
+  onBlogClick,
   mode = 'tree',
 }: DocsSidebarProps) {
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(
@@ -67,13 +71,26 @@ export function DocsSidebar({
           <button
             type="button"
             onClick={onHomeClick}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer ${!activeEventSlug
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer ${(!activeEventSlug && !isBlogActive)
                 ? 'bg-[var(--docs-text)] text-[var(--docs-bg)]'
                 : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-surface-hover)]'
               }`}
           >
             <span className="text-sm">🚩</span>
             <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Home</span>
+          </button>
+
+          {/* Blog button */}
+          <button
+            type="button"
+            onClick={onBlogClick}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer ${isBlogActive
+                ? 'bg-[var(--docs-text)] text-[var(--docs-bg)] font-bold'
+                : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-surface-hover)]'
+              }`}
+          >
+            <span className="text-sm">📝</span>
+            <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Blog</span>
           </button>
 
           <div className="py-2">
@@ -123,9 +140,23 @@ export function DocsSidebar({
         {/* Home button */}
         <button
           onClick={onHomeClick}
-          className="block w-full rounded px-3 py-2 text-left text-sm font-medium text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)] transition-colors cursor-pointer"
+          className={`block w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${(!activeEventSlug && !isBlogActive)
+            ? 'bg-[var(--docs-surface)] text-[var(--docs-text)] font-semibold'
+            : 'text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)]'
+          }`}
         >
           Home
+        </button>
+
+        {/* Blog button */}
+        <button
+          onClick={onBlogClick}
+          className={`block w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${isBlogActive
+            ? 'bg-[var(--docs-surface)] text-[var(--docs-text)] font-semibold'
+            : 'text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)]'
+          }`}
+        >
+          Blog
         </button>
 
         {/* Events */}

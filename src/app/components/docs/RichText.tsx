@@ -212,6 +212,28 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
     const line = lines[i];
     const trimmed = line.trim();
 
+    // 000. Check for markdown headings (e.g. #, ##, ###)
+    const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headerMatch) {
+      flush(i);
+      const level = headerMatch[1].length;
+      const titleText = headerMatch[2].trim();
+      const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+      
+      const id = titleText
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+      elements.push(
+        <Tag key={i} id={id} className={`docs-prose-${Tag}`}>
+          {renderInline(titleText)}
+        </Tag>
+      );
+      i++;
+      continue;
+    }
+
     // 00. Check for table row
     const hasPipe = trimmed.includes('|');
     if (hasPipe) {
