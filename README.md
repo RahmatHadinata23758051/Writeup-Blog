@@ -27,6 +27,19 @@ Website bersifat **read-only** untuk publik dan tidak menyediakan fitur autentik
 
 ---
 
+## CTFtime Integration
+
+Website ini mendukung integrasi profil CTFtime secara offline menggunakan static cache lokal:
+- **Data Primer**: Halaman Home menyajikan tabel performa dan solves dari data writeup lokal (`src/app/data/writeups.ts`).
+- **Offline Cache**: Data profil dan ranking event diperkaya menggunakan file cache lokal di `src/app/data/ctftimeProfile.ts`.
+- **Performa & Privasi**: Tidak ada request API live ke CTFtime saat runtime di browser agar loading cepat dan aman.
+- **Fallbacks**: Kolom rating points/rank yang kosong di cache akan ditampilkan sebagai `"—"`.
+- **Profil Tim**: Tim CTFtime yang terdaftar adalah `rhnata/writeups` (ID: [408130](https://ctftime.org/team/408130)).
+- **Sync/Update**: Jalankan `npm run ctftime:help` untuk petunjuk pembaruan cache data CTFtime secara manual.
+
+---
+
+
 ## Struktur Write-Up
 
 Setiap write-up mengikuti struktur berikut:
