@@ -69,9 +69,9 @@ export const MathBlock: React.FC<MathBlockProps> = ({
   variant = 'default'
 }) => {
   const variantClasses = {
-    default: 'bg-slate-900 dark:bg-slate-950 border-purple-500/30 dark:border-purple-500/20',
-    highlight: 'bg-gradient-to-r from-purple-900/40 to-blue-900/40 dark:from-purple-900/30 dark:to-blue-900/30 border-purple-500/50 dark:border-purple-400/40 shadow-lg shadow-purple-500/10',
-    subtle: 'bg-slate-800/50 dark:bg-slate-900/50 border-slate-600/30 dark:border-slate-700/30'
+    default: 'math-variant-default border-[var(--docs-border-soft)]',
+    highlight: 'math-variant-highlight border-[var(--docs-accent)]/30 shadow-sm shadow-[var(--docs-accent-soft)]',
+    subtle: 'math-variant-subtle border-[var(--docs-border-soft)]/50'
   };
 
   return (
