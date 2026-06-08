@@ -34,11 +34,11 @@ function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) 
 
 const renderInline = (inputText: string): React.ReactNode[] => {
   if (!inputText) return [];
-  
-  // Split by block math ($$...$$), inline math ($...$), inline code (`...`), and bold (**...**)
-  const regex = /(\$\$.*?\$\$|\$.*?\$|`.*?`|\*\*.*?\*\*)/gs;
+
+  // Split by block math ($$...$$), inline math ($...$), inline code (`...`), bold (**...**), and markdown links ([text](url))
+  const regex = /(\$\$.*?\$\$|\$.*?\$|`.*?`|\*\*.*?\*\*|\[[^\]]+\]\([^)]+\))/gs;
   const parts = inputText.split(regex);
-  
+
   return parts.map((part, index) => {
     if (part.startsWith('$$') && part.endsWith('$$')) {
       const formula = part.slice(2, -2).trim();
@@ -81,7 +81,38 @@ const renderInline = (inputText: string): React.ReactNode[] => {
       );
     } else if (part.startsWith('**') && part.endsWith('**')) {
       const boldText = part.slice(2, -2);
-      return <strong key={index}>{boldText}</strong>;
+      return <strong key={index}>{renderInline(boldText)}</strong>;
+    } else if (part.startsWith('[') && part.endsWith(')')) {
+      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      if (linkMatch) {
+        const linkText = linkMatch[1];
+        const url = linkMatch[2];
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 font-medium text-[var(--docs-accent)] hover:text-[var(--docs-accent)] border-b border-dashed border-[var(--docs-accent)]/30 hover:border-[var(--docs-accent)] transition-all duration-200 group no-underline"
+          >
+            {renderInline(linkText)}
+            <svg
+              className="inline-block w-3 h-3 ml-0.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </a>
+        );
+      }
+      return part;
     } else {
       const lines = part.split('\n');
       return (
@@ -103,8 +134,8 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
 
   const lines = text.split('\n');
   const elements: React.ReactNode[] = [];
-  
-  let currentType: 'p' | 'ul' | 'ol' | 'math' | 'code' | 'table' | null = null;
+
+  let currentType: 'p' | 'ul' | 'ol' | 'math' | 'code' | 'table' | 'blockquote' | null = null;
   let currentLines: string[] = [];
   let currentLanguage = '';
   let currentHeaderLine = '';
@@ -135,7 +166,7 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
         const trimmed = rowLine.trim().replace(/^\||\|$/g, '');
         return trimmed.split('|').map(cell => cell.trim());
       };
-      
+
       const headerRow = parseRow(currentHeaderLine);
       const rows = currentLines.map(parseRow);
 
@@ -195,6 +226,12 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
           ))}
         </ol>
       );
+    } else if (currentType === 'blockquote') {
+      elements.push(
+        <blockquote key={key} className="pl-4 border-l-4 border-[var(--docs-accent)] italic text-[var(--docs-text-muted)] my-4 bg-[var(--docs-bg-soft)]/30 py-2 pr-2 rounded-r">
+          {renderInline(currentLines.join('\n'))}
+        </blockquote>
+      );
     } else if (currentType === 'p') {
       elements.push(
         <p key={key} className="my-3">
@@ -231,6 +268,26 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
       continue;
     }
 
+    // 0000. Check for horizontal rule (e.g., ---)
+    if (/^-{3,}$/.test(trimmed)) {
+      flush(i);
+      elements.push(<hr key={`hr-${i}`} className="my-6 border-[var(--docs-border-soft)]" />);
+      i++;
+      continue;
+    }
+
+    // 00000. Check for blockquote line (e.g. > Quote)
+    const blockquoteMatch = line.match(/^>\s?(.*)$/);
+    if (blockquoteMatch) {
+      if (currentType !== 'blockquote') {
+        flush(i);
+        currentType = 'blockquote';
+      }
+      currentLines.push(blockquoteMatch[1]);
+      i++;
+      continue;
+    }
+
     // 000. Check for markdown headings (e.g. #, ##, ###)
     const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
     if (headerMatch) {
@@ -238,7 +295,7 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
       const level = headerMatch[1].length;
       const titleText = headerMatch[2].trim();
       const Tag = `h${level}` as keyof JSX.IntrinsicElements;
-      
+
       const id = titleText
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -281,8 +338,8 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
     // 1. Check for block math start/end
     if (trimmed.startsWith('$$')) {
       if (currentType === 'math') {
-        const content = trimmed.endsWith('$$') && trimmed.length > 2 
-          ? trimmed.slice(0, -2) 
+        const content = trimmed.endsWith('$$') && trimmed.length > 2
+          ? trimmed.slice(0, -2)
           : '';
         if (content) currentLines.push(content);
         flush(i);

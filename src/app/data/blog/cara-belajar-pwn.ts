@@ -1,14 +1,14 @@
 import { BlogPost } from '../blogTypes';
 
 export const caraBelajarPwn: BlogPost = {
-  id: 'cara-belajar-pwn',
-  title: 'Panduan Memulai Kategori PWN untuk Pemula',
-  date: '2026-06-08',
-  excerpt: 'Langkah-langkah praktis, pemahaman dasar memori, dan tools terbaik untuk mulai menguasai Binary Exploitation dari nol.',
-  tags: ['Pwn', 'Binary Exploitation', 'Tutorial', 'Reverse'],
-  author: 'Nattt',
-  readTime: '5 min read',
-  content: `Menembus pertahanan memori biner (binary exploitation/PWN) memang menantang, tapi sangat seru setelah kamu memahami cara kerja komputer di balik layar. PWN berfokus pada menemukan celah keamanan dalam program terkompilasi (binary) dan memanipulasinya untuk mendapatkan kontrol penuh atas sistem (misalnya memicu shell).
+    id: 'cara-belajar-pwn',
+    title: 'Panduan Memulai Kategori PWN untuk Pemula',
+    date: '2026-06-08',
+    excerpt: 'Langkah-langkah praktis, pemahaman dasar memori, dan tools terbaik untuk mulai menguasai Binary Exploitation dari nol.',
+    tags: ['Pwn', 'Binary Exploitation', 'Tutorial', 'Reverse'],
+    author: 'Nattt',
+    readTime: '5 min read',
+    content: `Menembus pertahanan memori biner (binary exploitation/PWN) memang menantang, tapi sangat seru setelah kamu memahami cara kerja komputer di balik layar. PWN berfokus pada menemukan celah keamanan dalam program terkompilasi (binary) dan memanipulasinya untuk mendapatkan kontrol penuh atas sistem (misalnya memicu shell).
 
 Berikut adalah roadmap praktis bagi kamu yang ingin memulai perjalanan di kategori PWN:
 
@@ -74,6 +74,6 @@ Cara terbaik belajar PWN adalah dengan praktik langsung. Kamu bisa mulai di situ
 * **ropemporium.com** (fokus belajar Return Oriented Programming)
 * **pwnable.tw** / **pwnable.kr** (untuk tantangan tingkat lanjut)
 
-Semoga bermanfaat, dan selamat meretas! 🚀
+Good Luck :)
 `
 };
