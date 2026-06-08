@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "start": "vite",
-    "build": "vite build",
-    "dev": "vite"
+    "build": "node scripts/validate-writeups.mjs && vite build && npx tsx scripts/generate-sitemap.js",
+    "dev": "vite",
+    "new:writeup": "node scripts/new-writeup.mjs",
+    "validate:writeups": "node scripts/validate-writeups.mjs",
+    "ctftime:help": "node scripts/fetch-ctftime-team.mjs",
+    "writeups:import": "node scripts/import-local-writeups.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
