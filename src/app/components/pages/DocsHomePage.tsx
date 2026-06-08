@@ -70,21 +70,53 @@ export function DocsHomePage({
 
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3 pt-4">
-        <div className="rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/30 p-5">
-          <div className="text-2xl font-bold font-mono text-[var(--docs-accent)]">{tree.length}</div>
-          <p className="text-xs font-sans text-[var(--docs-text-soft)] uppercase tracking-wider font-semibold">CTF Events</p>
+      {/* Origin + CTFtime Rank */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-2">
+        {/* Indonesia Badge */}
+        <div className="flex items-center gap-4 rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/30 px-5 py-4 flex-shrink-0">
+          {/* Indonesian Flag SVG */}
+          <div className="relative flex-shrink-0 w-12 h-8 rounded overflow-hidden shadow-md border border-white/10" aria-label="Bendera Indonesia">
+            <div className="absolute inset-0 top-0 h-1/2 bg-[#CE1126]" />
+            <div className="absolute inset-0 top-1/2 h-1/2 bg-white" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--docs-text-soft)] font-sans">Asal</p>
+            <p className="text-sm font-semibold text-[var(--docs-text)] font-serif">Indonesia 🇮🇩</p>
+          </div>
         </div>
-        <div className="rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/30 p-5">
-          <div className="text-2xl font-bold font-mono text-[var(--docs-success)]">{totalWriteups}</div>
-          <p className="text-xs font-sans text-[var(--docs-text-soft)] uppercase tracking-wider font-semibold">Total Solves</p>
-        </div>
-        <div className="rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/30 p-5">
-          <div className="text-2xl font-bold font-mono text-[var(--docs-danger)]">{totalCategories}</div>
-          <p className="text-xs font-sans text-[var(--docs-text-soft)] uppercase tracking-wider font-semibold">Categories</p>
-        </div>
+
+        {/* CTFtime Ranking Card */}
+        <a
+          href="https://ctftime.org/team/408130"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex-1 rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/30 px-5 py-4 transition-all hover:border-[var(--docs-accent-border)] hover:bg-[var(--docs-bg-soft)]/50 cursor-pointer"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--docs-text-soft)] font-sans">CTFtime Ranking 2026</p>
+            <span className="text-[10px] font-mono text-[var(--docs-accent)] group-hover:underline">ctftime.org →</span>
+          </div>
+          <div className="flex items-end gap-6 flex-wrap">
+            <div>
+              <div className="text-2xl font-black font-mono text-[var(--docs-accent)] leading-none">#2</div>
+              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🇮🇩 Indonesia</p>
+            </div>
+            <div>
+              <div className="text-2xl font-black font-mono text-[var(--docs-text)] leading-none">#88</div>
+              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🌍 Worldwide</p>
+            </div>
+            <div>
+              <div className="text-xl font-bold font-mono text-[var(--docs-success)] leading-none">334.57</div>
+              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Points</p>
+            </div>
+            <div>
+              <div className="text-xl font-bold font-mono text-[var(--docs-text-muted)] leading-none">86</div>
+              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Events</p>
+            </div>
+          </div>
+        </a>
       </div>
+
 
       {/* HISTORICAL STATS TABLE */}
       <div id="stats-table-section" className="pt-6 space-y-3">
@@ -92,16 +124,6 @@ export function DocsHomePage({
           <h3 className="text-[10px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase font-sans">
             CTF Performance & Solves
           </h3>
-          {ctftimeProfile?.teamUrl && (
-            <a
-              href={ctftimeProfile.teamUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-[var(--docs-accent)] hover:underline font-mono"
-            >
-              CTFtime team profile →
-            </a>
-          )}
         </div>
 
         <div className="overflow-x-auto rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/20 shadow-sm">
@@ -126,35 +148,35 @@ export function DocsHomePage({
                   ? findCtftimeEvent(event.name, ctftimeProfile)
                   : undefined;
 
-                 // Determine Rank/Place with EVENT_PLACES fallback (case-insensitive lookup)
-                 let place: string | number = '—';
-                 if (ctftimeEvent?.place !== undefined && ctftimeEvent?.place !== null) {
-                   place = ctftimeEvent.place;
-                 } else {
-                   const matchedKey = Object.keys(EVENT_PLACES).find(
-                     (k) => k.toLowerCase() === event.name.toLowerCase()
-                   );
-                   if (matchedKey) {
-                     place = EVENT_PLACES[matchedKey];
-                   }
-                 }
+                // Determine Rank/Place with EVENT_PLACES fallback (case-insensitive lookup)
+                let place: string | number = '—';
+                if (ctftimeEvent?.place !== undefined && ctftimeEvent?.place !== null) {
+                  place = ctftimeEvent.place;
+                } else {
+                  const matchedKey = Object.keys(EVENT_PLACES).find(
+                    (k) => k.toLowerCase() === event.name.toLowerCase()
+                  );
+                  if (matchedKey) {
+                    place = EVENT_PLACES[matchedKey];
+                  }
+                }
 
-                 // Determine Points with local writeups sum fallback
-                 let points: string | number = '—';
-                 if (ctftimeEvent?.points !== undefined && ctftimeEvent?.points !== null) {
-                   points = ctftimeEvent.points;
-                 } else {
-                   const totalLocalPoints = event.categories.reduce((sum, cat) => {
-                     return sum + cat.writeups.reduce((catSum, w) => {
-                       const pts = Number(w.points);
-                       return catSum + (isNaN(pts) ? 0 : pts);
-                     }, 0);
-                   }, 0);
-                   if (totalLocalPoints > 0) {
-                     points = totalLocalPoints;
-                   }
-                 }
-                 const team = ctftimeEvent?.team || ctftimeProfile?.teamName || 'Personal';
+                // Determine Points with local writeups sum fallback
+                let points: string | number = '—';
+                if (ctftimeEvent?.points !== undefined && ctftimeEvent?.points !== null) {
+                  points = ctftimeEvent.points;
+                } else {
+                  const totalLocalPoints = event.categories.reduce((sum, cat) => {
+                    return sum + cat.writeups.reduce((catSum, w) => {
+                      const pts = Number(w.points);
+                      return catSum + (isNaN(pts) ? 0 : pts);
+                    }, 0);
+                  }, 0);
+                  if (totalLocalPoints > 0) {
+                    points = totalLocalPoints;
+                  }
+                }
+                const team = ctftimeEvent?.team || ctftimeProfile?.teamName || 'Personal';
 
                 // Find latest writeup date
                 const dates = event.categories
