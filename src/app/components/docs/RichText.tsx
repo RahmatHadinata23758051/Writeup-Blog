@@ -212,6 +212,25 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
     const line = lines[i];
     const trimmed = line.trim();
 
+    // 0. Check for code block start/end (MUST be checked first so code content is not parsed as markdown)
+    if (trimmed.startsWith('```')) {
+      if (currentType === 'code') {
+        flush(i);
+      } else {
+        flush(i);
+        currentType = 'code';
+        currentLanguage = trimmed.slice(3).trim();
+      }
+      i++;
+      continue;
+    }
+
+    if (currentType === 'code') {
+      currentLines.push(line);
+      i++;
+      continue;
+    }
+
     // 000. Check for markdown headings (e.g. #, ##, ###)
     const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
     if (headerMatch) {
@@ -257,25 +276,6 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
     } else if (currentType === 'table') {
       flush(i);
       // Let the rest of the loop process this non-table line
-    }
-
-    // 0. Check for code block start/end
-    if (trimmed.startsWith('```')) {
-      if (currentType === 'code') {
-        flush(i);
-      } else {
-        flush(i);
-        currentType = 'code';
-        currentLanguage = trimmed.slice(3).trim();
-      }
-      i++;
-      continue;
-    }
-
-    if (currentType === 'code') {
-      currentLines.push(line);
-      i++;
-      continue;
     }
 
     // 1. Check for block math start/end
