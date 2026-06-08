@@ -18,8 +18,8 @@
 .math-block {
   margin: 1.5rem 0;
   padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
-  border: 1px solid rgba(148, 113, 234, 0.2);
+  background: var(--docs-bg-soft);
+  border: 1px solid var(--docs-border-soft);
   border-radius: 0.75rem;
   overflow-x: auto;
   overflow-y: hidden;
@@ -27,25 +27,22 @@
   align-items: center;
   justify-content: center;
   min-height: 6rem;
-  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
 .math-block:hover {
-  border-color: rgba(148, 113, 234, 0.4);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
-  box-shadow: 0 0 20px rgba(148, 113, 234, 0.1);
+  border-color: var(--docs-accent);
+  box-shadow: 0 0 15px var(--docs-accent-soft);
 }
 
 .dark .math-block {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
-  border-color: rgba(168, 85, 247, 0.25);
+  background: var(--docs-bg-soft);
+  border-color: var(--docs-border-soft);
 }
 
 .dark .math-block:hover {
-  border-color: rgba(168, 85, 247, 0.4);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+  border-color: var(--docs-accent);
+  box-shadow: 0 0 15px var(--docs-accent-soft);
 }
 
 .math-block .katex {
@@ -66,15 +63,23 @@
   transition: all 0.3s ease;
 }
 
-.math-block-container.highlight {
-  background: linear-gradient(135deg, rgba(126, 34, 206, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
-  border-color: rgba(168, 85, 247, 0.3);
-  box-shadow: 0 0 15px rgba(168, 85, 247, 0.08);
+.math-variant-default {
+  background-color: var(--docs-bg-soft);
+  color: var(--docs-text);
 }
 
-.math-block-container.highlight:hover {
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
-  border-color: rgba(168, 85, 247, 0.5);
+.math-variant-highlight {
+  background-color: var(--docs-accent-soft);
+  color: var(--docs-text);
+}
+
+.math-variant-subtle {
+  background-color: rgba(26, 26, 26, 0.02);
+  color: var(--docs-text-muted);
+}
+
+.dark .math-variant-subtle {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .math-content-wrapper {

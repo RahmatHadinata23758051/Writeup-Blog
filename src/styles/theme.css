@@ -2,93 +2,110 @@
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
+  
+  /* Clean Docs Theme Variables (GitBook-like - krauq aesthetic) */
+  --docs-bg: #F2F0E9;
+  --docs-bg-soft: #E9E6DC;
+  --docs-surface: #E9E6DC;
+  --docs-surface-hover: #DFDCD2;
+  --docs-border: rgba(26, 26, 26, 0.15);
+  --docs-border-soft: rgba(26, 26, 26, 0.1);
+  
+  --docs-text: #1A1A1A;
+  --docs-text-muted: rgba(26, 26, 26, 0.6);
+  --docs-text-soft: rgba(26, 26, 26, 0.4);
+  
+  --docs-accent: #D44D26;
+  --docs-accent-soft: rgba(212, 77, 38, 0.1);
+  --docs-accent-border: rgba(212, 77, 38, 0.25);
+  
+  --docs-code-bg: #1A1A1A;
+  --docs-code-border: #1A1A1A;
+  --docs-code-text: #F2F0E9;
+  
+  --docs-success: #10b981;
+  --docs-warning: #f59e0b;
+  --docs-danger: #ef4444;
+
+  --background: var(--docs-bg);
+  --foreground: var(--docs-text);
+  --card: var(--docs-bg-soft);
+  --card-foreground: var(--docs-text);
+  --popover: var(--docs-bg-soft);
+  --popover-foreground: var(--docs-text);
+  --primary: var(--docs-accent);
+  --primary-foreground: var(--docs-bg);
+  --secondary: var(--docs-surface);
+  --secondary-foreground: var(--docs-text);
+  --muted: var(--docs-bg-soft);
+  --muted-foreground: var(--docs-text-muted);
+  --accent: var(--docs-surface-hover);
+  --accent-foreground: var(--docs-accent);
+  --destructive: var(--docs-danger);
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
+  --border: var(--docs-border);
   --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
+  --input-background: var(--docs-surface);
+  --switch-background: var(--docs-border-soft);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  
-  /* CTF Theme Colors */
-  --neon-green: #00ff41;
-  --neon-cyan: #00ffff;
-  --neon-purple: #9d00ff;
+  --ring: var(--docs-accent);
+  --radius: 0.375rem;
+
+  --sidebar: var(--docs-bg-soft);
+  --sidebar-foreground: var(--docs-text);
+  --sidebar-primary: var(--docs-accent);
+  --sidebar-primary-foreground: var(--docs-bg);
+  --sidebar-accent: var(--docs-surface-hover);
+  --sidebar-accent-foreground: var(--docs-accent);
+  --sidebar-border: var(--docs-border-soft);
+  --sidebar-ring: var(--docs-accent);
 }
 
+/* Maintain dark variables mapped to the same warm sand aesthetic to avoid mixing themes */
 .dark {
-  --background: #0a0e14;
-  --foreground: #e6e6e6;
-  --card: #1a1f2e;
-  --card-foreground: #e6e6e6;
-  --popover: #1a1f2e;
-  --popover-foreground: #e6e6e6;
-  --primary: #00ff41;
-  --primary-foreground: #0a0e14;
-  --secondary: #1e2433;
-  --secondary-foreground: #e6e6e6;
-  --muted: #1e2433;
-  --muted-foreground: #9ca3af;
-  --accent: #2a3142;
-  --accent-foreground: #00ff41;
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: #2a3142;
-  --input: #1e2433;
-  --ring: #00ff41;
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --docs-bg: #F2F0E9;
+  --docs-bg-soft: #E9E6DC;
+  --docs-surface: #E9E6DC;
+  --docs-surface-hover: #DFDCD2;
+  --docs-border: rgba(26, 26, 26, 0.15);
+  --docs-border-soft: rgba(26, 26, 26, 0.1);
   
-  /* CTF Theme Colors */
-  --neon-green: #00ff41;
-  --neon-cyan: #00ffff;
-  --neon-purple: #9d00ff;
+  --docs-text: #1A1A1A;
+  --docs-text-muted: rgba(26, 26, 26, 0.6);
+  --docs-text-soft: rgba(26, 26, 26, 0.4);
+  
+  --docs-accent: #D44D26;
+  --docs-accent-soft: rgba(212, 77, 38, 0.1);
+  --docs-accent-border: rgba(212, 77, 38, 0.25);
+  
+  --docs-code-bg: #1A1A1A;
+  --docs-code-border: #1A1A1A;
+  --docs-code-text: #F2F0E9;
+  
+  --docs-success: #10b981;
+  --docs-warning: #f59e0b;
+  --docs-danger: #ef4444;
+
+  --background: var(--docs-bg);
+  --foreground: var(--docs-text);
+  --card: var(--docs-bg-soft);
+  --card-foreground: var(--docs-text);
+  --border: var(--docs-border);
+  --ring: var(--docs-accent);
+  
+  --sidebar: var(--docs-bg-soft);
+  --sidebar-foreground: var(--docs-text);
+  --sidebar-border: var(--docs-border-soft);
+  --sidebar-ring: var(--docs-accent);
 }
 
 @theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Lora", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -110,14 +127,9 @@
   --color-input-background: var(--input-background);
   --color-switch-background: var(--switch-background);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -127,6 +139,30 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Docs Theme Colors */
+  --color-docs-bg: var(--docs-bg);
+  --color-docs-bg-soft: var(--docs-bg-soft);
+  --color-docs-surface: var(--docs-surface);
+  --color-docs-surface-hover: var(--docs-surface-hover);
+  --color-docs-border: var(--docs-border);
+  --color-docs-border-soft: var(--docs-border-soft);
+  
+  --color-docs-text: var(--docs-text);
+  --color-docs-text-muted: var(--docs-text-muted);
+  --color-docs-text-soft: var(--docs-text-soft);
+  
+  --color-docs-accent: var(--docs-accent);
+  --color-docs-accent-soft: var(--docs-accent-soft);
+  --color-docs-accent-border: var(--docs-accent-border);
+  
+  --color-docs-code-bg: var(--docs-code-bg);
+  --color-docs-code-border: var(--docs-code-border);
+  --color-docs-code-text: var(--docs-code-text);
+  
+  --color-docs-success: var(--docs-success);
+  --color-docs-warning: var(--docs-warning);
+  --color-docs-danger: var(--docs-danger);
 }
 
 @layer base {
@@ -137,11 +173,6 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
 
   html {
     font-size: var(--font-size);
