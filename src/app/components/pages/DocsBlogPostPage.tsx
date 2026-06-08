@@ -1,6 +1,7 @@
 import React from 'react';
 import type { BlogPost } from '../../data/blogTypes';
 import { RichText } from '../docs/RichText';
+import { BlogComments } from '../docs/BlogComments';
 import { ArrowLeft, Calendar, Clock, User, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DocsBlogPostPageProps {
@@ -77,6 +78,9 @@ export function DocsBlogPostPage({ post, posts, onPostClick, onBackClick }: Docs
       <article className="prose-container">
         <RichText text={post.content} className="leading-relaxed" />
       </article>
+
+      {/* Comments Section */}
+      <BlogComments postId={post.id} />
 
       {/* Article Navigation Footer */}
       <footer className="border-t border-[var(--docs-border-soft)] pt-8 mt-12">
