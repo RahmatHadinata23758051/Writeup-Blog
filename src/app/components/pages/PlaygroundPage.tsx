@@ -4,7 +4,133 @@ import { CyberMastermind } from './CyberMastermind';
 import { Activity, Key, ChevronLeft, Gamepad2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-// HTML5 Canvas Pixel Animation Background Component
+// Retro 8-bit animated typing hacker component
+function PixelHacker() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Sprite resolution (16x16)
+    const size = 16;
+    const pixelScale = 4.5; // Scale pixels to be crisp and visible
+    canvas.width = size * pixelScale;
+    canvas.height = size * pixelScale;
+
+    // Rust theme color palette
+    const PALETTE: Record<string, string> = {
+      '.': 'transparent',
+      'H': '#3a2212', // Hair (brown)
+      'S': '#fcd2b2', // Skin (peach)
+      'T': '#d44d26', // Shirt (accent rust)
+      'L': '#2b2b2b', // Laptop body (dark charcoal)
+      'G': '#ffe6cc', // Screen glow (warm white)
+      'D': '#8a5a36', // Desk (wood brown)
+      'W': '#ffb366', // Typing sparks
+    };
+
+    // Frame A: Arms resting, screen glow normal
+    const FRAME_A = [
+      "....HHHH........",
+      "...HHHHHH.......",
+      "...HSSSSHH......",
+      "...HSSSSH.......",
+      "....SSSS........",
+      "...TTTTTT.......",
+      "..TTTTTTTT......",
+      ".TTTTTTTTTT.....",
+      ".TT......TT.....",
+      ".........TT.GG..",
+      ".........TTLGG.L",
+      "..........LLLLLL",
+      "..........LLLL..",
+      "DDDDDDDDDDDDDDDD",
+      "DDDDDDDDDDDDDDDD",
+      "................"
+    ];
+
+    // Frame B: Left arm typing, sparks rising
+    const FRAME_B = [
+      "....HHHH........",
+      "...HHHHHH.......",
+      "...HSSSSHH......",
+      "...HSSSSH.......",
+      "....SSSS........",
+      "...TTTTTT.......",
+      "..TTTTTTTT......",
+      ".TTTTTTTTTT.....",
+      ".TT.T....TT..W..",
+      "...T.....TT.GG..",
+      ".........TTLGG.L",
+      "..........LLLLLL",
+      "..........LLLL..",
+      "DDDDDDDDDDDDDDDD",
+      "DDDDDDDDDDDDDDDD",
+      "................"
+    ];
+
+    // Frame C: Right arm typing, sparks rising
+    const FRAME_C = [
+      "....HHHH........",
+      "...HHHHHH.......",
+      "...HSSSSHH......",
+      "...HSSSSH.......",
+      "....SSSS........",
+      "...TTTTTT.......",
+      "..TTTTTTTT......",
+      ".TTTTTTTTTT.....",
+      ".TT......TT.T...",
+      ".........TT.GGT.",
+      ".........TTLGG.L",
+      "..........LLLLLL",
+      "..........LLLL..",
+      "DDDDDDDDDDDDDDDD",
+      "DDDDDDDDDDDDDDDD",
+      "................"
+    ];
+
+    const frames = [FRAME_A, FRAME_B, FRAME_C, FRAME_B];
+    let currentFrameIdx = 0;
+
+    const drawFrame = (frame: string[]) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false; // Keep pixels sharp
+
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const char = frame[r][c];
+          const color = PALETTE[char];
+          if (color && color !== 'transparent') {
+            ctx.fillStyle = color;
+            ctx.fillRect(c * pixelScale, r * pixelScale, pixelScale, pixelScale);
+          }
+        }
+      }
+    };
+
+    // Cycle through animation frames every 180ms
+    const interval = setInterval(() => {
+      currentFrameIdx = (currentFrameIdx + 1) % frames.length;
+      drawFrame(frames[currentFrameIdx]);
+    }, 180);
+
+    // Initial render
+    drawFrame(frames[0]);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative p-1 bg-[var(--docs-surface)] border border-[var(--docs-border-soft)] rounded shadow-sm shrink-0 flex items-center justify-center w-20 h-20">
+      <canvas ref={canvasRef} className="block" style={{ imageRendering: 'pixelated' }} />
+    </div>
+  );
+}
+
+// HTML5 Canvas Pixel Animation Background Component (Ambient background)
 function PixelBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -37,14 +163,13 @@ function PixelBackground() {
       return {
         x: Math.random() * width,
         y: yPos,
-        size: Math.floor(Math.random() * 6) + 3, // 3px to 8px pixel blocks
+        size: Math.floor(Math.random() * 6) + 3,
         speedY: -(Math.random() * 0.8 + 0.3),
         alpha: Math.random() * 0.5 + 0.2,
         decay: Math.random() * 0.002 + 0.001,
       };
     };
 
-    // Initialize particles across the canvas height initially
     for (let i = 0; i < maxParticles; i++) {
       particles.push(createParticle(Math.random() * height));
     }
@@ -70,19 +195,14 @@ function PixelBackground() {
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseleave', handleMouseLeave);
 
-    // Animation Loop
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Render & update particles
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        
-        // Move particle
         p.y += p.speedY;
         p.alpha -= p.decay;
 
-        // Interaction with mouse (pixels push away slightly)
         const dx = p.x - mouse.x;
         const dy = p.y - mouse.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -91,11 +211,9 @@ function PixelBackground() {
           p.x += (dx / dist) * force * 2;
         }
 
-        // Draw pixel block (no rounded arcs, pure retro square pixels)
-        ctx.fillStyle = `rgba(212, 77, 38, ${p.alpha})`; // Accent Rust color
+        ctx.fillStyle = `rgba(212, 77, 38, ${p.alpha})`;
         ctx.fillRect(p.x, p.y, p.size, p.size);
 
-        // Reset if transparent or out of bounds
         if (p.alpha <= 0 || p.y < -10) {
           particles[i] = createParticle();
         }
@@ -145,8 +263,8 @@ export function PlaygroundPage() {
             exit={{ opacity: 0, y: -10 }}
             className="flex-1 flex flex-col justify-between space-y-8 relative"
           >
-            {/* Header Banner */}
-            <div className="flex items-start justify-between border-b border-[var(--docs-border)] pb-4">
+            {/* Header Banner with animated pixel-art typing hacker mascot */}
+            <div className="flex items-center justify-between border-b border-[var(--docs-border)] pb-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
                   <Gamepad2 className="h-6 w-6 text-[var(--docs-accent)]" />
@@ -158,6 +276,7 @@ export function PlaygroundPage() {
                   Select a sandbox node to override security firewalls.
                 </p>
               </div>
+              <PixelHacker />
             </div>
 
             {/* Menu Selection Cards Area */}
