@@ -1,6 +1,7 @@
 import React from 'react';
 import type { DocsEventNode } from '../../data/docsTree';
-import { getEventEmoji } from '../docs/DocsSidebar';
+import { getEventIcon } from '../docs/DocsSidebar';
+import { FaHome } from 'react-icons/fa';
 import type { CtftimeTeamProfile } from '../../data/ctftimeTypes';
 import { findCtftimeEvent } from '../../data/eventMeta';
 
@@ -48,7 +49,7 @@ export function DocsHomePage({
       {/* Header Banner */}
       <div className="flex items-start justify-between border-b border-[var(--docs-border)] pb-4">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">🚩</span>
+          <FaHome className="text-2xl text-[var(--docs-accent)]" />
           <h1 className="text-3xl font-bold font-display text-[var(--docs-text)] tracking-tighter">Home</h1>
         </div>
       </div>
@@ -141,7 +142,7 @@ export function DocsHomePage({
             </thead>
             <tbody className="divide-y divide-[var(--docs-border-soft)]">
               {tree.map((event) => {
-                const emoji = getEventEmoji(event.name);
+                const icon = getEventIcon(event.name);
 
                 // Find matching CTFtime metadata
                 const ctftimeEvent = ctftimeProfile
@@ -196,7 +197,7 @@ export function DocsHomePage({
                     className="hover:bg-[var(--docs-bg-soft)]/60 transition cursor-pointer group"
                   >
                     <td className="p-3 font-semibold text-[var(--docs-accent)] group-hover:underline font-serif text-sm">
-                      <span className="mr-2 text-sm">{emoji}</span>
+                      <span className="mr-2 inline-flex items-center align-middle">{icon}</span>
                       {event.name}
                     </td>
                     <td className="p-3 text-[var(--docs-text-muted)] font-mono">

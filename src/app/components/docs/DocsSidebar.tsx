@@ -130,7 +130,7 @@ export function DocsSidebar({
             <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Blog</span>
           </button>
 
-          {/* Playground / Hacking Game button */}
+          {/* Playground / Game button */}
           <button
             type="button"
             onClick={onPlaygroundClick}
@@ -140,10 +140,7 @@ export function DocsSidebar({
               }`}
           >
             <PiGameControllerFill className="h-4.5 w-4.5 shrink-0 transition-transform group-hover:scale-110" />
-            <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Hacking Game</span>
-            <span className="text-[9.5px] ml-auto font-mono text-[var(--docs-accent)] bg-[var(--docs-accent-soft)] px-1.5 py-0.5 rounded font-bold border border-[var(--docs-accent-border)] animate-pulse">
-              • HACK
-            </span>
+            <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Game</span>
           </button>
 
           <div className="py-2">
@@ -213,7 +210,7 @@ export function DocsSidebar({
           <span>Blog</span>
         </button>
 
-        {/* Playground / Hacking Game button */}
+        {/* Playground / Game button */}
         <button
           onClick={onPlaygroundClick}
           className={`w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 group ${isPlaygroundActive
@@ -222,7 +219,7 @@ export function DocsSidebar({
           }`}
         >
           <PiGameControllerFill className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
-          <span>Hacking Game</span>
+          <span>Game</span>
         </button>
 
         {/* Events */}

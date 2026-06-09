@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { BlogPost } from '../../data/blogTypes';
 import { Search, Calendar, Clock, Tag as TagIcon } from 'lucide-react';
+import { SiBloglovin } from 'react-icons/si';
 
 interface DocsBlogListPageProps {
   posts: BlogPost[];
@@ -47,7 +48,7 @@ export function DocsBlogListPage({ posts, onPostClick }: DocsBlogListPageProps) 
       {/* Page Header */}
       <div className="flex items-start justify-between border-b border-[var(--docs-border)] pb-4">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">📝</span>
+          <SiBloglovin className="text-2xl text-[var(--docs-accent)]" />
           <h1 className="text-3xl font-bold font-display text-[var(--docs-text)] tracking-tighter">Blog</h1>
         </div>
       </div>

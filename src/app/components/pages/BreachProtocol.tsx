@@ -524,8 +524,8 @@ export function BreachProtocol() {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between font-mono bg-[var(--docs-bg-soft)] border border-[var(--docs-border-soft)] px-3 py-2 rounded">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 bg-red-600 rounded-full animate-ping" />
-                  <span className="text-xs text-[var(--docs-text-muted)]">ACTIVE MATRIX BYPASSING</span>
+                  <div className="w-2.5 h-2.5 bg-amber-600 rounded-full animate-ping" />
+                  <span className="text-xs text-[var(--docs-text-muted)]">DECRYPTION MATRIX</span>
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   <div>
@@ -657,12 +657,12 @@ export function BreachProtocol() {
               </div>
 
               {/* CONSOLE TERMINAL LOGS */}
-              <div className="border border-[var(--docs-border)] bg-zinc-950 rounded-lg p-3 space-y-2 text-lime-500 font-mono text-[10.5px] h-48 flex flex-col justify-between overflow-hidden">
+              <div className="border border-[var(--docs-border)] bg-[var(--docs-code-bg)] rounded-lg p-3 space-y-2 text-[var(--docs-accent)] font-mono text-[10.5px] h-48 flex flex-col justify-between overflow-hidden">
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-1.5">
-                  <span className="flex items-center gap-1.5 text-lime-400 font-bold">
+                  <span className="flex items-center gap-1.5 text-[var(--docs-accent)] font-bold">
                     <Terminal className="h-3.5 w-3.5" /> SYSTEM LOGS
                   </span>
-                  <span className="text-[9px] text-zinc-500">LIVE FEED</span>
+                  <span className="text-[9px] text-[var(--docs-text-soft)]">LIVE FEED</span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
