@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
 import type { DocsEventNode } from '../../data/docsTree';
 
+// React Icons
+import { PiGameControllerFill } from 'react-icons/pi';
+import { SiBloglovin } from 'react-icons/si';
+import { 
+  FaTheRedYeti, 
+  FaThemeisle, 
+  FaFlag, 
+  FaSkull, 
+  FaTerminal, 
+  FaShieldAlt, 
+  FaLock, 
+  FaKey, 
+  FaMicrochip, 
+  FaHome,
+  FaCompass,
+  FaWrench,
+  FaFileCode,
+  FaServer,
+  FaBug
+} from 'react-icons/fa';
+import { GiBirdTwitter, GiNinjaHead, GiAbstract053, GiProcessor } from 'react-icons/gi';
+
 interface DocsSidebarProps {
   tree?: DocsEventNode[];
   activeEventSlug?: string;
@@ -16,25 +38,36 @@ interface DocsSidebarProps {
   mode?: 'tree' | 'events-only';
 }
 
-export function getEventEmoji(eventName: string): string {
-  const name = eventName.toLowerCase();
-  if (name.includes('m0lecon')) return '🐜';
-  if (name.includes('intechfest')) return '⚙️';
-  if (name.includes('vuwctf') || name.includes('vuw')) return '🏫';
-  if (name.includes('ptm')) return '🛡️';
-  if (name.includes('unlp')) return '🏫';
-  if (name.includes('lake')) return '🏞️';
-  if (name.includes('flagyard')) return '🎯';
-  if (name.includes('247ctf')) return '🔑';
-  if (name.includes('vulnby')) return '🛡️';
-  if (name.includes('hackthebox') || name.includes('htb')) return '📦';
-  if (name.includes('jersey')) return '🛡️';
-  if (name.includes('dawg')) return '🐕';
-  if (name.includes('unbreakable')) return '💎';
-  if (name.includes('lactf') || name.includes('la ctf')) return '🎬';
-  if (name.includes('pragyan')) return '🇮🇳';
-  if (name.includes('nullcon')) return '🎯';
-  return '🏆'; // Default emoji
+const eventIcons = [
+  FaTheRedYeti,
+  FaThemeisle,
+  GiBirdTwitter,
+  FaFlag,
+  FaSkull,
+  FaTerminal,
+  FaShieldAlt,
+  FaLock,
+  FaKey,
+  FaMicrochip,
+  FaCompass,
+  FaWrench,
+  FaFileCode,
+  FaServer,
+  FaBug,
+  GiNinjaHead,
+  GiAbstract053,
+  GiProcessor
+];
+
+export function getEventIcon(eventName: string) {
+  // Deterministic hash-based selection of icons
+  let hash = 0;
+  for (let i = 0; i < eventName.length; i++) {
+    hash = eventName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % eventIcons.length;
+  const IconComponent = eventIcons[index];
+  return <IconComponent className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />;
 }
 
 export function DocsSidebar({
@@ -75,12 +108,12 @@ export function DocsSidebar({
           <button
             type="button"
             onClick={onHomeClick}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer ${(!activeEventSlug && !isBlogActive)
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${(!activeEventSlug && !isBlogActive && !isPlaygroundActive)
                 ? 'bg-[var(--docs-text)] text-[var(--docs-bg)]'
                 : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-surface-hover)]'
               }`}
           >
-            <span className="text-sm">🚩</span>
+            <FaHome className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
             <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Home</span>
           </button>
 
@@ -88,12 +121,12 @@ export function DocsSidebar({
           <button
             type="button"
             onClick={onBlogClick}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer ${isBlogActive
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${isBlogActive
                 ? 'bg-[var(--docs-text)] text-[var(--docs-bg)] font-bold'
                 : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-surface-hover)]'
               }`}
           >
-            <span className="text-sm">📝</span>
+            <SiBloglovin className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
             <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Blog</span>
           </button>
 
@@ -101,12 +134,12 @@ export function DocsSidebar({
           <button
             type="button"
             onClick={onPlaygroundClick}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer ${isPlaygroundActive
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${isPlaygroundActive
                 ? 'bg-[var(--docs-text)] text-[var(--docs-bg)] font-bold'
                 : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-surface-hover)]'
               }`}
           >
-            <span className="text-sm">🎮</span>
+            <PiGameControllerFill className="h-4.5 w-4.5 shrink-0 transition-transform group-hover:scale-110" />
             <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Hacking Game</span>
             <span className="text-[9.5px] ml-auto font-mono text-[var(--docs-accent)] bg-[var(--docs-accent-soft)] px-1.5 py-0.5 rounded font-bold border border-[var(--docs-accent-border)] animate-pulse">
               • HACK
@@ -120,7 +153,6 @@ export function DocsSidebar({
             <div className="space-y-1">
               {tree?.map((event) => {
                 const isActive = activeEventSlug === event.slug;
-                const emoji = getEventEmoji(event.name);
                 return (
                   <button
                     key={event.slug}
@@ -130,14 +162,14 @@ export function DocsSidebar({
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className={`
-                      w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-all cursor-pointer
+                      w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-all cursor-pointer group
                       ${isActive
                         ? 'bg-[var(--docs-text)] text-[var(--docs-bg)] font-bold'
                         : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-surface-hover)]'
                       }
                     `}
                   >
-                    <span className="text-sm">{emoji}</span>
+                    {getEventIcon(event.name)}
                     <span className="truncate font-sans font-medium text-[13.5px]">{event.name}</span>
                     <span className={`text-[12px] ml-auto font-mono ${isActive ? 'text-[var(--docs-bg)]/80' : 'text-[var(--docs-text-soft)]'}`}>
                       {event.totalWriteups}
@@ -160,39 +192,41 @@ export function DocsSidebar({
         {/* Home button */}
         <button
           onClick={onHomeClick}
-          className={`block w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${(!activeEventSlug && !isBlogActive)
+          className={`w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 group ${(!activeEventSlug && !isBlogActive && !isPlaygroundActive)
             ? 'bg-[var(--docs-surface)] text-[var(--docs-text)] font-semibold'
             : 'text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)]'
           }`}
         >
-          Home
+          <FaHome className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+          <span>Home</span>
         </button>
 
         {/* Blog button */}
         <button
           onClick={onBlogClick}
-          className={`block w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${isBlogActive
+          className={`w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 group ${isBlogActive
             ? 'bg-[var(--docs-surface)] text-[var(--docs-text)] font-semibold'
             : 'text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)]'
           }`}
         >
-          Blog
+          <SiBloglovin className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+          <span>Blog</span>
         </button>
 
         {/* Playground / Hacking Game button */}
         <button
           onClick={onPlaygroundClick}
-          className={`block w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${isPlaygroundActive
+          className={`w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 group ${isPlaygroundActive
             ? 'bg-[var(--docs-surface)] text-[var(--docs-text)] font-semibold'
             : 'text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)]'
           }`}
         >
-          Hacking Game
+          <PiGameControllerFill className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+          <span>Hacking Game</span>
         </button>
 
         {/* Events */}
         {tree?.map((event) => {
-          const emoji = getEventEmoji(event.name);
           return (
             <div key={event.slug} className="space-y-1">
               <div className="flex items-center gap-0">
@@ -219,7 +253,7 @@ export function DocsSidebar({
                   }}
                   className={`
                     flex-1 rounded px-3 py-2 text-left text-sm font-semibold
-                    transition-colors flex items-center justify-between cursor-pointer
+                    transition-colors flex items-center justify-between cursor-pointer group
                     ${activeEventSlug === event.slug
                       ? 'bg-[var(--docs-surface)] text-[var(--docs-text)]'
                       : 'text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)]'
@@ -227,7 +261,7 @@ export function DocsSidebar({
                   `}
                 >
                   <span className="flex items-center gap-1.5">
-                    <span>{emoji}</span>
+                    {getEventIcon(event.name)}
                     <span>{event.name}</span>
                   </span>
                   <span className="text-xs text-[var(--docs-text-soft)]">({event.totalWriteups})</span>
