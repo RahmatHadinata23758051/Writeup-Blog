@@ -44,7 +44,9 @@ if (!GEMINI_API_KEY) {
 let GEMINI_MODEL = 'gemini-2.0-flash';
 
 const WRITEUPS_BASE_DIR = 'C:\\Users\\user\\Nata\\Blog-Writeup\\Writeup';
-const WRITEUPS_FILE_PATH = path.resolve(__dirname, '../src/app/data/writeups.ts');
+const WRITEUPS_FILE_PATH = path.resolve(__dirname, '../src/app/data/writeups.ts'); // shim — kept for backward compat
+const EVENTS_DIR = path.resolve(__dirname, '../src/app/data/writeups/events');
+const INDEX_FILE_PATH = path.resolve(__dirname, '../src/app/data/writeups/index.ts');
 
 // Event folder name → CTF display name mapping
 const EVENT_NAMES = {
@@ -607,29 +609,33 @@ async function main() {
   }
   console.log('');
 
-  // Load existing IDs and dynamic EVENT_NAMES mappings from writeups.ts
-  const existingContent = fs.readFileSync(WRITEUPS_FILE_PATH, 'utf-8');
+  // Load existing IDs and dynamic EVENT_NAMES mappings from per-event files
   const existingIds = new Set();
-  
-  // Parse existing writeups to dynamically map ID prefix -> ctfName
-  const writeupBlocks = existingContent.split(/},\s*\n*\s*{/);
-  for (const block of writeupBlocks) {
-    const idMatch = block.match(/"id":\s*"([^"]+)"/);
-    const ctfNameMatch = block.match(/"ctfName":\s*"([^"]+)"/);
-    if (idMatch && ctfNameMatch) {
-      const id = idMatch[1];
-      const ctfName = ctfNameMatch[1];
-      const eventFolder = id.split('-')[0].toLowerCase();
-      if (eventFolder && !EVENT_NAMES[eventFolder]) {
-        EVENT_NAMES[eventFolder] = ctfName;
+
+  // Read all event files in the events directory
+  const eventFiles = fs.existsSync(EVENTS_DIR)
+    ? fs.readdirSync(EVENTS_DIR).filter(f => f.endsWith('.ts'))
+    : [];
+
+  for (const eventFile of eventFiles) {
+    const filePath = path.join(EVENTS_DIR, eventFile);
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+
+    // Parse existing writeups to dynamically map ID prefix -> ctfName
+    const writeupBlocks = fileContent.split(/},\s*\n*\s*{/);
+    for (const block of writeupBlocks) {
+      const idMatch = block.match(/"id":\s*"([^"]+)"/);
+      const ctfNameMatch = block.match(/"ctfName":\s*"([^"]+)"/);
+      if (idMatch && ctfNameMatch) {
+        const id = idMatch[1];
+        const ctfName = ctfNameMatch[1];
+        const eventFolder = id.split('-')[0].toLowerCase();
+        if (eventFolder && !EVENT_NAMES[eventFolder]) {
+          EVENT_NAMES[eventFolder] = ctfName;
+        }
+        existingIds.add(id);
       }
     }
-  }
-
-  if (!REPROCESS) {
-    const idRegex = /"id":\s*"([^"]+)"/g;
-    let m;
-    while ((m = idRegex.exec(existingContent)) !== null) existingIds.add(m[1]);
   }
 
   // Interactive menu if no args passed
@@ -814,63 +820,112 @@ async function main() {
     return;
   }
 
-  // Write to writeups.ts
-  if (REPROCESS) {
-    // Full rewrite: parse existing, replace matching entries
-    console.log('[i] Reprocess mode — updating existing entries...');
-    let updatedContent = existingContent;
-    for (const w of imported) {
-      // Find and replace existing entry by id
-      const idMarker = `"id": "${w.id}"`;
-      const idx = updatedContent.indexOf(idMarker);
-      if (idx === -1) {
-        // If it wasn't found (maybe the ID was fixed/changed), we should append it instead
-        console.log(`  [i] ID "${w.id}" tidak ditemukan di file asli. Menambahkan di akhir...`);
-        const lastBracket = updatedContent.lastIndexOf('];');
-        if (lastBracket !== -1) {
-          const newEntry = ',\n' + JSON.stringify(w, null, 4);
-          updatedContent = updatedContent.slice(0, lastBracket) + newEntry + '\n' + updatedContent.slice(lastBracket);
+  // ─── Write to per-event files ──────────────────────────────────────────
+  // Helper: convert ctfName → slug → filename (mirrors split-writeups.mjs logic)
+  function ctfNameToSlug(ctfName) {
+    return ctfName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  }
+  function slugToExportName(slug) {
+    return slug.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase()) + 'Writeups';
+  }
+
+  // Group imported writeups by ctfName
+  const byEvent = {};
+  for (const w of imported) {
+    const name = w.ctfName || 'Unknown';
+    if (!byEvent[name]) byEvent[name] = [];
+    byEvent[name].push(w);
+  }
+
+  for (const [ctfName, wList] of Object.entries(byEvent)) {
+    const slug = ctfNameToSlug(ctfName);
+    const exportName = slugToExportName(slug);
+    const eventFilePath = path.join(EVENTS_DIR, `${slug}.ts`);
+
+    if (REPROCESS) {
+      // Update mode: replace matching entries inside the existing event file
+      if (!fs.existsSync(eventFilePath)) {
+        console.log(`  [!] Event file not found for "${ctfName}". Creating new file.`);
+      } else {
+        let fileContent = fs.readFileSync(eventFilePath, 'utf-8');
+        for (const w of wList) {
+          const idMarker = `"id": "${w.id}"`;
+          const idx = fileContent.indexOf(idMarker);
+          if (idx === -1) {
+            // Append at end of array
+            const lastBracket = fileContent.lastIndexOf('];');
+            if (lastBracket !== -1) {
+              const newEntry = ',\n' + JSON.stringify(w, null, 2);
+              fileContent = fileContent.slice(0, lastBracket) + newEntry + '\n' + fileContent.slice(lastBracket);
+            }
+            console.log(`  + Appended: ${w.id}`);
+            continue;
+          }
+          // Find the opening { before this id
+          let start = idx;
+          while (start > 0 && fileContent[start] !== '{') start--;
+          // Find the closing } for this object
+          let depth = 0, end = start;
+          while (end < fileContent.length) {
+            if (fileContent[end] === '{') depth++;
+            else if (fileContent[end] === '}') { depth--; if (depth === 0) { end++; break; } }
+            end++;
+          }
+          fileContent = fileContent.slice(0, start) + JSON.stringify(w, null, 2) + fileContent.slice(end);
+          console.log(`  ↻ Updated: ${w.id}`);
         }
+        if (!DRY_RUN) fs.writeFileSync(eventFilePath, fileContent, 'utf-8');
         continue;
       }
+    }
 
-      // Find the opening { before this id
-      let start = idx;
-      while (start > 0 && updatedContent[start] !== '{') start--;
-
-      // Find the closing } for this object
-      let depth = 0;
-      let end = start;
-      while (end < updatedContent.length) {
-        if (updatedContent[end] === '{') depth++;
-        else if (updatedContent[end] === '}') {
-          depth--;
-          if (depth === 0) { end++; break; }
-        }
-        end++;
+    if (fs.existsSync(eventFilePath)) {
+      // Append to existing event file
+      let fileContent = fs.readFileSync(eventFilePath, 'utf-8');
+      const lastBracket = fileContent.lastIndexOf('];');
+      if (lastBracket === -1) {
+        console.error(`[-] Could not find ]; in ${eventFilePath}`);
+        continue;
       }
-
-      const newEntry = JSON.stringify(w, null, 4);
-      updatedContent = updatedContent.slice(0, start) + newEntry + updatedContent.slice(end);
-      console.log(`  ↻ Updated: ${w.id}`);
+      const entries = wList.map(w => JSON.stringify(w, null, 2)).join(',\n');
+      const updated = fileContent.slice(0, lastBracket) + ',\n' + entries + '\n' + fileContent.slice(lastBracket);
+      if (!DRY_RUN) fs.writeFileSync(eventFilePath, updated, 'utf-8');
+      console.log(`[+] Appended ${wList.length} writeup(s) to writeups/events/${slug}.ts`);
+    } else {
+      // Create new event file
+      const content = [
+        `import type { WriteUp } from '../types';`,
+        ``,
+        `// ${ctfName} — ${wList.length} writeup${wList.length > 1 ? 's' : ''}`,
+        `export const ${exportName}: WriteUp[] = ${JSON.stringify(wList, null, 2)};`,
+        ``,
+      ].join('\n');
+      if (!DRY_RUN) {
+        fs.mkdirSync(EVENTS_DIR, { recursive: true });
+        fs.writeFileSync(eventFilePath, content, 'utf-8');
+        // Update index.ts to include the new event
+        if (fs.existsSync(INDEX_FILE_PATH)) {
+          let indexContent = fs.readFileSync(INDEX_FILE_PATH, 'utf-8');
+          const importLine = `import { ${exportName} } from './events/${slug}';`;
+          const spreadLine = `  ...${exportName},`;
+          if (!indexContent.includes(importLine)) {
+            // Add import after last existing import
+            indexContent = indexContent.replace(
+              /(import \{[^}]+\} from '\..*';\n)(?!import)/,
+              `$1${importLine}\n`
+            );
+            // Add spread inside the array
+            indexContent = indexContent.replace(
+              /export const writeups[^=]*= \[([\s\S]*?)\];/,
+              (_, inner) => `export const writeups: WriteUp[] = [${inner}${spreadLine}\n];`
+            );
+            fs.writeFileSync(INDEX_FILE_PATH, indexContent, 'utf-8');
+            console.log(`[+] Updated writeups/index.ts to include ${slug}`);
+          }
+        }
+      }
+      console.log(`[+] Created new event file: writeups/events/${slug}.ts (${wList.length} writeup(s))`);
     }
-    if (!DRY_RUN) fs.writeFileSync(WRITEUPS_FILE_PATH, updatedContent, 'utf-8');
-  } else {
-    // Append new entries
-    const lastBracket = existingContent.lastIndexOf('];');
-    if (lastBracket === -1) {
-      console.error('[-] Could not find ]; in writeups.ts');
-      process.exit(1);
-    }
-
-    const entries = imported.map(w => JSON.stringify(w, null, 4)).join(',\n');
-    const updatedContent =
-      existingContent.slice(0, lastBracket) +
-      ',\n' + entries + '\n' +
-      existingContent.slice(lastBracket);
-
-    fs.writeFileSync(WRITEUPS_FILE_PATH, updatedContent, 'utf-8');
-    console.log(`[+] Appended ${imported.length} new writeup(s) to writeups.ts`);
   }
 
   // Summary

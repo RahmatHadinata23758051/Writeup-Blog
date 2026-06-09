@@ -3,27 +3,33 @@
 /**
  * Writeup Validation Script
  *
- * Reads src/app/data/writeups.ts as plain text and checks for common
- * authoring issues without needing a TypeScript runtime.
+ * Reads all per-event files from src/app/data/writeups/events/ and checks
+ * for common authoring issues without needing a TypeScript runtime.
  *
  * Usage:
  *   node scripts/validate-writeups.mjs
  */
 
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { readFileSync, readdirSync, existsSync } from 'fs';
+import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const writeupPath = resolve(__dirname, '../src/app/data/writeups.ts');
+const eventsDir = resolve(__dirname, '../src/app/data/writeups/events');
 
-let content;
-try {
-  content = readFileSync(writeupPath, 'utf-8');
-} catch (err) {
-  console.error(`Could not read ${writeupPath}: ${err.message}`);
+if (!existsSync(eventsDir)) {
+  console.error(`Events directory not found: ${eventsDir}`);
   process.exit(1);
 }
+
+// Concatenate all event files into one content blob for regex scanning
+const eventFiles = readdirSync(eventsDir).filter(f => f.endsWith('.ts'));
+let content = '';
+for (const file of eventFiles) {
+  content += readFileSync(join(eventsDir, file), 'utf-8') + '\n';
+}
+
+console.log(`Scanning ${eventFiles.length} event file(s) from writeups/events/...`);
 
 const warnings = [];
 let errorCount = 0;
