@@ -829,6 +829,42 @@ async function main() {
     return slug.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase()) + 'Writeups';
   }
 
+  /**
+   * Fuzzy match: before creating a new file, check if any existing event file
+   * is "close enough" to the candidate slug.
+   *
+   * Strategy — strip all non-alphanumeric from both sides, then check:
+   *   1. Exact match:           "flagyard"    == "flagyard"      → match
+   *   2. Existing is prefix:    "flagyardctf" starts "flagyard"  → match (use existing)
+   *   3. Candidate is prefix:   "flagyard"    starts "flagyard2026" → match (use existing)
+   *
+   * Returns the existing file's slug if a match is found, otherwise null.
+   */
+  function findMatchingEventFile(candidateSlug) {
+    const existingFiles = fs.existsSync(EVENTS_DIR)
+      ? fs.readdirSync(EVENTS_DIR).filter(f => f.endsWith('.ts')).map(f => f.replace('.ts', ''))
+      : [];
+
+    // Raw = only alphanumeric, no separators
+    const rawCandidate = candidateSlug.replace(/_/g, '');
+
+    for (const existingSlug of existingFiles) {
+      const rawExisting = existingSlug.replace(/_/g, '');
+
+      if (
+        rawCandidate === rawExisting ||                      // exact
+        rawCandidate.startsWith(rawExisting) ||             // existing is a prefix (e.g. "flagyard" in "flagyardctf")
+        rawExisting.startsWith(rawCandidate)                // candidate is a prefix (e.g. "flagyard" vs "flagyard2026")
+      ) {
+        if (existingSlug !== candidateSlug) {
+          console.log(`  [~] Fuzzy match: "${candidateSlug}" → existing file "${existingSlug}.ts"`);
+        }
+        return existingSlug;
+      }
+    }
+    return null; // no match → create new file
+  }
+
   // Group imported writeups by ctfName
   const byEvent = {};
   for (const w of imported) {
@@ -837,8 +873,11 @@ async function main() {
     byEvent[name].push(w);
   }
 
+
   for (const [ctfName, wList] of Object.entries(byEvent)) {
-    const slug = ctfNameToSlug(ctfName);
+    const rawSlug = ctfNameToSlug(ctfName);
+    // Use fuzzy match to find an existing file, or fall back to rawSlug for new file
+    const slug = findMatchingEventFile(rawSlug) ?? rawSlug;
     const exportName = slugToExportName(slug);
     const eventFilePath = path.join(EVENTS_DIR, `${slug}.ts`);
 
