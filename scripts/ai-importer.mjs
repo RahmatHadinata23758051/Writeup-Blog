@@ -820,7 +820,53 @@ async function main() {
     return;
   }
 
-  // ─── Write to per-event files ──────────────────────────────────────────
+  // ─── Write helpers ───────────────────────────────────────────────────────
+
+  /**
+   * String-aware brace scanner.
+   * Finds the index AFTER the closing } of the JSON object starting at `start`.
+   * Ignores { and } that appear inside string literals (handles \" escapes).
+   */
+  function findObjectEnd(content, start) {
+    let i = start;
+    let depth = 0;
+    let inString = false;
+
+    while (i < content.length) {
+      const ch = content[i];
+      if (inString) {
+        if (ch === '\\') { i += 2; continue; }   // skip escaped char
+        if (ch === '"') inString = false;
+      } else {
+        if (ch === '"') { inString = true; }
+        else if (ch === '{') { depth++; }
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) return i + 1;
+        }
+      }
+      i++;
+    }
+    return -1; // not found
+  }
+
+  /**
+   * Validates a written event file by extracting the array literal and JSON-parsing it.
+   * Logs a warning (but does NOT crash) if validation fails.
+   */
+  function validateEventFile(filePath, context = '') {
+    try {
+      const src = fs.readFileSync(filePath, 'utf-8');
+      const arrayMatch = src.match(/=\s*(\[[\s\S]*\]);?\s*$/);
+      if (!arrayMatch) { throw new Error('Could not find array literal'); }
+      JSON.parse(arrayMatch[1]);
+    } catch (e) {
+      console.error(`  ⚠ VALIDATION FAILED ${context ? `(${context})` : ''}: ${path.basename(filePath)}`);
+      console.error(`    ${e.message}`);
+      console.error(`    File may be corrupt — check it manually before reloading the dev server.`);
+    }
+  }
+
   // Helper: convert ctfName → slug → filename (mirrors split-writeups.mjs logic)
   function ctfNameToSlug(ctfName) {
     return ctfName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -903,17 +949,19 @@ async function main() {
           // Find the opening { before this id
           let start = idx;
           while (start > 0 && fileContent[start] !== '{') start--;
-          // Find the closing } for this object
-          let depth = 0, end = start;
-          while (end < fileContent.length) {
-            if (fileContent[end] === '{') depth++;
-            else if (fileContent[end] === '}') { depth--; if (depth === 0) { end++; break; } }
-            end++;
+          // Find the closing } for this object — string-aware so { } inside code/strings are ignored
+          const objEnd = findObjectEnd(fileContent, start);
+          if (objEnd === -1) {
+            console.error(`  ✗ Could not find closing } for ${w.id} — skipping update.`);
+            continue;
           }
-          fileContent = fileContent.slice(0, start) + JSON.stringify(w, null, 2) + fileContent.slice(end);
+          fileContent = fileContent.slice(0, start) + JSON.stringify(w, null, 2) + fileContent.slice(objEnd);
           console.log(`  ↻ Updated: ${w.id}`);
         }
-        if (!DRY_RUN) fs.writeFileSync(eventFilePath, fileContent, 'utf-8');
+        if (!DRY_RUN) {
+          fs.writeFileSync(eventFilePath, fileContent, 'utf-8');
+          validateEventFile(eventFilePath, 'after reprocess');
+        }
         continue;
       }
     }
@@ -928,7 +976,10 @@ async function main() {
       }
       const entries = wList.map(w => JSON.stringify(w, null, 2)).join(',\n');
       const updated = fileContent.slice(0, lastBracket) + ',\n' + entries + '\n' + fileContent.slice(lastBracket);
-      if (!DRY_RUN) fs.writeFileSync(eventFilePath, updated, 'utf-8');
+      if (!DRY_RUN) {
+        fs.writeFileSync(eventFilePath, updated, 'utf-8');
+        validateEventFile(eventFilePath, 'after append');
+      }
       console.log(`[+] Appended ${wList.length} writeup(s) to writeups/events/${slug}.ts`);
     } else {
       // Create new event file
