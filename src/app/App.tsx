@@ -8,6 +8,7 @@ import { DocsEventPage } from './components/pages/DocsEventPage';
 import { DocsWriteupPage } from './components/pages/DocsWriteupPage';
 import { DocsBlogListPage } from './components/pages/DocsBlogListPage';
 import { DocsBlogPostPage } from './components/pages/DocsBlogPostPage';
+import { BreachProtocol } from './components/pages/BreachProtocol';
 import { buildDocsTree } from './data/docsTree';
 import { writeups } from './data/writeups';
 import { blogPosts } from './data/blog';
@@ -68,7 +69,8 @@ type DocsView =
   | { type: 'event'; eventSlug: string }
   | { type: 'writeup'; writeupId: string }
   | { type: 'blog-list' }
-  | { type: 'blog-post'; postId: string };
+  | { type: 'blog-post'; postId: string }
+  | { type: 'hacking-game' };
 
 export default function App() {
   const [docsView, setDocsView] = useState<DocsView>({ type: 'home' });
@@ -96,6 +98,8 @@ export default function App() {
         } else {
           setDocsView({ type: 'blog-list' });
         }
+      } else if (parts[0] === 'playground') {
+        setDocsView({ type: 'hacking-game' });
       } else if (parts[0] === 'writeup' && parts[1]) {
         const writeupId = parts.slice(1).join('/');
 
@@ -146,6 +150,8 @@ export default function App() {
       window.location.hash = '#/blog';
     } else if (view.type === 'blog-post') {
       window.location.hash = `#/blog/${view.postId}`;
+    } else if (view.type === 'hacking-game') {
+      window.location.hash = '#/playground';
     }
   };
 
@@ -235,14 +241,19 @@ export default function App() {
         description: 'The requested blog post was not found.',
       });
     }
+  } else if (docsView.type === 'hacking-game') {
+    updateMetaTags({
+      title: 'Breach Protocol - Nattt',
+      description: 'Hack the cyber matrix in our interactive Breach Protocol minigame.',
+    });
   } else {
     updateMetaTags({ title: 'Nattt', description: 'Nattt CTF Writeups Collection' });
   }
 
   // Generate TOC based on view
   const tocItems = useMemo(() => {
-    if (docsView.type === 'home' || docsView.type === 'blog-list') {
-      return []; // Return empty array so DocsLayout collapses the right side on Home/Blog List
+    if (docsView.type === 'home' || docsView.type === 'blog-list' || docsView.type === 'hacking-game') {
+      return []; // Return empty array so DocsLayout collapses the right side on Home/Blog List/Game
     } else if (docsView.type === 'event' && activeEvent) {
       const items: Array<{ id: string; label: string; depth?: number }> = [];
 
@@ -300,6 +311,8 @@ export default function App() {
           onPostClick={(postId) => handleNavigate({ type: 'blog-post', postId })}
         />
       );
+    } else if (docsView.type === 'hacking-game') {
+      return <BreachProtocol />;
     } else if (docsView.type === 'blog-post') {
       const activePost = blogPosts.find((p) => p.id === docsView.postId);
       if (!activePost) return <div className="p-8 text-center text-[var(--docs-text)]">Blog post not found.</div>;
@@ -346,8 +359,10 @@ export default function App() {
             activeEventSlug={activeEvent?.slug}
             activeWriteupId={activeWriteupNode?.id}
             isBlogActive={docsView.type === 'blog-list' || docsView.type === 'blog-post'}
+            isPlaygroundActive={docsView.type === 'hacking-game'}
             onHomeClick={() => handleNavigate({ type: 'home' })}
             onBlogClick={() => handleNavigate({ type: 'blog-list' })}
+            onPlaygroundClick={() => handleNavigate({ type: 'hacking-game' })}
             onEventClick={(eventSlug) => handleNavigate({ type: 'event', eventSlug })}
             onWriteupClick={(writeupId) => handleNavigate({ type: 'writeup', writeupId })}
           />

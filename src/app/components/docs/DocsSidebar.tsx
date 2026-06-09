@@ -11,6 +11,8 @@ interface DocsSidebarProps {
   onWriteupClick?: (writeupId: string) => void;
   isBlogActive?: boolean;
   onBlogClick?: () => void;
+  isPlaygroundActive?: boolean;
+  onPlaygroundClick?: () => void;
   mode?: 'tree' | 'events-only';
 }
 
@@ -45,6 +47,8 @@ export function DocsSidebar({
   onWriteupClick,
   isBlogActive,
   onBlogClick,
+  isPlaygroundActive,
+  onPlaygroundClick,
   mode = 'tree',
 }: DocsSidebarProps) {
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(
@@ -91,6 +95,22 @@ export function DocsSidebar({
           >
             <span className="text-sm">📝</span>
             <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Blog</span>
+          </button>
+
+          {/* Playground / Hacking Game button */}
+          <button
+            type="button"
+            onClick={onPlaygroundClick}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer ${isPlaygroundActive
+                ? 'bg-[var(--docs-text)] text-[var(--docs-bg)] font-bold'
+                : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-surface-hover)]'
+              }`}
+          >
+            <span className="text-sm">🎮</span>
+            <span className="font-sans uppercase tracking-wider text-[13px] font-bold">Hacking Game</span>
+            <span className="text-[9.5px] ml-auto font-mono text-[var(--docs-accent)] bg-[var(--docs-accent-soft)] px-1.5 py-0.5 rounded font-bold border border-[var(--docs-accent-border)] animate-pulse">
+              • HACK
+            </span>
           </button>
 
           <div className="py-2">
@@ -157,6 +177,17 @@ export function DocsSidebar({
           }`}
         >
           Blog
+        </button>
+
+        {/* Playground / Hacking Game button */}
+        <button
+          onClick={onPlaygroundClick}
+          className={`block w-full rounded px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${isPlaygroundActive
+            ? 'bg-[var(--docs-surface)] text-[var(--docs-text)] font-semibold'
+            : 'text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)]'
+          }`}
+        >
+          Hacking Game
         </button>
 
         {/* Events */}

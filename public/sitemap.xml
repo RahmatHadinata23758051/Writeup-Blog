@@ -511,6 +511,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/gpnctf2026-crypto-justfollowtherecipe</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/gpnctf2026-misc-customerservice</loc>
     <lastmod>2026-06-08</lastmod>
     <changefreq>never</changefreq>
