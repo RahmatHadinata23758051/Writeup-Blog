@@ -481,12 +481,7 @@ export const gpnctf2026Writeups: WriteUp[] = [
   "terminalOutputs": [],
   "flag": "GPNCTF{sO_M4Ny_wAys_TO_LeAk_1N_N0Rma1_PyThOn_UAf_OlD_8UT_G0Ld}",
   "lessonsLearned": []
-}
-    ],
-    "terminalOutputs": [],
-    "flag": "GPNCTF{sO_M4Ny_wAys_TO_LeAk_1N_N0Rma1_PyThOn_UAf_OlD_8UT_G0Ld}",
-    "lessonsLearned": []
-  },
+},
   {
   "id": "gpnctf2026-rev-deliveryproblem",
   "title": "Konigsberg Delivery Problem",

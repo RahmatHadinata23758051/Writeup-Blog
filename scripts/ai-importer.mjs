@@ -920,67 +920,70 @@ async function main() {
   }
 
 
+  /**
+   * Read an event .ts file and return:
+   *   - prefix: everything before the array literal  (e.g. "import type...\n\nexport const ... = ")
+   *   - items:  the parsed WriteUp array
+   * Throws if the file cannot be parsed.
+   */
+  function readEventFile(filePath) {
+    const src = fs.readFileSync(filePath, 'utf-8');
+    // Match everything up to and including the "= " before the array
+    const prefixMatch = src.match(/^([\s\S]*?=\s*)(\[[\s\S]*\]);?\s*$/);
+    if (!prefixMatch) throw new Error(`Cannot locate array literal in ${path.basename(filePath)}`);
+    const prefix = prefixMatch[1];
+    const items = JSON.parse(prefixMatch[2]);
+    return { prefix, items };
+  }
+
+  /** Serialize and write an event file back to disk. */
+  function writeEventFile(filePath, prefix, items) {
+    const content = prefix + JSON.stringify(items, null, 2) + ';\n';
+    fs.writeFileSync(filePath, content, 'utf-8');
+  }
+
+  // Group imported writeups by ctfName
+  const byEvent = {};
+  for (const w of imported) {
+    const name = w.ctfName || 'Unknown';
+    if (!byEvent[name]) byEvent[name] = [];
+    byEvent[name].push(w);
+  }
+
   for (const [ctfName, wList] of Object.entries(byEvent)) {
     const rawSlug = ctfNameToSlug(ctfName);
-    // Use fuzzy match to find an existing file, or fall back to rawSlug for new file
     const slug = findMatchingEventFile(rawSlug) ?? rawSlug;
     const exportName = slugToExportName(slug);
     const eventFilePath = path.join(EVENTS_DIR, `${slug}.ts`);
 
-    if (REPROCESS) {
-      // Update mode: replace matching entries inside the existing event file
-      if (!fs.existsSync(eventFilePath)) {
-        console.log(`  [!] Event file not found for "${ctfName}". Creating new file.`);
-      } else {
-        let fileContent = fs.readFileSync(eventFilePath, 'utf-8');
-        for (const w of wList) {
-          const idMarker = `"id": "${w.id}"`;
-          const idx = fileContent.indexOf(idMarker);
-          if (idx === -1) {
-            // Append at end of array
-            const lastBracket = fileContent.lastIndexOf('];');
-            if (lastBracket !== -1) {
-              const newEntry = ',\n' + JSON.stringify(w, null, 2);
-              fileContent = fileContent.slice(0, lastBracket) + newEntry + '\n' + fileContent.slice(lastBracket);
-            }
-            console.log(`  + Appended: ${w.id}`);
-            continue;
-          }
-          // Find the opening { before this id
-          let start = idx;
-          while (start > 0 && fileContent[start] !== '{') start--;
-          // Find the closing } for this object — string-aware so { } inside code/strings are ignored
-          const objEnd = findObjectEnd(fileContent, start);
-          if (objEnd === -1) {
-            console.error(`  ✗ Could not find closing } for ${w.id} — skipping update.`);
-            continue;
-          }
-          fileContent = fileContent.slice(0, start) + JSON.stringify(w, null, 2) + fileContent.slice(objEnd);
-          console.log(`  ↻ Updated: ${w.id}`);
-        }
-        if (!DRY_RUN) {
-          fs.writeFileSync(eventFilePath, fileContent, 'utf-8');
-          validateEventFile(eventFilePath, 'after reprocess');
-        }
-        continue;
-      }
-    }
-
     if (fs.existsSync(eventFilePath)) {
-      // Append to existing event file
-      let fileContent = fs.readFileSync(eventFilePath, 'utf-8');
-      const lastBracket = fileContent.lastIndexOf('];');
-      if (lastBracket === -1) {
-        console.error(`[-] Could not find ]; in ${eventFilePath}`);
+      // ── Read, parse, modify in-memory, rewrite ───────────────────────────
+      let prefix, items;
+      try {
+        ({ prefix, items } = readEventFile(eventFilePath));
+      } catch (e) {
+        console.error(`  ✗ Could not parse ${slug}.ts: ${e.message}`);
+        console.error(`    Skipping writes for ${ctfName} — fix the file manually first.`);
         continue;
       }
-      const entries = wList.map(w => JSON.stringify(w, null, 2)).join(',\n');
-      const updated = fileContent.slice(0, lastBracket) + ',\n' + entries + '\n' + fileContent.slice(lastBracket);
-      if (!DRY_RUN) {
-        fs.writeFileSync(eventFilePath, updated, 'utf-8');
-        validateEventFile(eventFilePath, 'after append');
+
+      for (const w of wList) {
+        const existingIdx = items.findIndex(x => x.id === w.id);
+        if (existingIdx !== -1) {
+          if (REPROCESS) {
+            items[existingIdx] = w;
+            console.log(`  ↻ Updated: ${w.id}`);
+          } else {
+            console.log(`  [skip] Already exists: ${w.id}`);
+          }
+        } else {
+          items.push(w);
+          console.log(`  + Appended: ${w.id}`);
+        }
       }
-      console.log(`[+] Appended ${wList.length} writeup(s) to writeups/events/${slug}.ts`);
+
+      if (!DRY_RUN) writeEventFile(eventFilePath, prefix, items);
+      console.log(`[+] Saved ${wList.length} writeup(s) to writeups/events/${slug}.ts`);
     } else {
       // Create new event file
       const content = [
