@@ -8,7 +8,7 @@ import { DocsEventPage } from './components/pages/DocsEventPage';
 import { DocsWriteupPage } from './components/pages/DocsWriteupPage';
 import { DocsBlogListPage } from './components/pages/DocsBlogListPage';
 import { DocsBlogPostPage } from './components/pages/DocsBlogPostPage';
-import { BreachProtocol } from './components/pages/BreachProtocol';
+import { PlaygroundPage } from './components/pages/PlaygroundPage';
 import { buildDocsTree } from './data/docsTree';
 import { writeups } from './data/writeups';
 import { blogPosts } from './data/blog';
@@ -312,7 +312,7 @@ export default function App() {
         />
       );
     } else if (docsView.type === 'hacking-game') {
-      return <BreachProtocol />;
+      return <PlaygroundPage />;
     } else if (docsView.type === 'blog-post') {
       const activePost = blogPosts.find((p) => p.id === docsView.postId);
       if (!activePost) return <div className="p-8 text-center text-[var(--docs-text)]">Blog post not found.</div>;
