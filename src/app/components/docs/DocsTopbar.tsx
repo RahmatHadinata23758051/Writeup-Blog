@@ -1,10 +1,149 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FaPlay, FaSquare, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 
 interface DocsTopbarProps {
   title?: string;
   onHomeClick?: () => void;
   onMenuClick?: () => void;
   onSearchClick?: () => void;
+}
+
+function LofiRadio() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const isLoadingRef = useRef(false);
+  const isMutedRef = useRef(false);
+  const volume = 0.15;
+
+  const togglePlay = async () => {
+    const AudioContextClass = typeof window !== 'undefined' ? (window.AudioContext || (window as any).webkitAudioContext) : null;
+    if (!AudioContextClass) return;
+
+    if (isPlaying) {
+      if (sourceNodeRef.current) {
+        try {
+          sourceNodeRef.current.stop();
+        } catch (e) {}
+        sourceNodeRef.current = null;
+      }
+      setIsPlaying(false);
+    } else {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContextClass();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+
+      if (!masterGainRef.current) {
+        masterGainRef.current = ctx.createGain();
+        masterGainRef.current.connect(ctx.destination);
+      }
+      masterGainRef.current.gain.setValueAtTime(isMutedRef.current ? 0 : volume, ctx.currentTime);
+
+      setIsPlaying(true);
+
+      // Fetch and decode once
+      if (!audioBufferRef.current && !isLoadingRef.current) {
+        isLoadingRef.current = true;
+        try {
+          const response = await fetch('/lofi-bgm.mp3');
+          const arrayBuffer = await response.arrayBuffer();
+          audioBufferRef.current = await ctx.decodeAudioData(arrayBuffer);
+        } catch (err) {
+          console.error("Failed to load or decode lofi audio:", err);
+          setIsPlaying(false);
+          isLoadingRef.current = false;
+          return;
+        }
+        isLoadingRef.current = false;
+      }
+
+      const buffer = audioBufferRef.current;
+      if (!buffer) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create new buffer source node
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.loopStart = 0;
+      source.loopEnd = 13.0; // Loop precisely at 13 seconds
+
+      source.connect(masterGainRef.current);
+      source.start(0);
+      sourceNodeRef.current = source;
+    }
+  };
+
+  const toggleMute = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    isMutedRef.current = nextMuted;
+
+    if (masterGainRef.current && audioCtxRef.current) {
+      const targetVolume = nextMuted ? 0 : volume;
+      masterGainRef.current.gain.setValueAtTime(targetVolume, audioCtxRef.current.currentTime);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (sourceNodeRef.current) {
+        try {
+          sourceNodeRef.current.stop();
+        } catch (e) {}
+      }
+    };
+  }, []);
+
+  return (
+    <div className="flex items-center gap-1 bg-[var(--docs-bg-soft)] border border-[var(--docs-border-soft)] rounded-md px-1.5 py-0.5 select-none mr-2">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes retro-bounce-1 { 0%, 100% { height: 20%; } 50% { height: 80%; } }
+        @keyframes retro-bounce-2 { 0%, 100% { height: 15%; } 50% { height: 95%; } }
+        @keyframes retro-bounce-3 { 0%, 100% { height: 30%; } 50% { height: 70%; } }
+        .bar-anim-1 { animation: retro-bounce-1 0.7s ease-in-out infinite; }
+        .bar-anim-2 { animation: retro-bounce-2 0.5s ease-in-out infinite; }
+        .bar-anim-3 { animation: retro-bounce-3 0.8s ease-in-out infinite; }
+      `}} />
+      
+      {/* Play/Stop Button */}
+      <button
+        type="button"
+        onClick={togglePlay}
+        className="p-1 rounded hover:bg-[var(--docs-surface)] text-[var(--docs-text-soft)] hover:text-[var(--docs-text)] transition-colors flex items-center justify-center cursor-pointer"
+        title={isPlaying ? "Stop cozy lofi" : "Play cozy lofi"}
+      >
+        {isPlaying ? <FaSquare className="h-2.5 w-2.5" /> : <FaPlay className="h-2.5 w-2.5" />}
+      </button>
+
+      {/* Mute Button */}
+      <button
+        type="button"
+        onClick={toggleMute}
+        className="p-1 rounded hover:bg-[var(--docs-surface)] text-[var(--docs-text-soft)] hover:text-[var(--docs-text)] transition-colors flex items-center justify-center cursor-pointer"
+        title={isMuted ? "Unmute" : "Mute"}
+      >
+        {isMuted ? <FaVolumeMute className="h-2.5 w-2.5" /> : <FaVolumeUp className="h-2.5 w-2.5" />}
+      </button>
+
+      {/* Tiny Equalizer Visualizer */}
+      <div className="flex items-end gap-[1.5px] h-3 px-0.5 select-none w-4">
+        <div className={`w-[2px] bg-[var(--docs-accent)] rounded-t ${isPlaying && !isMuted ? 'bar-anim-1' : ''}`} style={{ height: '30%' }} />
+        <div className={`w-[2px] bg-[var(--docs-accent)] rounded-t ${isPlaying && !isMuted ? 'bar-anim-2' : ''}`} style={{ height: '15%' }} />
+        <div className={`w-[2px] bg-[var(--docs-accent)] rounded-t ${isPlaying && !isMuted ? 'bar-anim-3' : ''}`} style={{ height: '45%' }} />
+      </div>
+    </div>
+  );
 }
 
 export function DocsTopbar({
@@ -81,6 +220,7 @@ export function DocsTopbar({
 
         {/* Right: Extras */}
         <div className="flex items-center gap-3">
+          <LofiRadio />
           <a
             href="https://medium.com/@rsafei731"
             target="_blank"

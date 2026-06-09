@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { DocsEventNode } from '../../data/docsTree';
 
 // React Icons
@@ -69,6 +69,7 @@ export function getEventIcon(eventName: string) {
   const IconComponent = eventIcons[index];
   return <IconComponent className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />;
 }
+
 
 export function DocsSidebar({
   tree,

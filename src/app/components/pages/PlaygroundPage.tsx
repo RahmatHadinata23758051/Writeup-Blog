@@ -23,71 +23,73 @@ function PixelHacker() {
     // Rust theme color palette
     const PALETTE: Record<string, string> = {
       '.': 'transparent',
-      'H': '#3a2212', // Hair (brown)
+      'H': '#3a2212', // Hair / boots (dark brown)
       'S': '#fcd2b2', // Skin (peach)
       'T': '#d44d26', // Shirt (accent rust)
-      'L': '#2b2b2b', // Laptop body (dark charcoal)
+      'P': '#2b2b2b', // Pants (dark charcoal)
+      'C': '#4b5563', // Chair (steel grey)
+      'L': '#9ca3af', // Laptop (silver grey)
       'G': '#ffe6cc', // Screen glow (warm white)
-      'D': '#8a5a36', // Desk (wood brown)
+      'D': '#8a5a36', // Desk / floor (wood brown)
       'W': '#ffb366', // Typing sparks
     };
 
-    // Frame A: Arms resting, screen glow normal
+    // Frame A: Arms resting, typing idle
     const FRAME_A = [
-      "....HHHH........",
-      "...HHHHHH.......",
-      "...HSSSSHH......",
-      "...HSSSSH.......",
-      "....SSSS........",
-      "...TTTTTT.......",
-      "..TTTTTTTT......",
-      ".TTTTTTTTTT.....",
-      ".TT......TT.....",
-      ".........TT.GG..",
-      ".........TTLGG.L",
-      "..........LLLLLL",
-      "..........LLLL..",
-      "DDDDDDDDDDDDDDDD",
+      "................",
+      "................",
+      "....HHHHHH......",
+      "...HHHHHHHH.....",
+      "...HHHSSSSSS....",
+      "....HHSSSSS.....",
+      ".....TTTTTT.....",
+      "....TTTTTTTT....",
+      "...CTTTTTTSS....",
+      "...CTTTTTT.SSGL.",
+      "..CCPPPPPP..LL..",
+      "..C.C....PP.DDDD",
+      "..C.C....PP.D..D",
+      "..C.C...HH..D..D",
       "DDDDDDDDDDDDDDDD",
       "................"
     ];
 
     // Frame B: Left arm typing, sparks rising
     const FRAME_B = [
-      "....HHHH........",
-      "...HHHHHH.......",
-      "...HSSSSHH......",
-      "...HSSSSH.......",
-      "....SSSS........",
-      "...TTTTTT.......",
-      "..TTTTTTTT......",
-      ".TTTTTTTTTT.....",
-      ".TT.T....TT..W..",
-      "...T.....TT.GG..",
-      ".........TTLGG.L",
-      "..........LLLLLL",
-      "..........LLLL..",
-      "DDDDDDDDDDDDDDDD",
+      "................",
+      "................",
+      "....HHHHHH......",
+      "...HHHHHHHH.....",
+      "...HHHSSSSSS....",
+      "....HHSSSSS.....",
+      ".....TTTTTT.....",
+      "....TTTTTTTT....",
+      "...CTTTTTTTS....",
+      "...CTTTTTT..SGLW",
+      "..CCPPPPPP..LL..",
+      "..C.C....PP.DDDD",
+      "..C.C....PP.D..D",
+      "..C.C...HH..D..D",
       "DDDDDDDDDDDDDDDD",
       "................"
     ];
 
     // Frame C: Right arm typing, sparks rising
     const FRAME_C = [
-      "....HHHH........",
-      "...HHHHHH.......",
-      "...HSSSSHH......",
-      "...HSSSSH.......",
-      "....SSSS........",
-      "...TTTTTT.......",
-      "..TTTTTTTT......",
-      ".TTTTTTTTTT.....",
-      ".TT......TT.T...",
-      ".........TT.GGT.",
-      ".........TTLGG.L",
-      "..........LLLLLL",
-      "..........LLLL..",
-      "DDDDDDDDDDDDDDDD",
+      "................",
+      "................",
+      "....HHHHHH......",
+      "...HHHHHHHH.....",
+      "...HHHSSSSSS....",
+      "....HHSSSSS.....",
+      ".....TTTTTT.....",
+      "....TTTTTTTT....",
+      "...CTTTTTTT.S...",
+      "...CTTTTTT.S.GL.",
+      "..CCPPPPPP..LL..",
+      "..C.C....PP.DDDD",
+      "..C.C....PP.D..D",
+      "..C.C...HH..D..D",
       "DDDDDDDDDDDDDDDD",
       "................"
     ];
@@ -269,7 +271,7 @@ export function PlaygroundPage() {
                 <div className="flex items-center gap-2">
                   <Gamepad2 className="h-6 w-6 text-[var(--docs-accent)]" />
                   <h1 className="text-3xl font-bold font-display text-[var(--docs-text)] tracking-tighter">
-                    Hacker Arcade
+                    Game?!
                   </h1>
                 </div>
                 <p className="text-sm font-serif text-[var(--docs-text-muted)] italic">
