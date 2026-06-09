@@ -942,13 +942,6 @@ async function main() {
     fs.writeFileSync(filePath, content, 'utf-8');
   }
 
-  // Group imported writeups by ctfName
-  const byEvent = {};
-  for (const w of imported) {
-    const name = w.ctfName || 'Unknown';
-    if (!byEvent[name]) byEvent[name] = [];
-    byEvent[name].push(w);
-  }
 
   for (const [ctfName, wList] of Object.entries(byEvent)) {
     const rawSlug = ctfNameToSlug(ctfName);
