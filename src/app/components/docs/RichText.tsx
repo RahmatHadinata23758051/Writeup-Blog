@@ -35,8 +35,8 @@ function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) 
 const renderInline = (inputText: string): React.ReactNode[] => {
   if (!inputText) return [];
 
-  // Split by block math ($$...$$), inline math ($...$), inline code (`...`), bold (**...**), and markdown links ([text](url))
-  const regex = /(\$\$.*?\$\$|\$.*?\$|`.*?`|\*\*.*?\*\*|\[[^\]]+\]\([^)]+\))/gs;
+  // Split by block math ($$...$$), inline math ($...$), inline code (`...`), bold (**...**), markdown images (![alt](url)), and markdown links ([text](url))
+  const regex = /(\$\$.*?\$\$|\$.*?\$|`.*?`|\*\*.*?\*\*|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))/gs;
   const parts = inputText.split(regex);
 
   return parts.map((part, index) => {
@@ -82,6 +82,28 @@ const renderInline = (inputText: string): React.ReactNode[] => {
     } else if (part.startsWith('**') && part.endsWith('**')) {
       const boldText = part.slice(2, -2);
       return <strong key={index}>{renderInline(boldText)}</strong>;
+    } else if (part.startsWith('![') && part.endsWith(')')) {
+      const imgMatch = part.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+      if (imgMatch) {
+        const altText = imgMatch[1];
+        const src = imgMatch[2];
+        return (
+          <span key={index} className="block my-6 text-center">
+            <img
+              src={src}
+              alt={altText}
+              className="mx-auto rounded-lg border border-[var(--docs-border-soft)] shadow-md max-w-full h-auto object-contain bg-[var(--docs-surface)]"
+              style={{ maxHeight: '450px' }}
+            />
+            {altText && (
+              <span className="block mt-2 text-xs font-mono text-[var(--docs-text-soft)] tracking-wider">
+                {altText}
+              </span>
+            )}
+          </span>
+        );
+      }
+      return part;
     } else if (part.startsWith('[') && part.endsWith(')')) {
       const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
       if (linkMatch) {
