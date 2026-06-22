@@ -5,16 +5,51 @@ export const ctftimeProfile: CtftimeTeamProfile = {
   teamUrl: "https://ctftime.org/team/408130",
   teamName: "Roblox-Labs",
   country: "ID",
-  globalRank: 88,
+  globalRank: 78,
   countryRank: null,
-  ratingPoints: 334.568532376,
-  lastUpdated: "2026-06-08",
+  ratingPoints: 351.202784609,
+  lastUpdated: "2026-06-22",
   events: [
+  {
+    "eventName": "RIFFHACK: Black Market Break-In",
+    "place": 41,
+    "points": 4675,
+    "ratingPoints": 0,
+    "ctftimeUrl": "https://ctftime.org/event/3297"
+  },
+  {
+    "eventName": "Sieberrsec CTF 7.0",
+    "place": 27,
+    "points": 5039,
+    "ratingPoints": 0,
+    "ctftimeUrl": "https://ctftime.org/event/3299"
+  },
+  {
+    "eventName": "SCTF 2026",
+    "place": 115,
+    "points": 513,
+    "ratingPoints": 1.599,
+    "ctftimeUrl": "https://ctftime.org/event/3314"
+  },
+  {
+    "eventName": "Anti-Slop CTF 2026",
+    "place": 63,
+    "points": 1585,
+    "ratingPoints": 6.64,
+    "ctftimeUrl": "https://ctftime.org/event/3272"
+  },
+  {
+    "eventName": "boroCTF 2026",
+    "place": 45,
+    "points": 14100,
+    "ratingPoints": 0,
+    "ctftimeUrl": "https://ctftime.org/event/3309"
+  },
   {
     "eventName": "DalCTF 2026",
     "place": 27,
     "points": 5461,
-    "ratingPoints": 0,
+    "ratingPoints": 15.672,
     "ctftimeUrl": "https://ctftime.org/event/3320"
   },
   {
@@ -23,6 +58,13 @@ export const ctftimeProfile: CtftimeTeamProfile = {
     "points": 182,
     "ratingPoints": 1.654,
     "ctftimeUrl": "https://ctftime.org/event/3109"
+  },
+  {
+    "eventName": "GPN CTF 2026",
+    "place": 33,
+    "points": 2475,
+    "ratingPoints": 39.773,
+    "ctftimeUrl": "https://ctftime.org/event/3041"
   },
   {
     "eventName": "bhackari CTF 2026",
@@ -65,6 +107,13 @@ export const ctftimeProfile: CtftimeTeamProfile = {
     "points": 3273,
     "ratingPoints": 9.751,
     "ctftimeUrl": "https://ctftime.org/event/3270"
+  },
+  {
+    "eventName": "DEF CON CTF Qualifier 2026",
+    "place": 449,
+    "points": 1,
+    "ratingPoints": 0.147,
+    "ctftimeUrl": "https://ctftime.org/event/3205"
   },
   {
     "eventName": "0xV01D CTF 2026",
@@ -301,7 +350,7 @@ export const ctftimeProfile: CtftimeTeamProfile = {
     "eventName": "Hack for a Change 2026 March: UN SDG 3",
     "place": 19,
     "points": 2950,
-    "ratingPoints": 21.976,
+    "ratingPoints": 22.003,
     "ctftimeUrl": "https://ctftime.org/event/3184"
   },
   {
@@ -553,14 +602,14 @@ export const ctftimeProfile: CtftimeTeamProfile = {
     "eventName": "Pragyan CTF 2026",
     "place": 82,
     "points": 1650,
-    "ratingPoints": 0.471,
+    "ratingPoints": 0.474,
     "ctftimeUrl": "https://ctftime.org/event/3058"
   },
   {
     "eventName": "PascalCTF 2026",
     "place": 146,
     "points": 4523,
-    "ratingPoints": 14.791,
+    "ratingPoints": 14.809,
     "ctftimeUrl": "https://ctftime.org/event/2767"
   },
   {
