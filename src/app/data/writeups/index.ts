@@ -23,6 +23,8 @@ import { thcon2026Writeups } from './events/thcon_2026';
 import { them2026Writeups } from './events/them_2026';
 import { tjcscWriteups } from './events/tjcsc';
 import { vuwctf2025Writeups } from './events/vuwctf_2025';
+import { boroCtfWriteups } from './events/boro_ctf';
+import { siebersecCtfWriteups } from './events/siebersec_ctf';
 
 export type { WriteUp, Category, Difficulty, MathFormula, TerminalOutput } from './types';
 
@@ -49,4 +51,6 @@ export const writeups: WriteUp[] = [
   ...them2026Writeups,
   ...tjcscWriteups,
   ...vuwctf2025Writeups,
+  ...boroCtfWriteups,
+  ...siebersecCtfWriteups,
 ];

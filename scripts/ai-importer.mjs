@@ -280,7 +280,7 @@ function mapCategory(categoryFolder) {
   if (norm.startsWith('crypto')) return 'Crypto';
   if (norm.startsWith('pwn')) return 'Pwn';
   if (norm.startsWith('rev')) return 'Reverse';
-  if (norm.startsWith('forens')) return 'Forensics';
+  if (norm.startsWith('forens') || norm.startsWith('foren')) return 'Forensics';
   if (norm.startsWith('misc')) return 'Misc';
   if (norm.startsWith('osint')) return 'OSINT';
   if (norm.startsWith('stegano') || norm.startsWith('steg')) return 'Stegano';
@@ -1020,7 +1020,9 @@ async function main() {
   console.log('║          Summary             ║');
   console.log('╚══════════════════════════════╝');
   imported.forEach(w => {
-    console.log(`  • ${w.ctfName.padEnd(15)} [${w.category.padEnd(10)}] ${w.title}`);
+    const ctf = w.ctfName || 'Unknown';
+    const cat = w.category || 'Unknown';
+    console.log(`  • ${ctf.padEnd(15)} [${cat.padEnd(10)}] ${w.title}`);
   });
   console.log('');
   console.log('[✓] Done! Refresh your dev server to see changes.');
