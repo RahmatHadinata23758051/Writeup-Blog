@@ -25,6 +25,9 @@ import { tjcscWriteups } from './events/tjcsc';
 import { vuwctf2025Writeups } from './events/vuwctf_2025';
 import { boroCtfWriteups } from './events/boro_ctf';
 import { siebersecCtfWriteups } from './events/siebersec_ctf';
+import { v1tCtfWriteups } from './events/v1t_ctf';
+import { tracebashWriteups } from './events/tracebash';
+import { projectSekai2026Writeups } from './events/project_sekai_2026';
 
 export type { WriteUp, Category, Difficulty, MathFormula, TerminalOutput } from './types';
 
@@ -53,4 +56,7 @@ export const writeups: WriteUp[] = [
   ...vuwctf2025Writeups,
   ...boroCtfWriteups,
   ...siebersecCtfWriteups,
+  ...v1tCtfWriteups,
+  ...tracebashWriteups,
+  ...projectSekai2026Writeups,
 ];

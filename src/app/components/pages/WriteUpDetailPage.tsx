@@ -4,6 +4,8 @@ import { Button } from '../ui/button';
 import { MathBlock } from '../MathRenderer';
 import { writeups } from '../../data/writeups';
 import { useState, useEffect, useRef } from 'react';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 
 interface WriteUpDetailPageProps {
   writeupId: string;
@@ -54,9 +56,27 @@ function renderFormattedText(text: string) {
       );
     }
 
-    const parts = part.split(/(\*\*.*?\*\*|`.*?`)/g);
+    // Split by Display Math ($$...$$), Inline Math ($...$), Bold (**...**), and Inline Code (`...`)
+    const parts = part.split(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$|\*\*.*?\*\*|`.*?`)/g);
     return parts.map((subPart, idx) => {
-      if (subPart.startsWith('**') && subPart.endsWith('**')) {
+      if (subPart.includes('begin{pmatrix}')) {
+        console.log("RENDERED PART INFO:", { subPart, starts: subPart.startsWith('$$'), ends: subPart.endsWith('$$') });
+      }
+      if (subPart.startsWith('$$') && subPart.endsWith('$$')) {
+        const formula = subPart.slice(2, -2).trim();
+        return (
+          <span key={`math-block-${bIdx}-${idx}`} className="block my-3 overflow-x-auto">
+            <BlockMath math={formula} />
+          </span>
+        );
+      } else if (subPart.startsWith('$') && subPart.endsWith('$')) {
+        const formula = subPart.slice(1, -1).trim();
+        return (
+          <span key={`math-inline-${bIdx}-${idx}`} className="math-inline inline-block px-1">
+            <InlineMath math={formula} />
+          </span>
+        );
+      } else if (subPart.startsWith('**') && subPart.endsWith('**')) {
         return (
           <span key={`sub-${bIdx}-${idx}`} className="font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
             {subPart.slice(2, -2)}

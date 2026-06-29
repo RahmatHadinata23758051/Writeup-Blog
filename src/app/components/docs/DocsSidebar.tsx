@@ -60,6 +60,31 @@ const eventIcons = [
 ];
 
 export function getEventIcon(eventName: string) {
+  const name = eventName.toLowerCase();
+  if (name.includes('project sekai')) {
+    return (
+      <svg
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110"
+      >
+        {/* Pole */}
+        <line x1="4" y1="2" x2="4" y2="18" stroke="#00c2d7" strokeWidth="1.5" strokeLinecap="round" />
+        {/* Wavy Flag */}
+        <path
+          d="M4,3 C7,3 8,4.5 11,4.5 C14,4.5 15,3 18,3 L18,10.5 C15,10.5 14,12 11,12 C8,12 7,10.5 4,10.5 Z"
+          fill="#00c2d7"
+        />
+        {/* Music Note */}
+        <path
+          d="M10,8.5a1.1,1.1,0,1,1,-1.1,-1.1H10V5.5h2.2v0.9H11V8.5a1.1,1.1,0,0,1,-1,0Z"
+          fill="#0f3d61"
+        />
+      </svg>
+    );
+  }
+
   // Deterministic hash-based selection of icons
   let hash = 0;
   for (let i = 0; i < eventName.length; i++) {

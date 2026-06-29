@@ -36,7 +36,7 @@ const renderInline = (inputText: string): React.ReactNode[] => {
   if (!inputText) return [];
 
   // Split by block math ($$...$$), inline math ($...$), inline code (`...`), bold (**...**), markdown images (![alt](url)), and markdown links ([text](url))
-  const regex = /(\$\$.*?\$\$|\$.*?\$|`.*?`|\*\*.*?\*\*|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))/gs;
+  const regex = /(\$\$.*?\$\$|\$[^\$\n]+?\$|`.*?`|\*\*.*?\*\*|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))/gs;
   const parts = inputText.split(regex);
 
   return parts.map((part, index) => {
@@ -380,7 +380,13 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
     }
 
     if (currentType === 'math') {
-      currentLines.push(line);
+      if (trimmed.endsWith('$$')) {
+        const content = trimmed.slice(0, -2);
+        if (content) currentLines.push(content);
+        flush(i);
+      } else {
+        currentLines.push(line);
+      }
       i++;
       continue;
     }

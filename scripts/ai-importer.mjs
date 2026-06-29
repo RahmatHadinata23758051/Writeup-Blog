@@ -48,7 +48,6 @@ const WRITEUPS_FILE_PATH = path.resolve(__dirname, '../src/app/data/writeups.ts'
 const EVENTS_DIR = path.resolve(__dirname, '../src/app/data/writeups/events');
 const INDEX_FILE_PATH = path.resolve(__dirname, '../src/app/data/writeups/index.ts');
 
-// Event folder name → CTF display name mapping
 const EVENT_NAMES = {
   'flagyard':    'FlagYard',
   'jerseyctf':   'JerseyCTF',
@@ -59,6 +58,9 @@ const EVENT_NAMES = {
   'them2026':    'THEM 2026',
   'texcaw':      'TexSAW CTF',
   'tjcsc':       'TJCSC',
+  'v1tctf':      'V1T CTF',
+  'tracebash':   'Tracebash',
+  'projectsekai2026': 'Project Sekai 2026',
 };
 
 // ─── CLI ARGS & INTERACTIVE MENU ───────────────────────────────────────────
