@@ -10,9 +10,13 @@ interface MathTextProps {
 export const MathText: React.FC<MathTextProps> = ({ text, className = '' }) => {
   if (!text) return null;
 
+  const preprocessedText = text
+    .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+    .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
   // Split text by block math ($$...$$), inline math ($...$), and inline code (`...`)
   // The parenthesis capture group ensures the delimiters are kept in the split array
-  const parts = text.split(/(\$\$.*?\$\$|\$.*?\$|`.*?`)/gs);
+  const parts = preprocessedText.split(/(\$\$.*?\$\$|\$.*?\$|`.*?`)/gs);
 
   return (
     <span className={className}>

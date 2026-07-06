@@ -35,9 +35,13 @@ function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) 
 const renderInline = (inputText: string): React.ReactNode[] => {
   if (!inputText) return [];
 
+  const preprocessedInput = inputText
+    .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+    .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
   // Split by block math ($$...$$), inline math ($...$), inline code (`...`), bold (**...**), markdown images (![alt](url)), and markdown links ([text](url))
   const regex = /(\$\$.*?\$\$|\$[^\$\n]+?\$|`.*?`|\*\*.*?\*\*|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))/gs;
-  const parts = inputText.split(regex);
+  const parts = preprocessedInput.split(regex);
 
   return parts.map((part, index) => {
     if (part.startsWith('$$') && part.endsWith('$$')) {
@@ -154,7 +158,11 @@ const renderInline = (inputText: string): React.ReactNode[] => {
 export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
   if (!text) return null;
 
-  const lines = text.split('\n');
+  const preprocessedText = text
+    .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+    .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
+  const lines = preprocessedText.split('\n');
   const elements: React.ReactNode[] = [];
 
   let currentType: 'p' | 'ul' | 'ol' | 'math' | 'code' | 'table' | 'blockquote' | null = null;

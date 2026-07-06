@@ -28,6 +28,8 @@ import { siebersecCtfWriteups } from './events/siebersec_ctf';
 import { v1tCtfWriteups } from './events/v1t_ctf';
 import { tracebashWriteups } from './events/tracebash';
 import { projectSekai2026Writeups } from './events/project_sekai_2026';
+import { nohacknoctfWriteups } from './events/nohacknoctf';
+import { r3ctfWriteups } from './events/r3ctf';
 
 export type { WriteUp, Category, Difficulty, MathFormula, TerminalOutput } from './types';
 
@@ -59,4 +61,6 @@ export const writeups: WriteUp[] = [
   ...v1tCtfWriteups,
   ...tracebashWriteups,
   ...projectSekai2026Writeups,
+  ...nohacknoctfWriteups,
+  ...r3ctfWriteups,
 ];

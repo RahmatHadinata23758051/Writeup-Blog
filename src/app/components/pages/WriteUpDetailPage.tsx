@@ -31,7 +31,12 @@ const difficultyColors: Record<string, string> = {
 
 function renderFormattedText(text: string) {
   if (!text) return null;
-  const blockParts = text.split(/(```[\s\S]*?```)/g);
+
+  const preprocessedText = text
+    .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+    .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
+  const blockParts = preprocessedText.split(/(```[\s\S]*?```)/g);
   return blockParts.map((part, bIdx) => {
     if (part.startsWith('```') && part.endsWith('```')) {
       const content = part.slice(3, -3).trim();

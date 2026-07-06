@@ -84,6 +84,15 @@ export function getEventIcon(eventName: string) {
       </svg>
     );
   }
+  if (name.includes('r3ctf')) {
+    return (
+      <img
+        src="/r3ctf_logo.png"
+        alt="R3CTF Logo"
+        className="h-4.5 w-4.5 shrink-0 rounded-full transition-transform group-hover:scale-110 object-contain bg-white p-0.5"
+      />
+    );
+  }
 
   // Deterministic hash-based selection of icons
   let hash = 0;
