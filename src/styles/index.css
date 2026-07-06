@@ -107,7 +107,8 @@
   color: var(--katex-text-color) !important;
 }
 
-/* Ensure proper font rendering in KaTeX */
+/* commented out custom overrides that interfere with KaTeX official layout rules */
+/*
 .katex-display {
   text-align: center;
   margin: 0;
@@ -123,7 +124,6 @@
   position: relative;
 }
 
-/* Better rendering for mathematical symbols */
 .katex .mord,
 .katex .mop,
 .katex .mrel,
@@ -131,7 +131,6 @@
   display: inline-block;
 }
 
-/* Improve fraction display */
 .katex .frac-line {
   display: block;
   width: 100%;
@@ -140,7 +139,6 @@
   border: 0;
 }
 
-/* Better sqrt display */
 .katex .sqrt-sign {
   border-top-width: 1px;
   border-right-width: 1px;
@@ -150,24 +148,20 @@
   border-right-color: currentColor;
 }
 
-/* Improve over/under symbols visibility */
 .katex .accent {
   padding: 0 0.15em;
 }
 
-/* Better integral signs */
 .katex .mop.op-symbol {
   position: relative;
 }
 
-/* Adjustments for mathematical operators */
 .katex .vlist-t {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Fine-tune spacing for better readability */
 .katex .sizing {
   display: inline-block;
 }
@@ -176,11 +170,11 @@
   display: inline-block;
 }
 
-/* Prevent text selection inside formulas (optional) */
 .katex-html {
   -webkit-user-select: text;
   user-select: text;
 }
+*/
 
 /* Animation for formula entrance */
 @keyframes mathEntry {
