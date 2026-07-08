@@ -60,9 +60,111 @@ function mapCategory(folder) {
 
 // Regex to extract flag format
 function extractFlag(text) {
-  const flagRegex = /[a-zA-Z0-9_-]+{[a-zA-Z0-9_!@#$%^&*()\-+=?|~. ]+}/;
+  const flagRegex = /[a-zA-Z0-9_-]+{[a-zA-Z0-9_!@#$%^&*()\-+=?|~. :\/]+}/;
   const match = text.match(flagRegex);
   return match ? match[0] : null;
+}
+
+function isSectionHeader(line) {
+  const clean = line.trim();
+  if (!clean) return false;
+  
+  if (clean.startsWith('## ') || clean.startsWith('### ') || clean.startsWith('#### ')) {
+    return true;
+  }
+  
+  // Ignore python comments/markdown separators
+  if (clean.startsWith('#') || clean.startsWith('-') || clean.startsWith('*') || clean.startsWith('`')) {
+    return false;
+  }
+  
+  // If it ends with a period, question mark, or colon followed by text, it's probably a sentence
+  if (clean.endsWith('.') || clean.endsWith('?') || clean.endsWith(';')) {
+    return false;
+  }
+  
+  // Ignore metadata lines like "Category: Crypto", "Tags: ...", "Flag: ..."
+  if (clean.includes(':')) {
+    const parts = clean.split(':');
+    const label = parts[0].trim().toLowerCase();
+    if (
+      label.includes('writeup') ||
+      label.includes('kesulitan') ||
+      label.includes('kategori') ||
+      label.includes('category') ||
+      label.includes('tags') ||
+      label.includes('flag') ||
+      label.includes('difficulty') ||
+      label.includes('author') ||
+      label.includes('points') ||
+      label.includes('date') ||
+      label.includes('ctf') ||
+      label.includes('challenge')
+    ) {
+      return false;
+    }
+  }
+
+  // Match numbered headings like "1. ...", "2. ...", "3. ..."
+  if (/^[0-9]+\.\s+[A-Za-z0-9_]/i.test(clean) && clean.length < 60) {
+    return true;
+  }
+  
+  const knownHeaders = [
+    'overview',
+    'vulnerability analysis',
+    'exploitation challenges',
+    'solution',
+    'solution (exploit script)',
+    'skrip eksploitasi',
+    'skrip eksploitasi (python)',
+    'python exploit script',
+    'results',
+    'flag',
+    'analisis celah keamanan',
+    'deskripsi tantangan',
+    'langkah penyelesaian',
+    'informasi awal',
+    'eksploitasi cfor',
+    'ekstraksi dan decoding',
+    'analisis celah keamanan (the vulnerability)',
+    'analisis matematika (memecahkan lcg)'
+  ];
+  
+  const lower = clean.toLowerCase();
+  if (knownHeaders.includes(lower)) {
+    return true;
+  }
+  
+  if (/^(solution|results|flag|skrip eksploitasi)\b/i.test(lower) && clean.length < 50) {
+    return true;
+  }
+
+  // Capitalization ratio check for Title Case headings
+  if (clean.length > 55) return false;
+  const words = clean.split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 0) return false;
+  
+  let capCount = 0;
+  let ignoreCount = 0;
+  for (let w of words) {
+    if (/^[0-9]+/.test(w) || ['the', 'and', 'or', 'in', 'with', 'via', 'of', 'to', 'for', 'by', 'on', 'at', 'a', 'an', 'is'].includes(w.toLowerCase())) {
+      ignoreCount++;
+      continue;
+    }
+    if (w[0] === w[0].toUpperCase() && w[0] !== w[0].toLowerCase()) {
+      capCount++;
+    }
+  }
+  
+  const totalCheckable = words.length - ignoreCount;
+  if (totalCheckable <= 0) {
+    const firstWord = words[0];
+    return firstWord[0] === firstWord[0].toUpperCase();
+  }
+  
+  const ratio = capCount / totalCheckable;
+  return ratio >= 0.7;
 }
 
 function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
@@ -116,6 +218,7 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
   }
   if (titleFromHeader) {
     result.title = titleFromHeader
+      .replace(/^\s*Writeup\s*:\s*/gi, '')
       .replace(/\s*-\s*Writeup/gi, '')
       .replace(/\s*Writeup\s*CTF:\s*/gi, '')
       .replace(/\s*CTF\s*Writeup:\s*/gi, '')
@@ -124,16 +227,23 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
       .replace(/\s*\(NoHackNoCtf\)/gi, '')
       .replace(/^(newbie-crypto)$/gi, 'Newbie Crypto')
       .replace(/^(whois)$/gi, 'Whois')
+      .replace(/^:\s*/, '')
       .trim();
   }
 
   const sections = [];
   let currentSection = { heading: "", contentLines: [] };
+  let inCodeBlock = false;
   
   for (let line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+    }
+
     if (line.startsWith('# ')) {
       continue;
-    } else if (line.startsWith('## ') || line.startsWith('### ')) {
+    } else if (!inCodeBlock && isSectionHeader(line)) {
       if (currentSection.contentLines.length > 0 || currentSection.heading) {
         sections.push(currentSection);
       }
@@ -167,13 +277,38 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
       } else {
         result.tools = body.split(/[\r\n,]+/).map(t => t.replace(/^[-*+\s]*|[*`\s]*$/g, '').trim()).filter(Boolean);
       }
-    } else if (heading.includes('analis') || heading.includes('analysis') || heading.includes('enumer')) {
-      result.analysis = body;
+    } else if (
+      heading.includes('analis') || 
+      heading.includes('analysis') || 
+      heading.includes('enumer') || 
+      heading.includes('vulnerability') || 
+      heading.includes('celah') ||
+      heading.includes('menentukan') ||
+      heading.includes('wiener') ||
+      heading.includes('rekonstruksi') ||
+      heading.includes('cfor') ||
+      heading.includes('decoding') ||
+      heading.includes('prng') ||
+      heading.includes('v8 yang terbalik') ||
+      heading.includes('informasi awal') ||
+      heading.includes('transaksi') ||
+      heading.includes('outgoing') ||
+      heading.includes('sweep') ||
+      heading.includes('traceable')
+    ) {
+      const isMainAnalysis = heading.includes('analis') || heading.includes('analysis');
+      if (isMainAnalysis) {
+        if (result.analysis) result.analysis += '\n\n';
+        result.analysis += body;
+      } else {
+        if (result.analysis) result.analysis += '\n\n';
+        result.analysis += `### ${sec.heading}\n\n${body}`;
+      }
     } else if (heading.includes('lesson') || heading.includes('pelajaran') || heading.includes('takeaway')) {
       result.lessonsLearned = body;
     } else if (heading.includes('flag')) {
       result.flag = extractFlag(body) || body.replace(/^[-*+:\s]*|[*`#\s]*$/g, '').trim();
-    } else if (heading.includes('ringkasan') || heading.includes('summary')) {
+    } else if (heading.includes('ringkasan') || heading.includes('summary') || heading.includes('overview') || heading.includes('deskripsi')) {
       result.problemDescription = body;
     } else {
       const codeBlocks = [];
@@ -205,6 +340,28 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
 }
 
 function toSlug(ctfName) {
+  const norm = ctfName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const slugMap = {
+    'boroctf': 'boro_ctf',
+    'dalctf2026': 'dal_ctf_2026',
+    'k1nd4sus': 'k1nd4sus_ctf',
+    'k1nd4susctf': 'k1nd4sus_ctf',
+    'kubsuctf': 'kubsctf',
+    'kubsctf': 'kubsctf',
+    'projectsekai2026': 'project_sekai_2026',
+    'siebersecctf': 'siebersec_ctf',
+    'squ1rrel': 'squ1rrel_ctf',
+    'squ1rrelctf': 'squ1rrel_ctf',
+    'texcaw': 'texsaw_ctf',
+    'texsaw': 'texsaw_ctf',
+    'texsawctf': 'texsaw_ctf',
+    'v1tctf': 'v1t_ctf',
+    'cyberbreakerqual': 'cyberbreaker_qual',
+    'lyknctf2026': 'lyknctf2026'
+  };
+  if (slugMap[norm]) {
+    return slugMap[norm];
+  }
   return ctfName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
@@ -246,8 +403,8 @@ function scanLocalWriteups() {
 
         if (readmeFile) {
           const readmePath = path.join(challengePath, readmeFile);
-          const mdContent = fs.readFileSync(readmePath, 'utf-8');
           try {
+            const mdContent = fs.readFileSync(readmePath, 'utf-8');
             const parsed = parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder);
             
             const solverFile = files.find(f => {
@@ -258,18 +415,22 @@ function scanLocalWriteups() {
 
             if (solverFile) {
               const solverPath = path.join(challengePath, solverFile);
-              const solverContent = fs.readFileSync(solverPath, 'utf-8').trim();
-              if (solverContent) {
-                const hasSolverStep = parsed.solution.some(s => 
-                  s.code && s.code.trim() === solverContent.trim()
-                );
-                if (!hasSolverStep) {
-                  parsed.solution.push({
-                    title: "Solver Script",
-                    content: `The complete exploit/solver script (${solverFile}) is provided below:`,
-                    code: solverContent
-                  });
+              try {
+                const solverContent = fs.readFileSync(solverPath, 'utf-8').trim();
+                if (solverContent) {
+                  const hasSolverStep = parsed.solution.some(s => 
+                    s.code && s.code.trim() === solverContent.trim()
+                  );
+                  if (!hasSolverStep) {
+                    parsed.solution.push({
+                      title: "Solver Script",
+                      content: `The complete exploit/solver script (${solverFile}) is provided below:`,
+                      code: solverContent
+                    });
+                  }
                 }
+              } catch (se) {
+                console.warn(`[!] Failed to read solver: ${solverPath} - ${se.message}`);
               }
             }
 
@@ -282,25 +443,34 @@ function scanLocalWriteups() {
             try { return fs.statSync(path.join(challengePath, item)).isDirectory(); } catch { return false; }
           });
 
+          const subReadmes = [];
           for (let subDir of subDirs) {
             const subPath = path.join(challengePath, subDir);
-            const subFiles = fs.readdirSync(subPath);
-            const subReadme = subFiles.find(f => f.toLowerCase() === 'readme.md');
+            try {
+              const subFiles = fs.readdirSync(subPath);
+              const subReadme = subFiles.find(f => f.toLowerCase() === 'readme.md');
+              if (subReadme) {
+                subReadmes.push({ subDir, subReadme, subPath, subFiles });
+              }
+            } catch {}
+          }
 
-            if (subReadme) {
-              const readmePath = path.join(subPath, subReadme);
+          for (const { subDir, subReadme, subPath, subFiles } of subReadmes) {
+            const readmePath = path.join(subPath, subReadme);
+            try {
               const mdContent = fs.readFileSync(readmePath, 'utf-8');
-              try {
-                const parsed = parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder);
+              const suffix = subReadmes.length > 1 ? `-${subDir}` : '';
+              const parsed = parseReadme(mdContent, eventFolder, categoryFolder, `${challengeFolder}${suffix}`);
 
-                const solverFile = subFiles.find(f => {
-                  const name = f.toLowerCase();
-                  return (name.startsWith('solve') || name.startsWith('exploit') || name.includes('solver') || name.includes('exploit')) &&
-                         (name.endsWith('.py') || name.endsWith('.go') || name.endsWith('.sh') || name.endsWith('.sage') || name.endsWith('.js') || name.endsWith('.rb'));
-                });
+              const solverFile = subFiles.find(f => {
+                const name = f.toLowerCase();
+                return (name.startsWith('solve') || name.startsWith('exploit') || name.includes('solver') || name.includes('exploit')) &&
+                       (name.endsWith('.py') || name.endsWith('.go') || name.endsWith('.sh') || name.endsWith('.sage') || name.endsWith('.js') || name.endsWith('.rb'));
+              });
 
-                if (solverFile) {
-                  const solverPath = path.join(subPath, solverFile);
+              if (solverFile) {
+                const solverPath = path.join(subPath, solverFile);
+                try {
                   const solverContent = fs.readFileSync(solverPath, 'utf-8').trim();
                   if (solverContent) {
                     const hasSolverStep = parsed.solution.some(s =>
@@ -314,13 +484,14 @@ function scanLocalWriteups() {
                       });
                     }
                   }
+                } catch (se) {
+                  console.warn(`[!] Failed to read sub-solver: ${solverPath} - ${se.message}`);
                 }
-
-                newWriteups.push(parsed);
-                break;
-              } catch (e) {
-                console.warn(`[!] Failed to parse: ${readmePath} - ${e.message}`);
               }
+
+              newWriteups.push(parsed);
+            } catch (e) {
+              console.warn(`[!] Failed to parse: ${readmePath} - ${e.message}`);
             }
           }
         }
@@ -362,9 +533,9 @@ function main() {
       const arrayMatch = content.match(/export const \w+: WriteUp\[\] = (\[[\s\S]*\]);?\s*$/);
       if (arrayMatch) {
         try {
-          existingWriteups = JSON.parse(arrayMatch[1]);
+          existingWriteups = eval(arrayMatch[1]);
         } catch (e) {
-          console.warn(`[!] Failed to parse existing JSON in ${eventFilePath}: ${e.message}`);
+          console.warn(`[!] Failed to parse existing JS/TS in ${eventFilePath}: ${e.message}`);
         }
       }
     }

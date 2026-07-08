@@ -1,6 +1,6 @@
 import type { WriteUp } from '../types';
 
-// JerseyCTF — 29 writeups
+// JerseyCTF — 31 writeups
 export const jerseyctfWriteups: WriteUp[] = [
   {
     "id": "18",
@@ -1696,6 +1696,106 @@ export const jerseyctfWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "jctf{r0t_y0ur_w4y_t0_4cc3ss}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "jerseyctf-foren-mars-dominion",
+    "title": "- Mars Dominion (Forensics)",
+    "category": "Foren",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "JerseyCTF",
+    "tags": [],
+    "description": "Challenge ini memberikan bundle artefak campuran:\n- `orionhq-incident.pcap`\n- EVTX dari `WS01-SHIPLINK`, `DC01-SHIPLINK`, `DC01-ORIONHQ`\n- `bloodhound-collection.zip`",
+    "problemDescription": "Challenge ini memberikan bundle artefak campuran:\n- `orionhq-incident.pcap`\n- EVTX dari `WS01-SHIPLINK`, `DC01-SHIPLINK`, `DC01-ORIONHQ`\n- `bloodhound-collection.zip`\n\nTujuan: mengikuti alur kompromi dari foothold awal sampai trust boundary terakhir, lalu merangkai override-key fragments yang tersebar.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "1) Initial Recon",
+        "content": "Pertama saya identifikasi file:\n\n\n\nHasil penting:\n- Ada 1 file PCAP dan banyak EVTX (Security, Sysmon, PowerShell, Application, dsb).\n- BloodHound zip berisi dump AD object JSON.",
+        "code": "ls -la\nfile * DC01-ORIONHQ/* DC01-SHIPLINK/* WS01-SHIPLINK/*"
+      },
+      {
+        "title": "2) Triage PCAP",
+        "content": "Saya mulai dari lalu lintas protokol utama:\n\n\n\nTerlihat dominan: SMB2, DCERPC (termasuk DRSUAPI), DNS.\n\nLalu saya cari DNS query:\n\n\n\nTemuan krusial:\n- `sync-gate.amN0ZntuYXZf.ops.c2.silent-dominion.net`\n\nLabel `amN0ZntuYXZf` saya decode base64:\n\n\n\nHasil:\n- `jctf{nav_`\n\nIni jelas fragmen awal flag.",
+        "code": "tshark -r orionhq-incident.pcap -q -z io,phs"
+      },
+      {
+        "title": "a) Fragmen dari shortcut name (WS01 Application)",
+        "content": "Dari event Application di WS01, ada jejak:\n- `\\\\gate-archive\\shared\\ops\\lease-756e31745f7761735f.lnk`\n\nBagian hex `756e31745f7761735f` di-decode ASCII menjadi:\n- `un1t_was_`"
+      },
+      {
+        "title": "b) Fragmen dari PowerShell payload (DC01-SHIPLINK)",
+        "content": "Pada artefak PowerShell/Sysmon DC01-SHIPLINK, ada variabel:\n- `NAV-DRV-dGgzX3RocjNhdF8`\n\nDecode base64 `dGgzX3RocjNhdF8` menghasilkan:\n- `th3_thr3at_`"
+      },
+      {
+        "title": "c) Fragmen dari AD description update (DC01-ORIONHQ Sysmon EncodedCommand)",
+        "content": "Saya extract script `-EncodedCommand` dari Sysmon lalu decode UTF-16LE.\nScript tersebut berisi:\n- `Override fragment 04/05: all_al0`"
+      },
+      {
+        "title": "d) Fragmen penutup dari event log message (DC01-ORIONHQ Sysmon EncodedCommand)",
+        "content": "Encoded script lain menulis event warning dan menyebut:\n- `Override fragment 05/05: ng}`"
+      },
+      {
+        "title": "5) Kesimpulan Singkat",
+        "content": "Pelaku menyebar potongan override key lintas sumber forensik (DNS C2 label, artefak endpoint, dan perubahan AD metadata). Tanpa korelasi lintas PCAP + EVTX, flag tidak akan utuh."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "jctf{nav_un1t_was_th3_thr3at_all_al0ng}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "jerseyctf-foren-mars-dominion-evidence",
+    "title": "- Mars Dominion (Forensics)",
+    "category": "Foren",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-07-08",
+    "author": "Nattt",
+    "ctfName": "JerseyCTF",
+    "tags": [],
+    "description": "Challenge ini memberikan bundle artefak campuran:\n- `orionhq-incident.pcap`\n- EVTX dari `WS01-SHIPLINK`, `DC01-SHIPLINK`, `DC01-ORIONHQ`\n- `bloodhound-collection.zip`",
+    "problemDescription": "Challenge ini memberikan bundle artefak campuran:\n- `orionhq-incident.pcap`\n- EVTX dari `WS01-SHIPLINK`, `DC01-SHIPLINK`, `DC01-ORIONHQ`\n- `bloodhound-collection.zip`\n\nTujuan: mengikuti alur kompromi dari foothold awal sampai trust boundary terakhir, lalu merangkai override-key fragments yang tersebar.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "1) Initial Recon",
+        "content": "Pertama saya identifikasi file:\n\n\n\nHasil penting:\n- Ada 1 file PCAP dan banyak EVTX (Security, Sysmon, PowerShell, Application, dsb).\n- BloodHound zip berisi dump AD object JSON.",
+        "code": "ls -la\nfile * DC01-ORIONHQ/* DC01-SHIPLINK/* WS01-SHIPLINK/*"
+      },
+      {
+        "title": "2) Triage PCAP",
+        "content": "Saya mulai dari lalu lintas protokol utama:\n\n\n\nTerlihat dominan: SMB2, DCERPC (termasuk DRSUAPI), DNS.\n\nLalu saya cari DNS query:\n\n\n\nTemuan krusial:\n- `sync-gate.amN0ZntuYXZf.ops.c2.silent-dominion.net`\n\nLabel `amN0ZntuYXZf` saya decode base64:\n\n\n\nHasil:\n- `jctf{nav_`\n\nIni jelas fragmen awal flag.",
+        "code": "tshark -r orionhq-incident.pcap -q -z io,phs"
+      },
+      {
+        "title": "a) Fragmen dari shortcut name (WS01 Application)",
+        "content": "Dari event Application di WS01, ada jejak:\n- `\\\\gate-archive\\shared\\ops\\lease-756e31745f7761735f.lnk`\n\nBagian hex `756e31745f7761735f` di-decode ASCII menjadi:\n- `un1t_was_`"
+      },
+      {
+        "title": "b) Fragmen dari PowerShell payload (DC01-SHIPLINK)",
+        "content": "Pada artefak PowerShell/Sysmon DC01-SHIPLINK, ada variabel:\n- `NAV-DRV-dGgzX3RocjNhdF8`\n\nDecode base64 `dGgzX3RocjNhdF8` menghasilkan:\n- `th3_thr3at_`"
+      },
+      {
+        "title": "c) Fragmen dari AD description update (DC01-ORIONHQ Sysmon EncodedCommand)",
+        "content": "Saya extract script `-EncodedCommand` dari Sysmon lalu decode UTF-16LE.\nScript tersebut berisi:\n- `Override fragment 04/05: all_al0`"
+      },
+      {
+        "title": "d) Fragmen penutup dari event log message (DC01-ORIONHQ Sysmon EncodedCommand)",
+        "content": "Encoded script lain menulis event warning dan menyebut:\n- `Override fragment 05/05: ng}`"
+      },
+      {
+        "title": "5) Kesimpulan Singkat",
+        "content": "Pelaku menyebar potongan override key lintas sumber forensik (DNS C2 label, artefak endpoint, dan perubahan AD metadata). Tanpa korelasi lintas PCAP + EVTX, flag tidak akan utuh."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "jctf{nav_un1t_was_th3_thr3at_all_al0ng}",
     "lessonsLearned": ""
   }
 ];
