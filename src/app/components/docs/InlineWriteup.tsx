@@ -185,9 +185,6 @@ export function InlineWriteup({ writeup }: InlineWriteupProps) {
 
                   {isNonEmptyString(step.code) && (
                     <div className="space-y-2 pt-1">
-                      <div className="flex items-center">
-                        <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-[var(--docs-text-soft)]">Solver Script</span>
-                      </div>
                       <div className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 shadow-sm group">
                         <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
                           <CopyButton text={step.code as string} label="Copy" />

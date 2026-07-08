@@ -2196,14 +2196,10 @@ export const lyknctf2026Writeups: WriteUp[] = [
         "title": "8. Container Berjalan sebagai Root",
         "content": "RCE berjalan sebagai:\n\n\n\nDampak eksploitasi menjadi penuh.",
         "code": "uid=0(root)"
-      },
-      {
-        "title": "LYKNCTF{8977a05ebdf842d69cb1bd54caeb0659}",
-        "content": "```"
       }
     ],
     "terminalOutputs": [],
-    "flag": "Flag asli tersedia di:\n\n```text\n/flag.txt\n```\n\ndan dapat dibaca langsung oleh proses renderer.\n\n---\n\n```\n\nFlag:\n\n```text",
+    "flag": "LYKNCTF{8977a05ebdf842d69cb1bd54caeb0659}",
     "lessonsLearned": ""
   },
   {
