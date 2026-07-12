@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://rblxlabs.vercel.app/</loc>
-    <lastmod>2026-07-08</lastmod>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1</priority>
   </url>
@@ -81,6 +81,12 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/event/jerseyctf</loc>
     <lastmod>2026-03-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/juniorcrypt</loc>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -602,7 +608,7 @@
   </url>
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/boroctf-web-borogpt</loc>
-    <lastmod>2026-07-08</lastmod>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1299,6 +1305,156 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/jerseyctf-web-x-rayvision</loc>
     <lastmod>2026-06-08</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-ai-pickles</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-crypto-aperturescience</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-crypto-meowmeow</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-crypto-neurotoxindiagnostics</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-crypto-stillalive</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-crypto-weightedcompanioncube</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-foren-philologist</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-foren-promptandpretext</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-foren-theusbthatwouldntrepeat</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-misc-1000-7</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-misc-fearandhorror</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-misc-ghostlayers</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-misc-invisibleeditor</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-pwn-clockworkvault</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-pwn-deepport</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-pwn-houseofmirage</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-pwn-museumofechoes</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-pwn-redtideterminal</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-pwn-redtideterminalrevenge</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-rev-writethe</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-rev-wrongcubeplus</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-rev-wrongcubeplusplus</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-rev-wrongcubeplusplusplus</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-web-pulse</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-web-wrodle</loc>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>

@@ -13,6 +13,7 @@ import { hacktheboxWriteups } from './events/hackthebox';
 import { incognitoWriteups } from './events/incognito';
 import { intechfestWriteups } from './events/intechfest';
 import { jerseyctfWriteups } from './events/jerseyctf';
+import { juniorcryptWriteups } from './events/juniorcrypt';
 import { k1nd4susCtfWriteups } from './events/k1nd4sus_ctf';
 import { kubsctfWriteups } from './events/kubsctf';
 import { lagWriteups } from './events/lag';
@@ -48,6 +49,7 @@ export const writeups: WriteUp[] = [
   ...incognitoWriteups,
   ...intechfestWriteups,
   ...jerseyctfWriteups,
+  ...juniorcryptWriteups,
   ...k1nd4susCtfWriteups,
   ...kubsctfWriteups,
   ...lagWriteups,

@@ -69,102 +69,10 @@ function isSectionHeader(line) {
   const clean = line.trim();
   if (!clean) return false;
   
-  if (clean.startsWith('## ') || clean.startsWith('### ') || clean.startsWith('#### ')) {
+  if (clean.startsWith('## ')) {
     return true;
   }
-  
-  // Ignore python comments/markdown separators
-  if (clean.startsWith('#') || clean.startsWith('-') || clean.startsWith('*') || clean.startsWith('`')) {
-    return false;
-  }
-  
-  // If it ends with a period, question mark, or colon followed by text, it's probably a sentence
-  if (clean.endsWith('.') || clean.endsWith('?') || clean.endsWith(';')) {
-    return false;
-  }
-  
-  // Ignore metadata lines like "Category: Crypto", "Tags: ...", "Flag: ..."
-  if (clean.includes(':')) {
-    const parts = clean.split(':');
-    const label = parts[0].trim().toLowerCase();
-    if (
-      label.includes('writeup') ||
-      label.includes('kesulitan') ||
-      label.includes('kategori') ||
-      label.includes('category') ||
-      label.includes('tags') ||
-      label.includes('flag') ||
-      label.includes('difficulty') ||
-      label.includes('author') ||
-      label.includes('points') ||
-      label.includes('date') ||
-      label.includes('ctf') ||
-      label.includes('challenge')
-    ) {
-      return false;
-    }
-  }
-
-  // Match numbered headings like "1. ...", "2. ...", "3. ..."
-  if (/^[0-9]+\.\s+[A-Za-z0-9_]/i.test(clean) && clean.length < 60) {
-    return true;
-  }
-  
-  const knownHeaders = [
-    'overview',
-    'vulnerability analysis',
-    'exploitation challenges',
-    'solution',
-    'solution (exploit script)',
-    'skrip eksploitasi',
-    'skrip eksploitasi (python)',
-    'python exploit script',
-    'results',
-    'flag',
-    'analisis celah keamanan',
-    'deskripsi tantangan',
-    'langkah penyelesaian',
-    'informasi awal',
-    'eksploitasi cfor',
-    'ekstraksi dan decoding',
-    'analisis celah keamanan (the vulnerability)',
-    'analisis matematika (memecahkan lcg)'
-  ];
-  
-  const lower = clean.toLowerCase();
-  if (knownHeaders.includes(lower)) {
-    return true;
-  }
-  
-  if (/^(solution|results|flag|skrip eksploitasi)\b/i.test(lower) && clean.length < 50) {
-    return true;
-  }
-
-  // Capitalization ratio check for Title Case headings
-  if (clean.length > 55) return false;
-  const words = clean.split(/\s+/).filter(w => w.length > 0);
-  if (words.length === 0) return false;
-  
-  let capCount = 0;
-  let ignoreCount = 0;
-  for (let w of words) {
-    if (/^[0-9]+/.test(w) || ['the', 'and', 'or', 'in', 'with', 'via', 'of', 'to', 'for', 'by', 'on', 'at', 'a', 'an', 'is'].includes(w.toLowerCase())) {
-      ignoreCount++;
-      continue;
-    }
-    if (w[0] === w[0].toUpperCase() && w[0] !== w[0].toLowerCase()) {
-      capCount++;
-    }
-  }
-  
-  const totalCheckable = words.length - ignoreCount;
-  if (totalCheckable <= 0) {
-    const firstWord = words[0];
-    return firstWord[0] === firstWord[0].toUpperCase();
-  }
-  
-  const ratio = capCount / totalCheckable;
-  return ratio >= 0.7;
+  return false;
 }
 
 function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
@@ -178,6 +86,7 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
   const defaultTitle = cleanTitle.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   const id = `${eventFolder.toLowerCase()}-${categoryFolder.toLowerCase()}-${challengeFolder.toLowerCase()}`
+    .replace(/\+/g, 'plus')
     .replace(/[^a-z0-9-]/g, '');
 
   const result = {
@@ -235,19 +144,24 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
   let currentSection = { heading: "", contentLines: [] };
   let inCodeBlock = false;
   
+  let skippedTitleLine = false;
+  
   for (let line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith('```')) {
       inCodeBlock = !inCodeBlock;
     }
-
-    if (line.startsWith('# ')) {
+    
+    if (line.startsWith('# ') && !skippedTitleLine) {
+      skippedTitleLine = true;
       continue;
-    } else if (!inCodeBlock && isSectionHeader(line)) {
+    }
+
+    if (!inCodeBlock && (isSectionHeader(line) || line.startsWith('# '))) {
       if (currentSection.contentLines.length > 0 || currentSection.heading) {
         sections.push(currentSection);
       }
-      currentSection = { heading: line.replace(/^##+\s+/, '').trim(), contentLines: [] };
+      currentSection = { heading: line.replace(/^#+\s+/, '').trim(), contentLines: [] };
     } else {
       currentSection.contentLines.push(line);
     }
@@ -306,28 +220,23 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
       }
     } else if (heading.includes('lesson') || heading.includes('pelajaran') || heading.includes('takeaway')) {
       result.lessonsLearned = body;
-    } else if (heading.includes('flag')) {
-      result.flag = extractFlag(body) || body.replace(/^[-*+:\s]*|[*`#\s]*$/g, '').trim();
+    } else if (heading === 'flag' || heading === 'flag:' || heading === 'the flag' || heading === 'flag asli' || heading === 'flag value' || heading === 'flag format' || heading === 'flags') {
+      const ext = extractFlag(body);
+      if (ext) {
+        result.flag = ext;
+      } else {
+        const cleaned = body.replace(/^[-*+:\s]*|[*`#\s]*$/g, '').trim();
+        if (cleaned.length < 100) {
+          result.flag = cleaned;
+        }
+      }
     } else if (heading.includes('ringkasan') || heading.includes('summary') || heading.includes('overview') || heading.includes('deskripsi')) {
       result.problemDescription = body;
     } else {
-      const codeBlocks = [];
-      const codeRegex = /```(?:[a-zA-Z0-9]*)\r?\n([\s\S]*?)```/g;
-      let match;
-      let stepContent = body;
-      while ((match = codeRegex.exec(body)) !== null) {
-        codeBlocks.push(match[1].trim());
-      }
-      
-      stepContent = stepContent.replace(/```(?:[a-zA-Z0-9]*)\r?\n([\s\S]*?)```/g, '').trim();
-
       const step = {
         title: sec.heading,
-        content: stepContent
+        content: body
       };
-      if (codeBlocks.length > 0) {
-        step.code = codeBlocks[0];
-      }
       result.solution.push(step);
     }
   }
