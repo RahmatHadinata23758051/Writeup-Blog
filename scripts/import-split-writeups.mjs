@@ -23,7 +23,8 @@ function formatEventName(folder) {
     'ritsec': 'RITSEC',
     'byuctf': 'BYUCTF',
     'nohacknoctf': 'NoHackNoCTF',
-    'r3ctf': 'R3CTF'
+    'r3ctf': 'R3CTF',
+    'broncoctf': 'BroncoCTF'
   };
 
   const key = folder.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -60,7 +61,7 @@ function mapCategory(folder) {
 
 // Regex to extract flag format
 function extractFlag(text) {
-  const flagRegex = /[a-zA-Z0-9_-]+{[a-zA-Z0-9_!@#$%^&*()\-+=?|~. :\/]+}/;
+  const flagRegex = /[a-zA-Z0-9_-]+{[^{}]+}/;
   const match = text.match(flagRegex);
   return match ? match[0] : null;
 }
@@ -112,16 +113,27 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
   const lines = mdContent.split(/\r?\n/);
   
   let titleFromHeader = "";
-  for (let idx = 0; idx < Math.min(lines.length, 10); idx++) {
-    const line = lines[idx];
-    if (line.startsWith('# ')) {
-      titleFromHeader = line.slice(2).trim();
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx].trim();
+    const headerMatch = line.match(/^[^\w#]*#\s+(.+)$/);
+    if (headerMatch) {
+      titleFromHeader = headerMatch[1].trim();
       break;
+    }
+  }
+  if (!titleFromHeader) {
+    for (let idx = 0; idx < Math.min(lines.length, 15); idx++) {
+      const line = lines[idx].trim();
+      const titleMatch = line.match(/^title:\s*["']?([^"']+)["']?/i);
+      if (titleMatch) {
+        titleFromHeader = titleMatch[1];
+        break;
+      }
     }
   }
   if (!titleFromHeader && lines.length > 0) {
     const firstLine = lines[0].trim();
-    if (firstLine && !firstLine.startsWith('#') && firstLine.length < 100) {
+    if (firstLine && !firstLine.startsWith('#') && !firstLine.startsWith('---') && firstLine.length < 100) {
       titleFromHeader = firstLine;
     }
   }
@@ -137,6 +149,9 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
       .replace(/^(newbie-crypto)$/gi, 'Newbie Crypto')
       .replace(/^(whois)$/gi, 'Whois')
       .replace(/^:\s*/, '')
+      .replace(/\s*[—-]\s*BroncoCTF\s*(?:Web|Crypto|Pwn|Reverse|Forensics|Misc|OSINT)?\s*(?:Writeup)?/gi, '')
+      .replace(/\s*[—-]\s*BroncoCTF\s*\d*\s*/gi, '')
+      .replace(/\s*[:—-]\s*$/, '')
       .trim();
   }
 
@@ -266,7 +281,8 @@ function toSlug(ctfName) {
     'texsawctf': 'texsaw_ctf',
     'v1tctf': 'v1t_ctf',
     'cyberbreakerqual': 'cyberbreaker_qual',
-    'lyknctf2026': 'lyknctf2026'
+    'lyknctf2026': 'lyknctf2026',
+    'broncoctf': 'bronco_ctf'
   };
   if (slugMap[norm]) {
     return slugMap[norm];

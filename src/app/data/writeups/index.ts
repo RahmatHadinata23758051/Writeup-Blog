@@ -3,6 +3,7 @@
 
 import { bhackariWriteups } from './events/bhackari';
 import { boroCtfWriteups } from './events/boro_ctf';
+import { broncoCtfWriteups } from './events/bronco_ctf';
 import { byuctfWriteups } from './events/byuctf';
 import { citctfWriteups } from './events/citctf';
 import { cyberbreakerQualWriteups } from './events/cyberbreaker_qual';
@@ -39,6 +40,7 @@ export type { WriteUp, Category, Difficulty, MathFormula, TerminalOutput } from 
 export const writeups: WriteUp[] = [
   ...bhackariWriteups,
   ...boroCtfWriteups,
+  ...broncoCtfWriteups,
   ...byuctfWriteups,
   ...citctfWriteups,
   ...cyberbreakerQualWriteups,
