@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// THEM 2026 — 27 writeups
 export const them2026Writeups: WriteUp[] = [
   {
     "id": "them2026-foren-bite",

@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// RAM — 20 writeups
 export const ramWriteups: WriteUp[] = [
   {
     "id": "ram-crypto-delhi",
@@ -937,6 +936,56 @@ export const ramWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "RAM{m1ssing_subm1t_b0undary_brEAks_th3_g4te}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "ram-foren-pixelperfect",
+    "title": "CTF Writeup — PixelPerfect",
+    "category": "Forensics",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-08-16",
+    "author": "Nattt",
+    "ctfName": "RAM",
+    "tags": [],
+    "description": "**Event:** RAM  \n**Category:** Forensics  \n**Difficulty:** Easy  \n**Flag:** `RAM{m3t4d4t4_n0t_c13an3d}`",
+    "problemDescription": "| # | Finding | Detail |\n|---|---|---|\n| 1 | **Sensitive EXIF Metadata** | The JPEG `Artist` tag stores the ZIP password in plaintext |\n| 2 | **Appended Archive** | An AES-encrypted ZIP archive is concatenated to the end of the JPEG |\n| 3 | **Incomplete Cleanup** | The challenge relies on leftover metadata and hidden embedded content |\n\n---",
+    "tools": [
+      "file",
+      "exiftool",
+      "binwalk",
+      "7z"
+    ],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Challenge Description",
+        "content": "> We are given a single file, `chall.jpg`, and need to recover the hidden flag from it.\n\n**Attachment:** `chall.jpg`\n\n---"
+      },
+      {
+        "title": "Reconnaissance",
+        "content": "### Step 1 — Identify the File\n\nThe provided artifact is a JPEG image:\n\n```bash\nfile chall.jpg\n```\n\nOutput:\n\n```text\nchall.jpg: JPEG image data, JFIF standard 1.01, 400x400\n```\n\nAt first glance the image looks normal, so the next step is to inspect metadata and check whether extra data is appended to the file.\n\n### Step 2 — Inspect EXIF Metadata\n\nRunning `exiftool` reveals a suspicious value in the `Artist` tag:\n\n```bash\nexiftool chall.jpg\n```\n\nRelevant output:\n\n```text\nArtist : Password: super_secret_recovery_key_2026\n```\n\nThis is a strong indicator that the JPEG metadata was intentionally left dirty and contains the password for another hidden artifact.\n\n### Step 3 — Detect Embedded Data\n\nNext, check whether the JPEG contains appended files:\n\n```bash\nbinwalk chall.jpg\n```\n\nOutput:\n\n```text\nDECIMAL       HEXADECIMAL     DESCRIPTION\n--------------------------------------------------------------------------------\n0             0x0             JPEG image data, JFIF standard 1.01\n30            0x1E            TIFF image data, big-endian, offset of first image directory: 8\n3206          0xC86           Zip archive data, encrypted at least v2.0 to extract, compressed size: 85, uncompressed size: 55, name: flag.txt\n3405          0xD4D           End of Zip archive, footer length: 22\n```\n\nThis confirms that an encrypted ZIP archive is appended after the JPEG data.\n\n---"
+      },
+      {
+        "title": "Exploitation",
+        "content": "### Step 4 — Extract the Embedded ZIP\n\nThe simplest way is to let `binwalk` extract the appended archive automatically:\n\n```bash\nbinwalk -e chall.jpg\n```\n\nThis produces:\n\n```text\n_chall.jpg.extracted/C86.zip\n```\n\n### Step 5 — Use the EXIF Password\n\nNow extract the ZIP using the password found in the `Artist` EXIF field:\n\n```bash\n7z x -psuper_secret_recovery_key_2026 _chall.jpg.extracted/C86.zip\n```\n\nThe archive contains a single file:\n\n```text\nflag.txt\n```\n\n### Step 6 — Read the Flag\n\n```bash\ncat flag.txt\n```\n\nOutput:\n\n```text\nWell done! Here is your flag: RAM{m3t4d4t4_n0t_c13an3d}\n```\n\nThe flag is:\n\n```text\nRAM{m3t4d4t4_n0t_c13an3d}\n```\n\n---"
+      },
+      {
+        "title": "Remediation",
+        "content": "1. **Sanitize metadata before publishing files** — strip EXIF fields from images unless they are explicitly needed\n2. **Check for appended payloads** — validate distributed media to ensure no extra archives or data blobs are attached\n3. **Automate content inspection** — include metadata scanning and file integrity checks in release workflows\n\n---"
+      },
+      {
+        "title": "Attack Flow",
+        "content": "```text\nOpen chall.jpg\n      |\n      v\nInspect EXIF metadata\n  Artist = \"Password: super_secret_recovery_key_2026\"\n      |\n      v\nRun binwalk on chall.jpg\n  -> find embedded encrypted ZIP at 0xC86\n      |\n      v\nExtract ZIP from the JPEG\n      |\n      v\nUse EXIF password to decrypt archive\n      |\n      v\nRead flag.txt\n      |\n      v\nRAM{m3t4d4t4_n0t_c13an3d}\n```"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\n\r\nfrom __future__ import annotations\r\n\r\nimport argparse\r\nimport re\r\nimport shutil\r\nimport struct\r\nimport subprocess\r\nimport sys\r\nimport tempfile\r\nfrom pathlib import Path\r\n\r\n\r\nARTIST_TAG = 0x013B\r\nZIP_LOCAL_FILE_HEADER = b\"PK\\x03\\x04\"\r\n\r\n\r\ndef parse_args() -> argparse.Namespace:\r\n    parser = argparse.ArgumentParser(\r\n        description=\"Recover the hidden flag from the pixelperfect challenge image.\"\r\n    )\r\n    parser.add_argument(\r\n        \"image\",\r\n        nargs=\"?\",\r\n        default=\"chall.jpg\",\r\n        help=\"path to the challenge JPEG (default: chall.jpg)\",\r\n    )\r\n    return parser.parse_args()\r\n\r\n\r\ndef iter_jpeg_segments(data: bytes):\r\n    if not data.startswith(b\"\\xff\\xd8\"):\r\n        raise ValueError(\"input is not a JPEG file\")\r\n\r\n    offset = 2\r\n    data_len = len(data)\r\n\r\n    while offset < data_len:\r\n        if data[offset] != 0xFF:\r\n            raise ValueError(f\"invalid JPEG marker at offset 0x{offset:x}\")\r\n\r\n        while offset < data_len and data[offset] == 0xFF:\r\n            offset += 1\r\n\r\n        if offset >= data_len:\r\n            break\r\n\r\n        marker = data[offset]\r\n        offset += 1\r\n\r\n        if marker in {0xD8, 0xD9} or 0xD0 <= marker <= 0xD7:\r\n            continue\r\n\r\n        if offset + 2 > data_len:\r\n            raise ValueError(\"truncated JPEG segment length\")\r\n\r\n        seg_len = struct.unpack(\">H\", data[offset : offset + 2])[0]\r\n        payload_start = offset + 2\r\n        payload_end = payload_start + seg_len - 2\r\n        if payload_end > data_len:\r\n            raise ValueError(\"truncated JPEG segment payload\")\r\n\r\n        yield marker, data[payload_start:payload_end]\r\n        offset = payload_end\r\n\r\n\r\ndef parse_ifd_ascii_tag(exif_payload: bytes, tag_id: int) -> str | None:\r\n    if not exif_payload.startswith(b\"Exif\\x00\\x00\"):\r\n        return None\r\n\r\n    tiff = exif_payload[6:]\r\n    if len(tiff) < 8:\r\n        raise ValueError(\"truncated TIFF header\")\r\n\r\n    byte_order = tiff[:2]\r\n    if byte_order == b\"II\":\r\n        endian = \"<\"\r\n    elif byte_order == b\"MM\":\r\n        endian = \">\"\r\n    else:\r\n        raise ValueError(\"unsupported TIFF byte order\")\r\n\r\n    magic = struct.unpack(endian + \"H\", tiff[2:4])[0]\r\n    if magic != 42:\r\n        raise ValueError(\"invalid TIFF magic\")\r\n\r\n    ifd0_offset = struct.unpack(endian + \"I\", tiff[4:8])[0]\r\n    if ifd0_offset + 2 > len(tiff):\r\n        raise ValueError(\"invalid IFD0 offset\")\r\n\r\n    count = struct.unpack(endian + \"H\", tiff[ifd0_offset : ifd0_offset + 2])[0]\r\n    entries_offset = ifd0_offset + 2\r\n\r\n    for index in range(count):\r\n        entry_offset = entries_offset + index * 12\r\n        entry = tiff[entry_offset : entry_offset + 12]\r\n        if len(entry) != 12:\r\n            raise ValueError(\"truncated IFD entry\")\r\n\r\n        current_tag, field_type, value_count, value_or_offset = struct.unpack(\r\n            endian + \"HHII\", entry\r\n        )\r\n        if current_tag != tag_id or field_type != 2 or value_count == 0:\r\n            continue\r\n\r\n        if value_count <= 4:\r\n            raw = entry[8 : 8 + value_count]\r\n        else:\r\n            start = value_or_offset\r\n            end = start + value_count\r\n            raw = tiff[start:end]\r\n\r\n        return raw.rstrip(b\"\\x00\").decode(\"utf-8\", errors=\"replace\")\r\n\r\n    return None\r\n\r\n\r\ndef extract_password(jpeg_path: Path) -> str:\r\n    data = jpeg_path.read_bytes()\r\n    for marker, payload in iter_jpeg_segments(data):\r\n        if marker != 0xE1:\r\n            continue\r\n        artist = parse_ifd_ascii_tag(payload, ARTIST_TAG)\r\n        if artist and artist.startswith(\"Password: \"):\r\n            return artist.split(\": \", 1)[1].strip()\r\n    raise ValueError(\"password not found in EXIF Artist tag\")\r\n\r\n\r\ndef carve_zip(jpeg_path: Path, output_zip: Path) -> None:\r\n    data = jpeg_path.read_bytes()\r\n    start = data.find(ZIP_LOCAL_FILE_HEADER)\r\n    if start == -1:\r\n        raise ValueError(\"embedded ZIP archive not found\")\r\n    output_zip.write_bytes(data[start:])\r\n\r\n\r\ndef extract_flag(zip_path: Path, password: str) -> str:\r\n    seven_zip = shutil.which(\"7z\")\r\n    if not seven_zip:\r\n        raise RuntimeError(\"7z is required to extract the AES-encrypted ZIP archive\")\r\n\r\n    with tempfile.TemporaryDirectory() as tmpdir:\r\n        out_dir = Path(tmpdir) / \"out\"\r\n        out_dir.mkdir()\r\n\r\n        result = subprocess.run(\r\n            [\r\n                seven_zip,\r\n                \"x\",\r\n                \"-y\",\r\n                f\"-p{password}\",\r\n                str(zip_path),\r\n                f\"-o{out_dir}\",\r\n            ],\r\n            capture_output=True,\r\n            text=True,\r\n        )\r\n        if result.returncode != 0:\r\n            raise RuntimeError(result.stderr.strip() or result.stdout.strip())\r\n\r\n        flag_file = out_dir / \"flag.txt\"\r\n        if not flag_file.exists():\r\n            raise ValueError(\"flag.txt was not extracted from the archive\")\r\n        content = flag_file.read_text(encoding=\"utf-8\").strip()\r\n        match = re.search(r\"RAM\\{[^}]+\\}\", content)\r\n        return match.group(0) if match else content\r\n\r\n\r\ndef main() -> int:\r\n    args = parse_args()\r\n    jpeg_path = Path(args.image)\r\n    if not jpeg_path.is_file():\r\n        print(f\"[!] file not found: {jpeg_path}\", file=sys.stderr)\r\n        return 1\r\n\r\n    try:\r\n        password = extract_password(jpeg_path)\r\n        with tempfile.TemporaryDirectory() as tmpdir:\r\n            carved_zip = Path(tmpdir) / \"embedded.zip\"\r\n            carve_zip(jpeg_path, carved_zip)\r\n            flag = extract_flag(carved_zip, password)\r\n    except Exception as exc:\r\n        print(f\"[!] {exc}\", file=sys.stderr)\r\n        return 1\r\n\r\n    print(f\"[+] Password: {password}\")\r\n    print(f\"[+] Flag: {flag}\")\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "RAM{m3t4d4t4_n0t_c13an3d}",
     "lessonsLearned": ""
   }
 ];

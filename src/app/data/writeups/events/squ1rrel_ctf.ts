@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Squ 1rrel — 18 writeups
 export const squ1rrelCtfWriteups: WriteUp[] = [
   {
     "id": "squ1rrel-misc-loremipsum",

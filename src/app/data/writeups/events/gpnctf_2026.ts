@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// GPNCTF 2026 — 29 writeups
 export const gpnctf2026Writeups: WriteUp[] = [
   {
     "id": "gpnctf2026-pwn-recipefordisaster",

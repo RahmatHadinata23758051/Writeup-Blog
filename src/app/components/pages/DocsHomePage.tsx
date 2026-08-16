@@ -100,25 +100,25 @@ export function DocsHomePage({
           <div className="flex items-end gap-6 flex-wrap">
             <div>
               <div className="text-2xl font-black font-mono text-[var(--docs-accent)] leading-none">
-                {ctftimeProfile?.countryRank !== null && ctftimeProfile?.countryRank !== undefined ? `#${ctftimeProfile.countryRank}` : '#2'}
+                {ctftimeProfile?.countryRank !== null && ctftimeProfile?.countryRank !== undefined ? `#${ctftimeProfile.countryRank}` : '#1'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🇮🇩 Indonesia</p>
             </div>
             <div>
               <div className="text-2xl font-black font-mono text-[var(--docs-text)] leading-none">
-                {ctftimeProfile?.globalRank ? `#${ctftimeProfile.globalRank}` : '#78'}
+                {ctftimeProfile?.globalRank ? `#${ctftimeProfile.globalRank}` : '#72'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🌍 Worldwide</p>
             </div>
             <div>
               <div className="text-xl font-bold font-mono text-[var(--docs-success)] leading-none">
-                {ctftimeProfile?.ratingPoints ? Number(ctftimeProfile.ratingPoints).toFixed(2) : '351.20'}
+                {ctftimeProfile?.ratingPoints ? Number(ctftimeProfile.ratingPoints).toFixed(2) : '393.19'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Points</p>
             </div>
             <div>
               <div className="text-xl font-bold font-mono text-[var(--docs-text-muted)] leading-none">
-                {ctftimeProfile?.events ? ctftimeProfile.events.length : '111'}
+                {ctftimeProfile?.events ? ctftimeProfile.events.length : '130'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Events</p>
             </div>

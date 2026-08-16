@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Citctf — 19 writeups
 export const citctfWriteups: WriteUp[] = [
   {
     "id": "citctf-foren-larping101",

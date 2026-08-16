@@ -73,6 +73,21 @@ export const CategoryDetailPage: React.FC<CategoryDetailPageProps> = ({
                     return 'bg-orange-500/10 border-orange-400/30 hover:border-orange-400';
                   case 'OSINT':
                     return 'bg-cyan-500/10 border-cyan-400/30 hover:border-cyan-400';
+                  case 'AI':
+                    return 'bg-emerald-500/10 border-emerald-400/30 hover:border-emerald-400';
+                  case 'Malware':
+                  case 'Malware Analysis':
+                    return 'bg-rose-500/10 border-rose-400/30 hover:border-rose-400';
+                  case 'Mobile':
+                    return 'bg-sky-500/10 border-sky-400/30 hover:border-sky-400';
+                  case 'Hardware':
+                    return 'bg-amber-500/10 border-amber-400/30 hover:border-amber-400';
+                  case 'Blockchain':
+                    return 'bg-indigo-500/10 border-indigo-400/30 hover:border-indigo-400';
+                  case 'Kubernetes':
+                    return 'bg-blue-600/10 border-blue-300/30 hover:border-blue-300';
+                  case 'Steganography':
+                    return 'bg-teal-500/10 border-teal-400/30 hover:border-teal-400';
                   default:
                     return 'bg-green-500/10 border-green-400/30 hover:border-green-400';
                 }
@@ -92,6 +107,21 @@ export const CategoryDetailPage: React.FC<CategoryDetailPageProps> = ({
                     return 'text-orange-400';
                   case 'OSINT':
                     return 'text-cyan-400';
+                  case 'AI':
+                    return 'text-emerald-400';
+                  case 'Malware':
+                  case 'Malware Analysis':
+                    return 'text-rose-400';
+                  case 'Mobile':
+                    return 'text-sky-400';
+                  case 'Hardware':
+                    return 'text-amber-400';
+                  case 'Blockchain':
+                    return 'text-indigo-400';
+                  case 'Kubernetes':
+                    return 'text-blue-300';
+                  case 'Steganography':
+                    return 'text-teal-400';
                   default:
                     return 'text-green-400';
                 }

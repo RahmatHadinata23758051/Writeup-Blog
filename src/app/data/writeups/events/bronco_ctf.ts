@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// BroncoCTF — 36 writeups
 export const broncoCtfWriteups: WriteUp[] = [
   {
     "id": "broncoctf-crypto-blorgmultiplier",

@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// NoHackNoCTF — 22 writeups
 export const nohacknoctfWriteups: WriteUp[] = [
   {
     "id": "nohacknoctf-crypto-newbiecrypto",

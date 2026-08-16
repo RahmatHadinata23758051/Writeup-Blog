@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// VuwCTF 2025 — 2 writeups
 export const vuwctf2025Writeups: WriteUp[] = [
   {
     "id": "3",

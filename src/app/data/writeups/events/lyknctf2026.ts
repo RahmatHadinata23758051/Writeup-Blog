@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// LyknCTF 2026 — 43 writeups
 export const lyknctf2026Writeups: WriteUp[] = [
   {
     "id": "lyknctf2026-crypto-67xbet",

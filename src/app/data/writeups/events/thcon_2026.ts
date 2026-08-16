@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// THCON 2026 — 14 writeups
 export const thcon2026Writeups: WriteUp[] = [
   {
     "id": "thcon2026-foren-breach",

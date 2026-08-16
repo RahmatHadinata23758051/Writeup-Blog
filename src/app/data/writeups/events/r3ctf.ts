@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// R3CTF — 15 writeups
 export const r3ctfWriteups: WriteUp[] = [
   {
     "id": "r3ctf-crypto-inside",

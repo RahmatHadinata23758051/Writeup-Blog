@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// HackTheBox — 1 writeup
 export const hacktheboxWriteups: WriteUp[] = [
   {
     "id": "17",

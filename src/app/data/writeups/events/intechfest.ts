@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// INTECHFEST — 1 writeup
 export const intechfestWriteups: WriteUp[] = [
   {
     "id": "2",

@@ -40,6 +40,14 @@ export const CATEGORY_COLORS: Record<string, { bg: string; text: string; icon: s
   'Forensics': { bg: 'bg-yellow-500/10', text: 'text-yellow-400', icon: 'search' },
   'Reverse': { bg: 'bg-orange-500/10', text: 'text-orange-400', icon: 'settings' },
   'OSINT': { bg: 'bg-cyan-500/10', text: 'text-cyan-400', icon: 'public' },
+  'AI': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: 'psychology' },
+  'Malware Analysis': { bg: 'bg-rose-500/10', text: 'text-rose-400', icon: 'coronavirus' },
+  'Malware': { bg: 'bg-rose-500/10', text: 'text-rose-400', icon: 'coronavirus' },
+  'Mobile': { bg: 'bg-sky-500/10', text: 'text-sky-400', icon: 'smartphone' },
+  'Hardware': { bg: 'bg-amber-500/10', text: 'text-amber-400', icon: 'memory' },
+  'Blockchain': { bg: 'bg-indigo-500/10', text: 'text-indigo-400', icon: 'currency_bitcoin' },
+  'Kubernetes': { bg: 'bg-blue-600/10', text: 'text-blue-300', icon: 'cloud' },
+  'Steganography': { bg: 'bg-teal-500/10', text: 'text-teal-400', icon: 'image' },
   'Misc': { bg: 'bg-green-500/10', text: 'text-green-400', icon: 'extension' }
 };
 

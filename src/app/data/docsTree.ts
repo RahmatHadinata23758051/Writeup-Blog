@@ -60,7 +60,35 @@ export type DocsEventNode = {
   slug: string;
   categories: DocsCategoryNode[];
   totalWriteups: number;
+  latestDate?: string;
 };
+
+export type EventSortOrder = 'newest' | 'oldest' | 'az' | 'za';
+
+export function sortDocsEvents(events: DocsEventNode[], order: EventSortOrder = 'newest'): DocsEventNode[] {
+  const copy = [...events];
+  return copy.sort((a, b) => {
+    if (order === 'newest') {
+      const da = a.latestDate || '';
+      const db = b.latestDate || '';
+      if (da !== db) return db.localeCompare(da);
+      return a.name.localeCompare(b.name);
+    }
+    if (order === 'oldest') {
+      const da = a.latestDate || '9999-99-99';
+      const db = b.latestDate || '9999-99-99';
+      if (da !== db) return da.localeCompare(db);
+      return a.name.localeCompare(b.name);
+    }
+    if (order === 'az') {
+      return a.name.localeCompare(b.name);
+    }
+    if (order === 'za') {
+      return b.name.localeCompare(a.name);
+    }
+    return 0;
+  });
+}
 
 /**
  * Build a documentation tree from writeups data.
@@ -109,7 +137,7 @@ export function buildDocsTree(writeupList: Writeup[]): DocsEventNode[] {
     // Preferred category display order — unlisted categories sort alphabetically after these
     const CATEGORY_ORDER: string[] = [
       'Web', 'Crypto', 'Forensics', 'Reverse', 'Reverse Engineering',
-      'Binary Exploitation', 'Pwn', 'Misc', 'OSINT', 'Hardware', 'Blockchain',
+      'Binary Exploitation', 'Pwn', 'AI', 'Malware Analysis', 'Malware', 'Mobile', 'Hardware', 'Blockchain', 'Kubernetes', 'Steganography', 'OSINT', 'Misc',
     ];
 
     function categoryRank(name: string): number {
@@ -156,22 +184,10 @@ export function buildDocsTree(writeupList: Writeup[]): DocsEventNode[] {
       slug: eventSlug,
       categories,
       totalWriteups: eventWriteups.length,
-      _latestDate: latestDate, // internal, used for sorting only
-    } as DocsEventNode & { _latestDate: string });
+      latestDate: latestDate || undefined,
+    });
   }
 
-  // Sort events: newest first by latest writeup date, fallback reverse-alphabetical
-  events.sort((a, b) => {
-    const da = (a as DocsEventNode & { _latestDate?: string })._latestDate || '';
-    const db = (b as DocsEventNode & { _latestDate?: string })._latestDate || '';
-    if (da !== db) return db.localeCompare(da);
-    return b.name.localeCompare(a.name);
-  });
-
-  // Clean internal property before returning
-  for (const ev of events) {
-    delete (ev as DocsEventNode & { _latestDate?: string })._latestDate;
-  }
-
-  return events;
+  // Default: sort events newest first
+  return sortDocsEvents(events, 'newest');
 }

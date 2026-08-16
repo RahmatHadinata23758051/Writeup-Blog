@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Tjcsc — 20 writeups
 export const tjcscWriteups: WriteUp[] = [
   {
     "id": "tjcsc-foren-check-the-fine-print",

@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// SiebersecCTF — 31 writeups
 export const siebersecCtfWriteups: WriteUp[] = [
   {
     "id": "siebersecctf-crypto-67",

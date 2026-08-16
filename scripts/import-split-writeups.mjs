@@ -24,7 +24,16 @@ function formatEventName(folder) {
     'byuctf': 'BYUCTF',
     'nohacknoctf': 'NoHackNoCTF',
     'r3ctf': 'R3CTF',
-    'broncoctf': 'BroncoCTF'
+    'broncoctf': 'BroncoCTF',
+    'kaliteamctf2026': 'KaliTeamCTF 2026',
+    'leakctf': 'LeakCTF',
+    'universalctf': 'UniversalCTF',
+    '0xvoids2': '0xVoid Season 2',
+    'uiuctf2026': 'UIUCTF 2026',
+    'bushbash': 'BushBash',
+    'scriptctf': 'ScriptCTF',
+    'thjccsummer': 'THJCC Summer',
+    'thryvectf': 'ThryveCTF'
   };
 
   const key = folder.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -45,18 +54,60 @@ function formatEventName(folder) {
 // Category normalization mapping
 function mapCategory(folder) {
   const norm = folder.toLowerCase().trim();
+  if (norm === 'ai' || norm.startsWith('ai_') || norm.startsWith('ai-') || norm.includes('artificial')) return 'AI';
+  if (norm.includes('malware')) return 'Malware Analysis';
   if (norm.startsWith('web')) return 'Web';
-  if (norm.startsWith('crypto')) return 'Crypto';
-  if (norm.startsWith('pwn')) return 'Pwn';
+  if (norm.startsWith('crypto') || norm === 'entropy') return 'Crypto';
+  if (norm.startsWith('pwn') || norm === 'bin') return 'Pwn';
   if (norm.startsWith('rev') || norm.startsWith('reverse')) return 'Reverse';
-  if (norm.startsWith('forensic')) return 'Forensics';
-  if (norm.startsWith('misc')) return 'Misc';
+  if (norm.startsWith('forensic') || norm.startsWith('foren') || norm === 'network') return 'Forensics';
+  if (norm.startsWith('misc') || norm === 'beginner' || norm === 'sanity') return 'Misc';
   if (norm.startsWith('osint')) return 'OSINT';
-  if (norm.startsWith('hardware')) return 'Hardware';
+  if (norm.startsWith('hardware') || norm === 'hw') return 'Hardware';
   if (norm.startsWith('blockchain')) return 'Blockchain';
+  if (norm.startsWith('mobile')) return 'Mobile';
+  if (norm.startsWith('kuber')) return 'Kubernetes';
+  if (norm.startsWith('stego') || norm.startsWith('stegano')) return 'Steganography';
   
   // Capitalize first letter as fallback
   return folder.charAt(0).toUpperCase() + folder.slice(1);
+}
+
+function cleanTitle(title) {
+  if (!title) return "";
+  let clean = title.trim();
+
+  // 1. Strip leading dashes, colons, semicolons, bullets, hashes, spaces
+  clean = clean.replace(/^[\s\-_—–:;=+#]+/, '').trim();
+
+  // 2. Remove leading category / CTF prefixes:
+  // E.g.: "PWN — Train...", "CTF — Delphi...", "Blockchain — Switchyard...", "CTF - web/blog"
+  const prefixRegex = /^\s*(?:pwn|web|crypto|cryptography|foren|forensics|misc|stegano|rev|reverse|reverse\s*engineering|blockchain|osint|hardware|ai|ctf)\s*[:—–\-]\s*/i;
+  let prev = "";
+  while (clean !== prev) {
+    prev = clean;
+    clean = clean.replace(prefixRegex, '').trim();
+    clean = clean.replace(/^[\s\-_—–:;=+#]+/, '').trim();
+  }
+
+  // E.g. "web/blog" -> "blog", "pwn/b2b" -> "b2b", "misc/soulmate" -> "soulmate", "forensics/skeleton" -> "skeleton"
+  clean = clean.replace(/^(?:pwn|web|crypto|foren|forensics|misc|stegano|rev)\/([a-zA-Z0-9_\-]+)/i, '$1').trim();
+
+  // 3. Remove trailing event / category suffixes:
+  // E.g.: "— BroncoCTF Web", "— R3CTF 2026", "— SEKAI CTF 2026", "- Web CTF Walkthrough", "— Reverse Engineering"
+  const suffixRegex = /\s*[:—–\-]\s*(?:[A-Za-z0-9_\s]*CTF(?:\s*\d+)?|Web|Crypto|Cryptography|Pwn|Reverse(?:\s*Engineering)?|Forensics?|Misc|OSINT|Hardware|Blockchain|Walkthrough)(?:\s+Writeup)?\s*$/i;
+  prev = "";
+  while (clean !== prev) {
+    prev = clean;
+    clean = clean.replace(suffixRegex, '').trim();
+    clean = clean.replace(/[:—–\-]\s*$/, '').trim();
+  }
+
+  if (!clean) {
+    clean = title.trim();
+  }
+
+  return clean;
 }
 
 // Regex to extract flag format
@@ -79,12 +130,12 @@ function isSectionHeader(line) {
 function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
   const category = mapCategory(categoryFolder);
   const eventName = formatEventName(eventFolder);
-  const cleanTitle = challengeFolder
+  const fallbackTitleClean = challengeFolder
     .replace(/([A-Z])/g, ' $1') // insert spaces before caps
     .replace(/[-_]+/g, ' ')      // replace hyphens/underscores with space
     .trim();
   
-  const defaultTitle = cleanTitle.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const defaultTitle = fallbackTitleClean.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   const id = `${eventFolder.toLowerCase()}-${categoryFolder.toLowerCase()}-${challengeFolder.toLowerCase()}`
     .replace(/\+/g, 'plus')
@@ -138,21 +189,7 @@ function parseReadme(mdContent, eventFolder, categoryFolder, challengeFolder) {
     }
   }
   if (titleFromHeader) {
-    result.title = titleFromHeader
-      .replace(/^\s*Writeup\s*:\s*/gi, '')
-      .replace(/\s*-\s*Writeup/gi, '')
-      .replace(/\s*Writeup\s*CTF:\s*/gi, '')
-      .replace(/\s*CTF\s*Writeup:\s*/gi, '')
-      .replace(/\s*Writeup/gi, '')
-      .replace(/\s*\(NoHackNoCtf\s*-\s*Web\)/gi, '')
-      .replace(/\s*\(NoHackNoCtf\)/gi, '')
-      .replace(/^(newbie-crypto)$/gi, 'Newbie Crypto')
-      .replace(/^(whois)$/gi, 'Whois')
-      .replace(/^:\s*/, '')
-      .replace(/\s*[—-]\s*BroncoCTF\s*(?:Web|Crypto|Pwn|Reverse|Forensics|Misc|OSINT)?\s*(?:Writeup)?/gi, '')
-      .replace(/\s*[—-]\s*BroncoCTF\s*\d*\s*/gi, '')
-      .replace(/\s*[:—-]\s*$/, '')
-      .trim();
+    result.title = cleanTitle(titleFromHeader);
   }
 
   const sections = [];
@@ -282,7 +319,17 @@ function toSlug(ctfName) {
     'v1tctf': 'v1t_ctf',
     'cyberbreakerqual': 'cyberbreaker_qual',
     'lyknctf2026': 'lyknctf2026',
-    'broncoctf': 'bronco_ctf'
+    'broncoctf': 'bronco_ctf',
+    'kaliteamctf2026': 'kaliteamctf_2026',
+    'leakctf': 'leakctf',
+    'universalctf': 'universalctf',
+    '0xvoids2': '0xvoid_s2',
+    '0xvoidseason2': '0xvoid_s2',
+    'uiuctf2026': 'uiuctf_2026',
+    'bushbash': 'bushbash',
+    'scriptctf': 'scriptctf',
+    'thjccsummer': 'thjcc_summer',
+    'thryvectf': 'thryvectf'
   };
   if (slugMap[norm]) {
     return slugMap[norm];
@@ -294,7 +341,11 @@ function toSlug(ctfName) {
 }
 
 function toExportName(slug) {
-  return slug.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase()) + 'Writeups';
+  let name = slug.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase()) + 'Writeups';
+  if (/^[0-9]/.test(name)) {
+    name = '_' + name;
+  }
+  return name;
 }
 
 function scanLocalWriteups() {
@@ -316,8 +367,22 @@ function scanLocalWriteups() {
 
     for (let categoryFolder of categories) {
       const categoryPath = path.join(eventPath, categoryFolder);
-      const challenges = fs.readdirSync(categoryPath).filter(item => {
-        return fs.statSync(path.join(categoryPath, item)).isDirectory();
+      const categoryFiles = fs.readdirSync(categoryPath);
+      const directReadme = categoryFiles.find(f => f.toLowerCase() === 'readme.md');
+
+      if (directReadme) {
+        const readmePath = path.join(categoryPath, directReadme);
+        try {
+          const mdContent = fs.readFileSync(readmePath, 'utf-8');
+          const parsed = parseReadme(mdContent, eventFolder, categoryFolder, categoryFolder);
+          newWriteups.push(parsed);
+        } catch (e) {
+          console.warn(`[!] Failed to parse direct category Readme: ${readmePath} - ${e.message}`);
+        }
+      }
+
+      const challenges = categoryFiles.filter(item => {
+        try { return fs.statSync(path.join(categoryPath, item)).isDirectory(); } catch { return false; }
       });
 
       for (let challengeFolder of challenges) {

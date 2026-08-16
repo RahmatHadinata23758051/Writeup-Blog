@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// FlagYard — 6 writeups
 export const flagyardWriteups: WriteUp[] = [
   {
     "id": "9",

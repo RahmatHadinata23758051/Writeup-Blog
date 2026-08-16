@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// JerseyCTF — 31 writeups
 export const jerseyctfWriteups: WriteUp[] = [
   {
     "id": "18",
@@ -1796,6 +1795,55 @@ export const jerseyctfWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "jctf{nav_un1t_was_th3_thr3at_all_al0ng}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "jerseyctf-crypto-relayartifacttx-7",
+    "title": "CTF Writeup — Relay Artifact TX-7",
+    "category": "Crypto",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-08-16",
+    "author": "Nattt",
+    "ctfName": "JerseyCTF",
+    "tags": [],
+    "description": "**Event:** JerseyCTF  \n**Category:** Crypto  \n**Difficulty:** Medium  \n**Flag:** `JCTF{INDIRECT_CONTROL_IS_THE_ONLY_CONTROL}`",
+    "problemDescription": "**Event:** JerseyCTF  \n**Category:** Crypto  \n**Difficulty:** Medium  \n**Flag:** `JCTF{INDIRECT_CONTROL_IS_THE_ONLY_CONTROL}`\n\n---",
+    "tools": [
+      "openssl",
+      "Python (",
+      "xxd"
+    ],
+    "analysis": "### Vulnerability Summary\n\n| # | Technique | Detail |\n|---|---|---|\n| 1 | **RSA Prime Reuse / Shared Factor** | `relay_fingerprint` shares a prime with public modulus `n`, enabling `gcd(n, fingerprint)` attack |\n| 2 | **Deterministic Private-Key Recovery** | Once `p,q` are known, compute `d` and decrypt ciphertext directly |\n\n---",
+    "solution": [
+      {
+        "title": "Challenge Description",
+        "content": "> Relay node TX-7 was recovered from a decommissioned corridor between the outer and inner system. Diagnostics show it prepared a final transmission but never sent it - the relay restrained itself. Reconstruct what TX-7 was trying to say; its last unsent message may point toward the only viable route inward.\n\n**Files:**\n- `relay_pub.pem`\n- `relay_diag.json`\n- `relay_notes.log`\n- `tx_fragment.bin`\n- `unsent_notice.log`\n\n---"
+      },
+      {
+        "title": "Reconnaissance",
+        "content": "### Step 1 — Basic Artifact Review\n\n```bash\nls -la\n```\n\nInteresting clues:\n- `relay_pub.pem` contains an RSA public key.\n- `tx_fragment.bin` size is 384 bytes (matches RSA-3072 ciphertext length).\n- `relay_diag.json` has a huge hex field: `relay_fingerprint`.\n- `relay_notes.log` explicitly says: **\"Prime reuse flagged but ignored.\"**\n\n### Step 2 — Inspect RSA Public Key\n\n```bash\nopenssl rsa -pubin -in relay_pub.pem -text -noout\n```\n\nResult summary:\n- Public key is ~3072-bit RSA\n- Exponent `e = 65537`\n\n### Step 3 — Identify the Crypto Weakness\n\nThe log hints at weak entropy and prime reuse. A common failure pattern:\n- target modulus `n = p*q`\n- another value accidentally shares one prime (e.g. also divisible by `p`)\n- then `gcd(n, other_value) = p`\n\n`relay_diag.json` contains `relay_fingerprint`, a 3072-bit integer-like hex blob, perfect candidate for GCD attack.\n\n---"
+      },
+      {
+        "title": "Exploitation",
+        "content": "### Step 4 — Recover Prime via GCD\n\n```python\nfrom Crypto.PublicKey import RSA\nfrom math import gcd\nimport json\n\nkey = RSA.import_key(open(\"relay_pub.pem\", \"rb\").read())\nn = key.n\nf = int(json.load(open(\"relay_diag.json\"))[\"relay_fingerprint\"], 16)\n\np = gcd(n, f)\nq = n // p\n```\n\nThis produced a non-trivial factor (`1 < p < n`), so factorization succeeded instantly.\n\n### Step 5 — Rebuild Private Exponent and Decrypt\n\n```python\nphi = (p - 1) * (q - 1)\nd = pow(e, -1, phi)\n\nct = open(\"tx_fragment.bin\", \"rb\").read()\nc = int.from_bytes(ct, \"big\")\nm = pow(c, d, n)\n```\n\nThe decrypted block starts with `00 02 ... 00`, indicating **PKCS#1 v1.5 encryption padding**. After removing padding, plaintext is readable text containing the flag.\n\n### Step 6 — Extract Flag\n\nRecovered plaintext includes:\n\n```\nRelay Transmission — UNSENT\n...\nJCTF{INDIRECT_CONTROL_IS_THE_ONLY_CONTROL}\n```\n\n---"
+      },
+      {
+        "title": "Attack Flow",
+        "content": "```\nrelay_pub.pem + relay_diag.json + tx_fragment.bin\n                │\n                ▼\nExtract n,e and relay_fingerprint\n                │\n                ▼\np = gcd(n, relay_fingerprint)\n                │\n                ▼\nq = n/p, phi = (p-1)(q-1), d = e^{-1} mod phi\n                │\n                ▼\nRSA decrypt tx_fragment.bin\n                │\n                ▼\nPKCS#1 v1.5 unpad\n                │\n                ▼\nJCTF{INDIRECT_CONTROL_IS_THE_ONLY_CONTROL}\n```\n\n---"
+      },
+      {
+        "title": "Installation",
+        "content": "```bash\n# Optional: activate provided environment\nsource /home/nata/ctf_env/bin/activate\n\n# Run solver\npython3 solve.py\n```"
+      },
+      {
+        "title": "Solver Script",
+        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "code": "#!/usr/bin/env python3\r\nfrom math import gcd\r\nimport json\r\nimport re\r\nfrom Crypto.PublicKey import RSA\r\n\r\n\r\ndef main() -> None:\r\n    pub = RSA.import_key(open(\"relay_pub.pem\", \"rb\").read())\r\n    n, e = pub.n, pub.e\r\n\r\n    diag = json.load(open(\"relay_diag.json\", \"r\", encoding=\"utf-8\"))\r\n    fingerprint = int(diag[\"relay_fingerprint\"], 16)\r\n\r\n    # Prime reuse: modulus and fingerprint share one prime factor.\r\n    p = gcd(n, fingerprint)\r\n    if p in (1, n):\r\n        raise RuntimeError(\"GCD attack failed: no shared prime factor found\")\r\n    q = n // p\r\n\r\n    phi = (p - 1) * (q - 1)\r\n    d = pow(e, -1, phi)\r\n\r\n    ct = open(\"tx_fragment.bin\", \"rb\").read()\r\n    c = int.from_bytes(ct, \"big\")\r\n    m = pow(c, d, n)\r\n\r\n    k = (n.bit_length() + 7) // 8\r\n    pt = m.to_bytes(k, \"big\")\r\n\r\n    # PKCS#1 v1.5 unpadding for encryption block type 2.\r\n    if not pt.startswith(b\"\\x00\\x02\"):\r\n        raise RuntimeError(\"Unexpected plaintext format (not PKCS#1 v1.5 block type 2)\")\r\n    sep = pt.find(b\"\\x00\", 2)\r\n    if sep < 0:\r\n        raise RuntimeError(\"Invalid PKCS#1 v1.5 padding: separator not found\")\r\n\r\n    msg = pt[sep + 1 :]\r\n    print(msg.decode(\"utf-8\", errors=\"replace\"))\r\n\r\n    match = re.search(rb\"[A-Za-z0-9_]+\\{[^}]+\\}\", msg)\r\n    if not match:\r\n        raise RuntimeError(\"Flag pattern not found\")\r\n\r\n    flag = match.group().decode()\r\n    print(f\"\\n<FLAG>{flag}</FLAG>\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "JCTF{INDIRECT_CONTROL_IS_THE_ONLY_CONTROL}",
     "lessonsLearned": ""
   }
 ];

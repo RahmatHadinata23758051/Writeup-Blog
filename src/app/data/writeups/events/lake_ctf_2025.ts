@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Lake CTF 2025 — 1 writeup
 export const lakeCtf2025Writeups: WriteUp[] = [
   {
     "id": "8",

@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// KubsCTF — 30 writeups
 export const kubsctfWriteups: WriteUp[] = [
   {
     "id": "kubsuctf-crypto-nintendo",

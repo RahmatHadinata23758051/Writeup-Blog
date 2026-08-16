@@ -11,7 +11,9 @@ interface WriteUpEditorPageProps {
   onBack: () => void;
 }
 
-const categories: Category[] = ['Web', 'Crypto', 'Pwn', 'Forensics', 'Reverse', 'OSINT', 'Misc'];
+const categories: Category[] = [
+  'Web', 'Crypto', 'Pwn', 'Forensics', 'Reverse', 'AI', 'Malware Analysis', 'Mobile', 'Hardware', 'Blockchain', 'Kubernetes', 'Steganography', 'OSINT', 'Misc'
+];
 const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 
 export function WriteUpEditorPage({ onBack }: WriteUpEditorPageProps) {

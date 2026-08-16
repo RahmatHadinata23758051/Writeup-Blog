@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// JuniorCrypt — 25 writeups
 export const juniorcryptWriteups: WriteUp[] = [
   {
     "id": "juniorcrypt-ai-pickles",
@@ -1111,6 +1110,34 @@ export const juniorcryptWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "grodno{emmagtsrow}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "juniorcrypt-foren-invoicewithoutabank",
+    "title": "Invoice Without A Bank (Forensics)",
+    "category": "Forensics",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-08-16",
+    "author": "Nattt",
+    "ctfName": "JuniorCrypt",
+    "tags": [],
+    "description": "**CTF**: JuniorCrypt\n**Category**: Forensics\n**Flag**: `grodno{Vl6s3kCIKaUvwaUAeY.pdf_6ZFYeMmltso}`",
+    "problemDescription": "> Find the message where a PDF attachment is distributed under the guise of a banking notification.\n\nDikasih 10 file `.eml` di folder `emails/`. Tugasnya nyari satu email spesifik yang nyamar sebagai notifikasi bank, terus ambil nama attachment PDF-nya sama ID di subject.",
+    "tools": [
+      "grep",
+      "Python",
+      "email.header.decode_header"
+    ],
+    "analysis": "Subject challenge-nya udah kasih clue: harus ada teks **\"Fatura Emitida -\"** (bahasa Portugis, artinya \"Invoice Diterbitkan -\"). Tinggal grep semua `.eml` buat nyari itu:\n\n```bash\ngrep -liE \"fatura emitida\" *.eml\n```\n\nKetemu satu file: `sample-717.eml`.\n\nSekalian cross-check tema banking di email lain (buat mastiin bukan salah sample, soalnya ada beberapa phishing email lain yang juga nyamar jadi bank: `[BB]`, `Banco do Brasil`, dll):\n\n```bash\ngrep -liE \"bank|banco|banking\" *.eml\n```\n\nCek header `From`/`Subject` file itu:\n\n```\nFrom: \"Itaucard - Pague sua fatura | Cod. 2374614215181323\" <watw96708@gmail.com>\nSubject: Fatura Emitida - 6ZFYeMmltso\n```\n\n`From`-nya nyamarin diri jadi \"Itaucard\" (brand kartu kredit bank Itaú di Brasil) + kode fake, padahal domainnya cuma gmail biasa — pola khas phishing invoice/tagihan.",
+    "solution": [
+      {
+        "title": "Ekstraksi Detail",
+        "content": "Attachment filename-nya nggak keliatan langsung dari `grep -iE \"filename=.*\\.pdf\"` doang karena beberapa email nge-encode header (RFC 2047 `=?UTF-8?B?...?=`). Supaya nggak salah decode/salah baca, parse pakai modul `email` bawaan Python:\n\n```python\nimport glob, email\nfrom email.header import decode_header\n\ndef dec(s):\n    if not s:\n        return \"\"\n    out = \"\"\n    for val, enc in decode_header(s):\n        out += val.decode(enc or \"utf-8\", errors=\"replace\") if isinstance(val, bytes) else val\n    return out\n\nfor fname in sorted(glob.glob(\"*.eml\")):\n    with open(fname, \"rb\") as f:\n        msg = email.message_from_binary_file(f)\n    subj = dec(msg[\"subject\"])\n    if \"fatura emitida\" in subj.lower():\n        print(\"FILE:\", fname)\n        print(\"SUBJECT:\", subj)\n        for part in msg.walk():\n            fn = part.get_filename()\n            if fn:\n                print(\"  ATTACHMENT:\", dec(fn))\n```\n\nOutput:\n\n```\nFILE: sample-717.eml\nSUBJECT: Fatura Emitida - 6ZFYeMmltso\n  ATTACHMENT: Vl6s3kCIKaUvwaUAeY.pdf\n```\n\nDua data yang dibutuhin:\n\n- **Filename attachment**: `Vl6s3kCIKaUvwaUAeY.pdf`\n- **ID setelah \"Fatura Emitida -\"**: `6ZFYeMmltso`"
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "grodno{Vl6s3kCIKaUvwaUAeY.pdf_6ZFYeMmltso}",
     "lessonsLearned": ""
   }
 ];

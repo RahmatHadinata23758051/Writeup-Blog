@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Cyberbreaker Qual — 5 writeups
 export const cyberbreakerQualWriteups: WriteUp[] = [
   {
     "id": "cyberbreaker-qual-crypto-casino",
@@ -241,6 +240,74 @@ export const cyberbreakerQualWriteups: WriteUp[] = [
     ],
     "terminalOutputs": [],
     "flag": "CBC{6cc6abdf24b2ece791cff9c75f5fdddb}",
+    "lessonsLearned": ""
+  },
+  {
+    "id": "cyberbreaker-qual-pwn-pwn",
+    "title": "Writeup `cbc_plus_plus_1`",
+    "category": "Pwn",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-08-16",
+    "author": "Nattt",
+    "ctfName": "Cyberbreaker Qual",
+    "tags": [],
+    "description": "Challenge ini kelihatannya simpel banget di awal. Programnya cuma nyimpen angka ke `std::vector<unsigned long long>`, terus ada menu buat swap dua elemen. Biasanya kalau lihat soal beginian, insting pertama ya cari out-of-bounds. Dan ternyata memang itu sumber masalah utamanya.",
+    "problemDescription": "Challenge ini kelihatannya simpel banget di awal. Programnya cuma nyimpen angka ke `std::vector<unsigned long long>`, terus ada menu buat swap dua elemen. Biasanya kalau lihat soal beginian, insting pertama ya cari out-of-bounds. Dan ternyata memang itu sumber masalah utamanya.\n\nTarget remote:\n\n```bash\nnc pwn.cbd2026.cloud 9999\n```\n\nBinary yang dipakai:\n\n- `cbc_plus_plus_1`\n- source disediakan: `cbc_plus_plus_1.cpp`",
+    "tools": [],
+    "analysis": "",
+    "solution": [
+      {
+        "title": "Recon awal",
+        "content": "Pertama saya cek proteksi binary:\n\n```bash\nchecksec --file=cbc_plus_plus_1\n```\n\nHasil pentingnya:\n\n- `Full RELRO`\n- `Canary found`\n- `NX enabled`\n- `No PIE`\n- `SHSTK enabled`\n- `IBT enabled`\n\nJadi dari sini sudah kelihatan kalau jalur ret2libc klasik lewat overwrite return address itu bukan opsi yang enak. Bukan cuma karena canary, tapi juga karena ada shadow stack dan IBT. Artinya saya butuh primitive lain yang tidak bergantung pada hijack control flow via stack."
+      },
+      {
+        "title": "Bedah source",
+        "content": "Source programnya pendek:\n\n```cpp\ncase 2:\n    std::cout << \"Index 1: \";\n    std::cin >> ind1;\n    std::cout << \"Index 2: \";\n    std::cin >> ind2;\n    num = vec->operator[](ind1);\n    vec->operator[](ind1) = vec->operator[](ind2);\n    vec->operator[](ind2) = num;\n    std::cout << \"Done\" << std::endl;\n    break;\n```\n\nMasalahnya ada di `operator[]`. Akses ini tidak ada bounds check. Sementara indeks dibaca sebagai `int`, lalu di asm dikonversi pakai `movsxd`, jadi angka negatif ikut dibawa sebagai signed value, lalu dipakai sebagai offset 64-bit.\n\nImplementasi `vector::operator[]` yang dipanggil binary ini bentuknya pada dasarnya cuma:\n\n```asm\nrax = [vec_begin]\nrdx = index\nrdx <<= 3\nrax += rdx\nreturn rax\n```\n\nArtinya `vec[-1]`, `vec[-2]`, `vec[-3]`, dan seterusnya benar-benar ngarah ke alamat sebelum buffer vector di heap."
+      },
+      {
+        "title": "Layout yang penting",
+        "content": "Waktu `init()`, program melakukan:\n\n1. baca nama ke global `std::string name`\n2. `new std::vector<unsigned long long>()`\n3. `vec->reserve(0x100)`\n\nDari pengecekan di GDB, object `std::vector` sendiri ada di heap, dan isinya tiga pointer:\n\n- `begin`\n- `end`\n- `cap`\n\nSetelah `reserve(0x100)`, layout-nya kurang lebih jadi begini:\n\n```text\nvec object:\n  [0x00] begin -> buffer angka\n  [0x08] end   -> awal buffer juga, karena size masih 0\n  [0x10] cap   -> begin + 0x800\n```\n\nKarena `operator[]` membaca dari `begin`, maka:\n\n- `vec[-3]` mengarah ke `begin`\n- `vec[-2]` mengarah ke `end`\n- `vec[-1]` mengarah ke `cap`\n\nIni kunci exploit-nya."
+      },
+      {
+        "title": "Primitive yang dipakai",
+        "content": "Awalnya saya sempat mikir soal arbitrary read langsung dari OOB swap, tapi swap sendirian cuma tukar dua qword. Itu kuat, tapi belum otomatis nyaman dipakai buat baca string atau pointer libc.\n\nYang akhirnya dipakai adalah kombinasi:\n\n1. pakai `swap(-3, idx)` untuk menukar `begin`\n2. pakai `swap(-2, idx)` untuk menukar `end`\n3. manfaatkan `push_back()` sebagai write gadget\n\nKalau `end` saya arahkan ke target address, lalu `push_back(x)`, maka nilai `x` akan ditulis ke alamat yang sedang ditunjuk `end`.\n\nSecara konsep:\n\n```text\nvector.end = target\npush_back(value)\n=> *(target) = value\n```\n\nSupaya vector tidak rusak permanen, setelah write selesai `begin/end/cap` saya restore lagi ke nilai semula dengan swap balik.\n\nJadi primitive utamanya berubah menjadi:\n\n- `arb write 8-byte`\n\nSetelah punya arbitrary write, saya pakai object `std::string name` sebagai oracle untuk arbitrary read."
+      },
+      {
+        "title": "Kenapa `name` bisa dipakai buat leak",
+        "content": "Menu selalu mencetak:\n\n```cpp\nstd::cout << \"Hi, \" << name << std::endl;\n```\n\nKalau field internal `std::string name` diubah supaya pointer data-nya mengarah ke alamat tertentu, lalu length-nya di-set ke ukuran yang kita mau, setiap kali menu tampil program akan mencetak bytes dari alamat itu.\n\nUntuk string panjang di libstdc++, layout `std::string` global ini cukup sederhana:\n\n- offset `+0x00`: pointer data\n- offset `+0x08`: size\n- offset `+0x10`: area buffer/capacity tergantung mode\n\nKarena saya kasih nama awal sepanjang 32 byte, objek `name` masuk mode heap string, jadi destructor-nya nanti juga berguna.\n\nPrimitive leak yang dipakai:\n\n1. overwrite `name.ptr = alamat_target`\n2. overwrite `name.size = panjang`\n3. tunggu output `Hi, `\n4. baca `panjang` byte setelah itu\n5. reset lagi `name` ke string kosong supaya menu berikutnya tidak nge-print data liar terus-menerus\n\nDengan ini saya bisa leak:\n\n- GOT entry `__libc_start_main`\n- pointer `vec`\n- isi object vector di heap\n- area libc lain yang diperlukan"
+      },
+      {
+        "title": "Kenapa saya tidak pakai return address",
+        "content": "Di challenge ini ada:\n\n- canary\n- shadow stack\n- IBT\n\nJadi walaupun secara teori bisa cari jalur stack corruption, effort-nya jadi jauh lebih ribet dan belum tentu worth it. Begitu lihat ada global object C++ dan ada mekanisme exit handler, saya geser fokus ke sana karena jalurnya lebih bersih."
+      },
+      {
+        "title": "Target akhir: exit handler, bukan stack",
+        "content": "Ada satu detail penting di binary:\n\nglobal `std::string name` didaftarkan ke `__cxa_atexit`, supaya destructor-nya dipanggil saat program keluar.\n\nArtinya di libc ada entry exit handler yang berisi:\n\n- encoded function pointer ke destructor string\n- argumen = alamat object `name`\n- `dso_handle`\n\nKalau entry ini bisa saya ubah menjadi:\n\n- function pointer = `system`\n- argumen = pointer ke string command\n\nmaka saat user pilih `3. Exit`, program akan mengeksekusi `system(command)` secara natural, tanpa sentuh return address sama sekali.\n\nItu sangat cocok untuk challenge ini."
+      },
+      {
+        "title": "Pointer mangling di `__cxa_atexit`",
+        "content": "Masalahnya, pointer function di exit handler tidak disimpan mentah. Glibc melakukan pointer mangling.\n\nDari leak entry yang asli, saya dapat:\n\n- encoded destructor pointer\n- argumen asli (`&name`)\n- `dso_handle`\n\nLalu saya leak juga pointer destructor sebenarnya dari GOT:\n\n```text\nreal_dtor = GOT[basic_string destructor]\nencoded_dtor = entry->func\n```\n\nKarena skema mangle glibc untuk pointer ini adalah rotasi + xor dengan guard, guard bisa dipulihkan:\n\n```text\nguard = ror(encoded_dtor, 0x11) ^ real_dtor\n```\n\nSetelah guard ketemu, saya bisa encode `system` dengan format yang sama:\n\n```text\nencoded_system = rol(system ^ guard, 0x11)\n```\n\nLalu overwrite:\n\n- `entry->func = encoded_system`\n- `entry->arg = vec_begin`\n\nKenapa `vec_begin`? Karena saya taruh command di elemen awal vector, jadi alamat buffer vector sudah langsung jadi pointer ke string command."
+      },
+      {
+        "title": "Jebakan waktu ngerjain remote",
+        "content": "Bagian ini yang paling nyebelin justru bukan primitive-nya, tapi soal libc remote.\n\nAwalnya saya kira cukup:\n\n```text\nlibc_base = leak(__libc_start_main@got) - offset_local___libc_start_main\nsystem    = libc_base + offset_local_system\n```\n\nTernyata remote memang mirip libc lokal, tapi offset `system` beda `0x10`.\n\nDi lokal:\n\n- `system = 0x58750`\n\nDi remote hasil leak simbol:\n\n- `system = 0x58740`\n\nEfeknya bikin exploit terlihat “hampir benar” tapi command tidak jalan.\n\nBegitu saya leak langsung entry `dynsym[1050]` dari libc remote, kelihatan kalau simbol `system` memang ada di index yang sama, tapi `st_value`-nya beda sedikit. Dari situ alamat `system` yang dipakai exploit saya ambil langsung dari `dynsym` remote, bukan lagi percaya mentah ke offset lokal.\n\nItu yang bikin payload akhirnya stabil di service."
+      },
+      {
+        "title": "Flow exploit final",
+        "content": "Urutan exploit finalnya seperti ini:\n\n1. kirim nama panjang 32 byte supaya `name` jadi heap string\n2. isi vector dengan beberapa angka awal, termasuk string command yang sudah dipacking ke qword\n3. bangun primitive arbitrary write lewat korupsi `begin/end/cap`\n4. bangun primitive arbitrary read lewat manipulasi `std::string name`\n5. leak `__libc_start_main@got`\n6. hitung `libc_base`\n7. leak simbol `system` langsung dari `dynsym` remote\n8. leak `vec` lalu baca `vec_begin`\n9. ambil exit handler entry untuk destructor `name`\n10. recover pointer guard dari encoded destructor\n11. encode alamat `system`\n12. overwrite exit entry:\n    - function pointer -> encoded `system`\n    - argumen -> `vec_begin`\n13. pilih menu `3`\n14. program keluar dan menjalankan `system(command)`\n\nCommand yang dipakai terakhir:\n\n```text\ncat flag.txt\n```"
+      },
+      {
+        "title": "File exploit",
+        "content": "Script final ada di:\n\n[exploit.py](/home/nata/ctf/cyberbreaker-qual/pwn/exploit.py)\n\nJalankan lokal:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython exploit.py\n```\n\nJalankan remote:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython exploit.py REMOTE\n```"
+      },
+      {
+        "title": "Penutup",
+        "content": "Challenge ini enak karena bug-nya kecil, tapi ruang eksploitasinya lebar. Swap out-of-bounds doang ternyata cukup buat berubah jadi arbitrary write, lalu arbitrary read, lalu command execution penuh tanpa harus nyentuh stack sama sekali.\n\nKalau disederhanakan, inti soal ini ada di tiga hal:\n\n- `vector::operator[]` tanpa bounds check\n- object layout C++ yang bisa dimanipulasi\n- exit handler libc yang lebih realistis dipakai daripada ret smash\n\nBegitu ketiganya nyambung, sisanya tinggal kerja rapih di detail implementasi."
+      }
+    ],
+    "terminalOutputs": [],
+    "flag": "CBC{c47884f6827d5fdb9799e7dad890e04934f47b29ab5e9f20a04bb4d6d9426fcb}",
     "lessonsLearned": ""
   }
 ];

@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Tracebash — 27 writeups
 export const tracebashWriteups: WriteUp[] = [
   {
     "id": "tracebash-crypto-brokentrustprotocol",

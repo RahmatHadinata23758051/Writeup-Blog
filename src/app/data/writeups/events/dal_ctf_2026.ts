@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// DAL CTF 2026 — 17 writeups
 export const dalCtf2026Writeups: WriteUp[] = [
   {
     "id": "dalctf2026-forensic-spoiledcheesepull",

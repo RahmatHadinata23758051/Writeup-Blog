@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Bhackari — 5 writeups
 export const bhackariWriteups: WriteUp[] = [
   {
     "id": "bhackari-rev-dontunpackme",

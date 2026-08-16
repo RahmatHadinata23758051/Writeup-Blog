@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// BoroCTF — 54 writeups
 export const boroCtfWriteups: WriteUp[] = [
   {
     "id": "boroctf-crypto-anatomicallyincorrect",

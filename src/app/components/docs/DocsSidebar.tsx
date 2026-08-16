@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import type { DocsEventNode } from '../../data/docsTree';
+import React, { useState, useMemo } from 'react';
+import type { DocsEventNode, EventSortOrder } from '../../data/docsTree';
+import { sortDocsEvents } from '../../data/docsTree';
 
 // React Icons
 import { PiGameControllerFill } from 'react-icons/pi';
@@ -19,7 +20,10 @@ import {
   FaWrench,
   FaFileCode,
   FaServer,
-  FaBug
+  FaBug,
+  FaSortAmountDown,
+  FaSortAmountUpAlt,
+  FaSortAlphaDown
 } from 'react-icons/fa';
 import { GiBirdTwitter, GiNinjaHead, GiAbstract053, GiProcessor } from 'react-icons/gi';
 
@@ -119,6 +123,22 @@ export function DocsSidebar({
   onPlaygroundClick,
   mode = 'tree',
 }: DocsSidebarProps) {
+  // Sort order: default 'newest' (newest writeups / events at the top)
+  const [sortOrder, setSortOrder] = useState<EventSortOrder>('newest');
+
+  const sortedTree = useMemo(() => {
+    if (!tree) return [];
+    return sortDocsEvents(tree, sortOrder);
+  }, [tree, sortOrder]);
+
+  const cycleSortOrder = () => {
+    setSortOrder((current) => {
+      if (current === 'newest') return 'oldest';
+      if (current === 'oldest') return 'az';
+      return 'newest';
+    });
+  };
+
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(
     new Set(activeEventSlug ? [activeEventSlug] : tree?.slice(0, 2).map((e) => e.slug))
   );
@@ -179,11 +199,41 @@ export function DocsSidebar({
           </button>
 
           <div className="py-2">
-            <div className="px-3 pb-2 text-[12px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase font-sans border-b border-[var(--docs-border-soft)] mb-2">
-              CTF EVENT WRITEUPS
+            <div className="flex items-center justify-between px-3 pb-2 border-b border-[var(--docs-border-soft)] mb-2">
+              <span className="text-[12px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase font-sans">
+                CTF EVENTS ({sortedTree.length})
+              </span>
+              
+              {/* Ascending / Descending toggle button with React Icon */}
+              <button
+                type="button"
+                onClick={cycleSortOrder}
+                title={`Urutan: ${sortOrder === 'newest' ? 'Terbaru di atas (Descending)' : sortOrder === 'oldest' ? 'Terlama di atas (Ascending)' : 'Alfabetis (A-Z)'}. Klik untuk ganti.`}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono transition-all border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/50 hover:bg-[var(--docs-surface-hover)] text-[var(--docs-text-muted)] hover:text-[var(--docs-accent)] hover:border-[var(--docs-accent-border)] cursor-pointer group"
+              >
+                {sortOrder === 'newest' && (
+                  <>
+                    <FaSortAmountDown className="h-3 w-3 text-[var(--docs-accent)] transition-transform group-hover:scale-110" />
+                    <span className="text-[10px] font-sans font-semibold text-[var(--docs-accent)]">Newest</span>
+                  </>
+                )}
+                {sortOrder === 'oldest' && (
+                  <>
+                    <FaSortAmountUpAlt className="h-3 w-3 text-[var(--docs-text)] transition-transform group-hover:scale-110" />
+                    <span className="text-[10px] font-sans font-semibold text-[var(--docs-text)]">Oldest</span>
+                  </>
+                )}
+                {sortOrder === 'az' && (
+                  <>
+                    <FaSortAlphaDown className="h-3 w-3 text-cyan-400 transition-transform group-hover:scale-110" />
+                    <span className="text-[10px] font-sans font-semibold text-cyan-400">A-Z</span>
+                  </>
+                )}
+              </button>
             </div>
+
             <div className="space-y-1">
-              {tree?.map((event) => {
+              {sortedTree.map((event) => {
                 const isActive = activeEventSlug === event.slug;
                 return (
                   <button
@@ -257,8 +307,39 @@ export function DocsSidebar({
           <span>Game</span>
         </button>
 
+        <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-[var(--docs-border-soft)] mb-2">
+          <span className="text-[12px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase font-sans">
+            CTF EVENTS ({sortedTree.length})
+          </span>
+          <button
+            type="button"
+            onClick={cycleSortOrder}
+            title={`Urutan: ${sortOrder === 'newest' ? 'Terbaru di atas (Descending)' : sortOrder === 'oldest' ? 'Terlama di atas (Ascending)' : 'Alfabetis (A-Z)'}. Klik untuk ganti.`}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono transition-all border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/50 hover:bg-[var(--docs-surface-hover)] text-[var(--docs-text-muted)] hover:text-[var(--docs-accent)] hover:border-[var(--docs-accent-border)] cursor-pointer group"
+          >
+            {sortOrder === 'newest' && (
+              <>
+                <FaSortAmountDown className="h-3 w-3 text-[var(--docs-accent)] transition-transform group-hover:scale-110" />
+                <span className="text-[10px] font-sans font-semibold text-[var(--docs-accent)]">Newest</span>
+              </>
+            )}
+            {sortOrder === 'oldest' && (
+              <>
+                <FaSortAmountUpAlt className="h-3 w-3 text-[var(--docs-text)] transition-transform group-hover:scale-110" />
+                <span className="text-[10px] font-sans font-semibold text-[var(--docs-text)]">Oldest</span>
+              </>
+            )}
+            {sortOrder === 'az' && (
+              <>
+                <FaSortAlphaDown className="h-3 w-3 text-cyan-400 transition-transform group-hover:scale-110" />
+                <span className="text-[10px] font-sans font-semibold text-cyan-400">A-Z</span>
+              </>
+            )}
+          </button>
+        </div>
+
         {/* Events */}
-        {tree?.map((event) => {
+        {sortedTree.map((event) => {
           return (
             <div key={event.slug} className="space-y-1">
               <div className="flex items-center gap-0">

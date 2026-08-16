@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Incognito — 1 writeup
 export const incognitoWriteups: WriteUp[] = [
   {
     "id": "incognito-foren-deados",

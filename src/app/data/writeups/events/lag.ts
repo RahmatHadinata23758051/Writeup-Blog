@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Lag — 1 writeup
 export const lagWriteups: WriteUp[] = [
   {
     "id": "lag-crypto-2",

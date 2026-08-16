@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// TexSAW CTF — 3 writeups
 export const texsawCtfWriteups: WriteUp[] = [
   {
     "id": "texcaw-foren-2",

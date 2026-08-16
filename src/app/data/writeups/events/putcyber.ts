@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// Putcyber — 2 writeups
 export const putcyberWriteups: WriteUp[] = [
   {
     "id": "putcyber-web-confundus",

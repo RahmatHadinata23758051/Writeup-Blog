@@ -1,4 +1,4 @@
-export type Category = 'Web' | 'Crypto' | 'Pwn' | 'Forensics' | 'Reverse' | 'OSINT' | 'Misc';
+export type Category = 'Web' | 'Crypto' | 'Pwn' | 'Forensics' | 'Reverse' | 'OSINT' | 'Misc' | 'AI' | 'Malware Analysis' | 'Malware' | 'Mobile' | 'Hardware' | 'Blockchain' | 'Kubernetes' | 'Steganography' | string;
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
 export interface MathFormula {

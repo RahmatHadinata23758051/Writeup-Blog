@@ -10,7 +10,9 @@ interface WriteUpsPageProps {
 export function WriteUpsPage({ onSelectWriteUp }: WriteUpsPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
 
-  const categories: (Category | 'All')[] = ['All', 'Web', 'Crypto', 'Pwn', 'Forensics', 'Reverse', 'OSINT', 'Misc'];
+  const categories: (Category | 'All')[] = [
+    'All', 'Web', 'Crypto', 'Pwn', 'Forensics', 'Reverse', 'AI', 'Malware Analysis', 'Mobile', 'Hardware', 'Blockchain', 'Kubernetes', 'Steganography', 'OSINT', 'Misc'
+  ];
 
   const filteredWriteUps =
     selectedCategory === 'All'

@@ -68,7 +68,7 @@ export function HomePage({ onNavigate, onSelectWriteUp }: HomePageProps) {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {['Web', 'Crypto', 'Pwn', 'Forensics', 'Reverse', 'OSINT', 'Misc'].map(
+            {Array.from(new Set(writeups.map(w => w.category || 'Misc'))).sort().map(
               (category) => {
                 const count = writeups.filter(
                   (w) => w.category === category

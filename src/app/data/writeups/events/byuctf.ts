@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// BYUCTF — 9 writeups
 export const byuctfWriteups: WriteUp[] = [
   {
     "id": "byuctf-foren-allrighttimeparadox",

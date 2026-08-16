@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// V 1tCtf — 27 writeups
 export const v1tCtfWriteups: WriteUp[] = [
   {
     "id": "v1tctf-crypto-antislop",

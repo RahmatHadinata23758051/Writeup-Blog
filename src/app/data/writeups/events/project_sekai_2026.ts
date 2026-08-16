@@ -1,6 +1,5 @@
-import type { WriteUp } from '../types';
+import type { WriteUp } from "../types";
 
-// ProjectSekai 2026 — 15 writeups
 export const projectSekai2026Writeups: WriteUp[] = [
   {
     "id": "projectsekai2026-blockchain-openworld",
