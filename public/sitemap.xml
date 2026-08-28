@@ -2,9 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://rblxlabs.vercel.app/</loc>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/0xvoid-season-2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://rblxlabs.vercel.app/#/event/bhackari</loc>
@@ -27,6 +33,12 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/event/broncoctf</loc>
     <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/bushbash</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -109,6 +121,12 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/event/kaliteamctf-2026</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/event/kubsctf</loc>
     <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -123,6 +141,12 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/event/lake-ctf-2025</loc>
     <lastmod>2025-02-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/leakctf</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -159,6 +183,12 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/event/ram</loc>
     <lastmod>2026-07-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/scriptctf</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -205,6 +235,18 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/event/thjcc-summer</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/thryvectf</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/event/tjcsc</loc>
     <lastmod>2026-07-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -213,6 +255,18 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/event/tracebash</loc>
     <lastmod>2026-06-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/uiuctf-2026</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/event/universalctf</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -227,6 +281,222 @@
     <lastmod>2025-02-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-acrostic</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-checkpointseed</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-confidencecipher</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-embeddingoracle</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-quietnote</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-refusalwithextratokens</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-safetybitfield</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-selfconsistencyvote</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-temperatureseven</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-ai-tokenizeroffbyone</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-crypto-v01dhandout</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-crypto-v01dhandout2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-foren-blackout</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-foren-echoesinthewal</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-foren-twosidesofmidnight</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-misc-betweenthelines</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-misc-singlebyte</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-misc-timemachine</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-mobile-0b51d14nk3y</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-mobile-losilluminados</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-mobile-mawjrelay</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-mobile-pingback</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-mobile-voidenote</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-osint-mapdetective</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-osint-theelephantinthearchive</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-osint-thezodiacarchive</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-pwn-ropcsu</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-pwn-shellgame</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-pwn-thevault</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-rev-afterimageprotocol</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-rev-chronocore</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-rev-turningcurse</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-stegano-transmission</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-web-directive</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-web-loopbacklens</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/0xvoid-s2-web-palimpsestvault</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/11</loc>
@@ -614,7 +884,7 @@
   </url>
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/boroctf-web-borogpt</loc>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>
@@ -877,6 +1147,48 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/bushbash-crypto-cachebrowns</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/bushbash-crypto-strawberries</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/bushbash-misc-signalhaze</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/bushbash-pwn-hackthevaultii</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/bushbash-rev-langleranglelanglerangle</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/bushbash-rev-langleranglelangleranglelangleranglelangleranglelangleranglelanglerangle</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/bushbash-rev-turnaround</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/byuctf-foren-allrighttimeparadox</loc>
     <lastmod>2026-06-08</lastmod>
     <changefreq>never</changefreq>
@@ -1053,6 +1365,12 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/cyberbreaker-qual-crypto-waifu-shop</loc>
     <lastmod>2026-06-08</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/cyberbreaker-qual-pwn-pwn</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1417,6 +1735,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/jerseyctf-crypto-relayartifacttx-7</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/jerseyctf-foren-coldwake</loc>
     <lastmod>2026-06-08</lastmod>
     <changefreq>never</changefreq>
@@ -1563,6 +1887,12 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-crypto-weightedcompanioncube</loc>
     <lastmod>2026-07-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/juniorcrypt-foren-invoicewithoutabank</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1717,6 +2047,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/k1nd4sus-web-ezbounty</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/k1nd4sus-web-layeredcakeshop</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/k1nd4sus-web-sportivibe2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/k1nd4sus-web-spotivibe1</loc>
     <lastmod>2026-07-08</lastmod>
     <changefreq>never</changefreq>
@@ -1725,6 +2073,96 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/k1nd4sus-web-spotivibe1-spotivibe1</loc>
     <lastmod>2026-07-08</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-crypto-merkletrapdoor</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-crypto-nineseals</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-misc-callme1</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-misc-oshit</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-misc-whoami</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-osint-lastshift</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-pwn-leaky</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-pwn-rayray</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-pwn-theaethervault</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-pwn-warmy</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-rev-faultcrypto</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-rev-whisperingfeather</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-web-koon7r</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-web-lockout</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/kaliteamctf2026-web-robots</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1911,6 +2349,114 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/lag-crypto-2</loc>
     <lastmod>2026-06-08</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-beginner-babylcg</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-beginner-getflag</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-beginner-mefr</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-crypto-1plus13</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-crypto-immiscible</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-crypto-po1337nomial-revenge</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-crypto-rsaeclipse</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-foren-l3akapt</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-foren-transcendentrenovation</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-foren-youscannedhow</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-foren-youscannedwhat</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-misc-bluinder</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-pwn-rudimentarycalculator</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-rev-subleqscramble</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-rev-yetanotherchat</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-web-catvault</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-web-workerboard</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/leakctf-web-zebda</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>
@@ -2527,6 +3073,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/ram-foren-pixelperfect</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/ram-misc-amnesia</loc>
     <lastmod>2026-07-08</lastmod>
     <changefreq>never</changefreq>
@@ -2613,6 +3165,126 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/ram-web-submission</loc>
     <lastmod>2026-07-08</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-blockchain-blockchain</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-crypto-oops</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-foren-bruteforced</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-foren-johncena</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-foren-recovermypet</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-misc-flagcheck67</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-misc-golf</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-osint-promotion</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-osint-thenewone1</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-osint-thenewone2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-osint-timetraveler</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-pwn-faas15</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-pwn-leaks</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-rev-diabolical</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-rev-fuck</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-rev-mc-checker</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-rev-meowvelousshop</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-web-404notfound</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-web-pixieplus</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/scriptctf-web-wpm-game</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>
@@ -3175,6 +3847,306 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-amillionmessages</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-forbidden</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-latticeofdoom</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-noncesense</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-oracleofpadding</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-schizophrenicsigner</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-crypto-twoexponents</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-foren-afterimage1</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-foren-afterimage2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-foren-nono</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-foren-starrysky</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-misc-67jail</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-misc-allnightlong</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-misc-teagood</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-misc-timemachine</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-pwn-canarynotes</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-pwn-chronicle</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-pwn-djvu</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-pwn-iatesomethingbad</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-pwn-necropet</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-pwn-verysecurityshell</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-rev-blackfrost</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-rev-license</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-rev-makereverse</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-rev-teagod</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-rev-xorlocks</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-web-avatarstudio</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-web-contosoassetportal</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-web-get-file1</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-web-get-file2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thjccsummer-web-whoiswhois2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-crypto-67</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-crypto-meow</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-crypto-smile</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-crypto-vigroterse</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-foren-greenledger</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-foren-mondayattack</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-foren-novavault</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-foren-signallost</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-malwareanalysis-malwareanalysis</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-pwn-secretdoor</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-rev-blackblood</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-rev-brogecheck</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-rev-chimera</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-rev-hell</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-rev-redline</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-rev-soul</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-web-chess</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/thryvectf-web-sketchy</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/tjcsc-foren-check-the-fine-print</loc>
     <lastmod>2026-06-08</lastmod>
     <changefreq>never</changefreq>
@@ -3453,6 +4425,240 @@
   <url>
     <loc>https://rblxlabs.vercel.app/#/writeup/tracebash-web-trustedrules-trustedrules</loc>
     <lastmod>2026-07-08</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-crypto-positive-thinking</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-misc-emacsjail2</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-misc-jail</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-misc-proof</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-misc-smaller-jail</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-osint-secretacount-osintgram</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-osint-secretacount-x-ig-osint</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-pwn-firefly</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-pwn-sparxie</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-rev-behindthecurtain</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-rev-glyphs</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-rev-godmode</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-rev-vector-cache</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/uiuctf2026-rev-veilofevernight</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-blockchain-lastcountersign</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-blockchain-switchyardauction</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-blockchain-vaultbreach</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-crypto-bondedledger</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-foren-carrierlock</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-foren-deadreckoning</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-foren-familiarlanguange</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-foren-occultationwindow</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-foren-paperjam</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-foren-quiettwin</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-kubernetas-identitycrisis</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-kubernetas-queitwitness</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-pwn-cargooverrun</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-pwn-freightyard</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-pwn-traindispatchsimulator</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-rev-aphelionvault</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-rev-coldrev</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-rev-narcissus</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-rev-proteus</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-web-deaddrop</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-web-ghostfreight</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-web-houseaccount</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-web-papertrail</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-web-secondhandsignal</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rblxlabs.vercel.app/#/writeup/universalctf-web-stellarscope</loc>
+    <lastmod>2026-08-16</lastmod>
     <changefreq>never</changefreq>
     <priority>0.8</priority>
   </url>

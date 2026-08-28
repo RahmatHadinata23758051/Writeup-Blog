@@ -1,0 +1,76 @@
+<!-- Source: Dibuatkan untuk blog post claude-vs-gpt-vs-kimi-ctf.ts
+   ViewBox 640x400 sama seperti sebelumnya, warna dan struktur bar-nya dipertahankan
+   Kelas CSS untuk hover dan styling -->
+<svg viewBox="0 0 640 400" class="w-full h-auto rounded-lg border border-border bg-card p-4" xmlns="http://www.w3.org/2000/svg">
+  <!-- Grid background -->
+  <defs>
+    <!-- Gradients untuk setiap series (sama seperti di sini) -->
+    <linearGradient id="claude-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgb(59, 130, 246)" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="rgb(6, 182, 212)" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="gpt-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgb(139, 92, 246)" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="rgb(217, 70, 239)" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="kimi-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgb(34, 211, 238)" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="rgb(14, 165, 233)" stop-opacity="0.7"/>
+    </linearGradient>
+    <!-- Shadow untuk kedalaman -->
+    <filter id="soft-shadow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feOffset dx="2" dy="2" result="offset"/>
+      <feMerge>
+        <feMergeNode in="offset"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Grid lines (kasar) -->
+  <line x1="60" y1="320" x2="580" y2="320" stroke="var(--docs-border-soft)" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="60" y1="60" x2="60" y2="320" stroke="var(--docs-border-soft)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- Judul -->
+  <text x="320" y="30" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="var(--docs-text)" text-anchor="middle">Biaya per Kompetisi CTF (USD) — dengan Caching</text>
+  <text x="320" y="50" font-family="system-ui, sans-serif" font-size="11" fill="var(--docs-text-muted)" text-anchor="middle">Tips: hover untuk highlight</text>
+
+  <!-- Label sumbu Y -->
+  <text x="50" y="325" font-family="system-ui, sans-serif" font-size="14" fill="var(--docs-text-muted)" text-anchor="end" transform="rotate(-90 50 325) translate(0, -10)">Biaya Total (USD)</text>
+
+  <!-- Bar series (sama seperti data di post) -->
+  <!-- Claude Sonnet 5 -->
+  <rect class="chart-bar" data-model="claude-sonnet-5" x="120" y="240" width="140" height="80" rx="4" fill="url(#claude-gradient)" filter="url(#soft-shadow)" opacity="0.9"/>
+  <text class="bar-label" x="190" y="270" font-family="system-ui, sans-serif" font-size="13" fill="rgb(59, 130, 246)" text-anchor="middle">Claude Sonnet 5</text>
+  <text class="bar-value" x="190" y="290" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">USD 39.60</text>
+
+  <!-- GPT-5.4 -->
+  <rect class="chart-bar" data-model="gpt-5-4" x="280" y="160" width="140" height="160" rx="4" fill="url(#gpt-gradient)" filter="url(#soft-shadow)" opacity="0.95"/>
+  <text class="bar-label" x="350" y="200" font-family="system-ui, sans-serif" font-size="13" fill="rgb(139, 92, 246)" text-anchor="middle">GPT-5.4</text>
+  <text class="bar-value" x="350" y="220" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">USD 53.40</text>
+
+  <!-- Kimi K3 (cache 80%) -->
+  <rect class="chart-bar" data-model="kimi-k3-cache" x="440" y="200" width="140" height="120" rx="4" fill="url(#kimi-gradient)" filter="url(#soft-shadow)" opacity="0.85"/>
+  <text class="bar-label" x="510" y="240" font-family="system-ui, sans-serif" font-size="13" fill="rgb(34, 211, 238)" text-anchor="middle">Kimi K3 (cache 80%)</text>
+  <text class="bar-value" x="510" y="260" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">USD 33.48</text>
+
+  <!-- GPT-5.4-mini -->
+  <rect class="chart-bar" data-model="gpt-5-4-mini" x="120" y="160" width="140" height="160" rx="4" fill="url(#gpt-gradient)" filter="url(#soft-shadow)" opacity="0.85"/>
+  <text class="bar-label" x="190" y="200" font-family="system-ui, sans-serif" font-size="13" fill="rgb(139, 92, 246)" text-anchor="middle">GPT-5.4-mini</text>
+  <text class="bar-value" x="190" y="220" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">USD 16.02</text>
+
+  <!-- Kimi K2.7 Code -->
+  <rect class="chart-bar" data-model="kimi-k2-7-code" x="280" y="0" width="140" height="200" rx="4" fill="url(#kimi-gradient)" filter="url(#soft-shadow)" opacity="0.8"/>
+  <text class="bar-label" x="350" y="40" font-family="system-ui, sans-serif" font-size="13" fill="rgb(34, 211, 238)" text-anchor="middle">Kimi K2.7 Code</text>
+  <text class="bar-value" x="350" y="60" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">USD 13.34</text>
+
+  <!-- Claude Opus 5 -->
+  <rect class="chart-bar" data-model="claude-opus-5" x="440" y="80" width="140" height="160" rx="4" fill="url(#claude-gradient)" filter="url(#soft-shadow)" opacity="0.9"/>
+  <text class="bar-label" x="510" y="120" font-family="system-ui, sans-serif" font-size="13" fill="rgb(59, 130, 246)" text-anchor="middle">Claude Opus 5</text>
+  <text class="bar-value" x="510" y="140" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">USD 99.00</text>
+
+  <!-- Hover tip -->
+  <text x="320" y="380" font-family="system-ui, sans-serif" font-size="11" fill="var(--docs-text-muted)" text-anchor="middle">Tips: hover untuk highlight</text>
+</svg>
