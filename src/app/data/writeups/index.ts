@@ -1,12 +1,14 @@
 import type { WriteUp } from "./types";
 
 import { _0xvoidS2Writeups } from "./events/0xvoid_s2";
+import { asisCtfWriteups } from "./events/asis_ctf";
 import { bhackariWriteups } from "./events/bhackari";
 import { boroCtfWriteups } from "./events/boro_ctf";
 import { broncoCtfWriteups } from "./events/bronco_ctf";
 import { bushbashWriteups } from "./events/bushbash";
 import { byuctfWriteups } from "./events/byuctf";
 import { citctfWriteups } from "./events/citctf";
+import { compfest18Writeups } from "./events/compfest_18";
 import { cyberbreakerQualWriteups } from "./events/cyberbreaker_qual";
 import { dalCtf2026Writeups } from "./events/dal_ctf_2026";
 import { flagyardWriteups } from "./events/flagyard";
@@ -45,12 +47,14 @@ import { vuwctf2025Writeups } from "./events/vuwctf_2025";
 
 export const writeups: WriteUp[] = [
   ..._0xvoidS2Writeups,
+  ...asisCtfWriteups,
   ...bhackariWriteups,
   ...boroCtfWriteups,
   ...broncoCtfWriteups,
   ...bushbashWriteups,
   ...byuctfWriteups,
   ...citctfWriteups,
+  ...compfest18Writeups,
   ...cyberbreakerQualWriteups,
   ...dalCtf2026Writeups,
   ...flagyardWriteups,
