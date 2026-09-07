@@ -25,6 +25,7 @@ import { lagWriteups } from "./events/lag";
 import { lakeCtf2025Writeups } from "./events/lake_ctf_2025";
 import { leakctfWriteups } from "./events/leakctf";
 import { lyknctf2026Writeups } from "./events/lyknctf2026";
+import { nnsCtfWriteups } from "./events/nns_ctf";
 import { nohacknoctfWriteups } from "./events/nohacknoctf";
 import { projectSekai2026Writeups } from "./events/project_sekai_2026";
 import { putcyberWriteups } from "./events/putcyber";
@@ -34,6 +35,7 @@ import { scriptctfWriteups } from "./events/scriptctf";
 import { siebersecCtfWriteups } from "./events/siebersec_ctf";
 import { squ1rrelCtfWriteups } from "./events/squ1rrel_ctf";
 import { texsawCtfWriteups } from "./events/texsaw_ctf";
+import { tfcctf2026Writeups } from "./events/tfcctf_2026";
 import { thcon2026Writeups } from "./events/thcon_2026";
 import { them2026Writeups } from "./events/them_2026";
 import { thjccSummerWriteups } from "./events/thjcc_summer";
@@ -71,6 +73,7 @@ export const writeups: WriteUp[] = [
   ...lakeCtf2025Writeups,
   ...leakctfWriteups,
   ...lyknctf2026Writeups,
+  ...nnsCtfWriteups,
   ...nohacknoctfWriteups,
   ...projectSekai2026Writeups,
   ...putcyberWriteups,
@@ -80,6 +83,7 @@ export const writeups: WriteUp[] = [
   ...siebersecCtfWriteups,
   ...squ1rrelCtfWriteups,
   ...texsawCtfWriteups,
+  ...tfcctf2026Writeups,
   ...thcon2026Writeups,
   ...them2026Writeups,
   ...thjccSummerWriteups,

@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "command": "node",
+      "args": [
+        "C:/Users/user/.gemini/mcp-servers/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js"
+      ]
+    },
+    "context7": {
+      "command": "node",
+      "args": [
+        "C:/Users/user/.gemini/mcp-servers/node_modules/@upstash/context7-mcp/dist/index.js"
+      ]
+    },
+    "playwright": {
+      "command": "node",
+      "args": [
+        "C:/Users/user/.gemini/mcp-servers/node_modules/@playwright/mcp/cli.js"
+      ]
+    }
+  }
+}

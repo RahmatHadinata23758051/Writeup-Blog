@@ -1003,7 +1003,7 @@ export const jerseyctfWriteups: WriteUp[] = [
       },
       {
         "title": "Step 3 — Hunt Strings Per-Module",
-        "content": "Dump VMA per PID untuk 5 module dibandingkan secara diferensial (unique string antar-module). Dari sini muncul pola string obfuscated yang konsisten:\n\n- Mercury: ````7?(9/(#``kuo``l>>oho8b<9n;``\n- Venus: ```` ,?4/)``huo``;8n>ljjo>8kh``\n- Earth: ````?;(.2``iuo``okk9kii?<8<>``\n- Mars: ````7;()``nuo``?m>cm9k>8>?l``\n- Jupiter: ````0/*3.?(``ouo``cl8?hm8jbcbo?8lk``\n\nPola ini sangat mencurigakan karena struktur antar-module mirip, hanya kontennya yang beda.\n\n---"
+        "content": "Dump VMA per PID untuk 5 module dibandingkan secara diferensial (unique string antar-module). Dari sini muncul pola string obfuscated yang konsisten:\n\n- Mercury: `7?(9/(#kuol>>oho8b<9n;`\n- Venus: ` ,?4/)huo;8n>ljjo>8kh`\n- Earth: `?;(.2iuookk9kii?<8<>`\n- Mars: `7;()nuo?m>cm9k>8>?l`\n- Jupiter: `0/*3.?(ouocl8?hm8jbcbo?8lk`\n\nPola ini sangat mencurigakan karena struktur antar-module mirip, hanya kontennya yang beda.\n\n---"
       },
       {
         "title": "Step 4 — Deobfuscation",

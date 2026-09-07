@@ -160,7 +160,7 @@ export const byuctfWriteups: WriteUp[] = [
       },
       {
         "title": "2. Bypass Filter Spasi",
-        "content": "Untuk menjalankan perintah dengan argumen tanpa karakter spasi, kita bisa menggunakan **Brace Expansion** di Bash. Format `{perintah,argumen}` akan dievaluasi oleh Bash sebagai `perintah argumen`.\n\nContoh penemuan file:\n```bash\n$ {echo,*}"
+        "content": "Untuk menjalankan perintah dengan argumen tanpa karakter spasi, kita bisa menggunakan **Brace Expansion** di Bash. Format `{perintah,argumen}` akan dievaluasi oleh Bash sebagai `perintah argumen`.\n\nContoh penemuan file:\n```bash\n$ {echo,*}\n```"
       }
     ],
     "terminalOutputs": [],
@@ -192,7 +192,7 @@ export const byuctfWriteups: WriteUp[] = [
       },
       {
         "title": "Eksekusi",
-        "content": "Kita melakukan iterasi panjang karakter menggunakan tanda tanya di shell target.\n\n```bash\nsafe_bash> ~+/???\ncommand failed\nsafe_bash> ~+/????\ncommand failed\nsafe_bash> ~+/?????\ncommand failed\nsafe_bash> ~+/??????\ncommand failed\nsafe_bash> ~+/???????"
+        "content": "Kita melakukan iterasi panjang karakter menggunakan tanda tanya di shell target.\n\n```bash\nsafe_bash> ~+/???\ncommand failed\nsafe_bash> ~+/????\ncommand failed\nsafe_bash> ~+/?????\ncommand failed\nsafe_bash> ~+/??????\ncommand failed\nsafe_bash> ~+/???????\n```"
       }
     ],
     "terminalOutputs": [],

@@ -563,7 +563,7 @@ export const compfest18Writeups: WriteUp[] = [
       },
       {
         "title": "Flag",
-        "content": "```text\nCOMPFEST18{bUR_BuR_BUr_buRh4n_h4Un7s_m3_t!L_t0D4y_mxmLI4SRk3aLF4no}"
+        "content": "Flag yang diperoleh:\n```text\nCOMPFEST18{bUR_BuR_BUr_buRh4n_h4Un7s_m3_t!L_t0D4y_mxmLI4SRk3aLF4no}\n```"
       },
       {
         "title": "Exploit & Solver Script",
