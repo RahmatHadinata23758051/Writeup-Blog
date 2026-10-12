@@ -9,8 +9,7 @@
     "dev": "vite",
     "new:writeup": "node scripts/new-writeup.mjs",
     "validate:writeups": "node scripts/validate-writeups.mjs",
-    "ctftime:help": "node scripts/fetch-ctftime-team.mjs",
-    "writeups:import": "node scripts/import-local-writeups.mjs"
+    "ctftime:help": "node scripts/fetch-ctftime-team.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -52,6 +51,7 @@
     "input-otp": "1.4.2",
     "katex": "^0.16.27",
     "lucide-react": "0.487.0",
+    "mermaid": "^12.1.0",
     "motion": "12.23.24",
     "next-themes": "0.4.6",
     "react-day-picker": "8.10.1",
