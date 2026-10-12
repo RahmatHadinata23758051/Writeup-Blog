@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { WriteUp } from '../../data/writeups';
 import { RichText } from '../docs/RichText';
+import { MermaidDiagram, isMermaidCode } from '../docs/MermaidDiagram';
 
 interface DocsWriteupPageProps {
   writeup: WriteUp;
@@ -213,14 +214,18 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
 
                   {isNonEmptyString(step.code) && (
                     <div className="space-y-2 pt-1">
-                      <div className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 shadow-sm group">
-                        <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
-                          <CopyButton text={step.code as string} />
+                      {isMermaidCode(step.code as string) ? (
+                        <MermaidDiagram code={step.code as string} title={step.title} />
+                      ) : (
+                        <div className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 shadow-sm group">
+                          <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <CopyButton text={step.code as string} />
+                          </div>
+                          <pre className="overflow-x-auto text-[11.5px] font-mono text-[var(--docs-code-text)] leading-relaxed whitespace-pre font-light pr-12">
+                            <code>{step.code}</code>
+                          </pre>
                         </div>
-                        <pre className="overflow-x-auto text-[11.5px] font-mono text-[var(--docs-code-text)] leading-relaxed whitespace-pre font-light pr-12">
-                          <code>{step.code}</code>
-                        </pre>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>

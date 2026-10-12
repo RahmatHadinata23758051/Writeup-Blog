@@ -2,6 +2,7 @@ import { BsArrowLeft, BsCalendarEvent, BsTrophy, BsTools, BsFlag, BsEye, BsEyeSl
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { MathBlock } from '../MathRenderer';
+import { MermaidDiagram, isMermaidCode } from '../docs/MermaidDiagram';
 import { writeups } from '../../data/writeups';
 import { useState, useEffect, useRef } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -46,6 +47,9 @@ function renderFormattedText(text: string) {
       if (lines[0] && !lines[0].includes(' ') && lines[0].length < 15 && /^[a-zA-Z0-9_-]+$/.test(lines[0])) {
         lang = lines[0].trim();
         code = lines.slice(1).join('\n');
+      }
+      if (lang.toLowerCase() === 'mermaid' || isMermaidCode(code)) {
+        return <MermaidDiagram key={`block-${bIdx}`} code={code} />;
       }
       return (
         <div key={`block-${bIdx}`} className="my-4 rounded-lg border border-border bg-gray-950 p-4 overflow-x-auto relative">
@@ -369,22 +373,26 @@ export function WriteUpDetailPage({ writeupId, onBack }: WriteUpDetailPageProps)
                     </p>
                     {step.code && (
                       <div className="ml-10">
-                        <div className="rounded-lg border border-border bg-gray-950 p-4 overflow-x-auto relative">
-                          <button
-                            onClick={() => handleCopyCode(step.code || '', index)}
-                            className="absolute top-2 right-2 p-2 rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
-                            title="Copy code"
-                          >
-                            {copiedCodeIndex === index ? (
-                              <BsCheck className="h-4 w-4 text-primary" />
-                            ) : (
-                              <BsClipboard className="h-4 w-4 text-primary" />
-                            )}
-                          </button>
-                          <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap break-words">
-                            <code>{step.code}</code>
-                          </pre>
-                        </div>
+                        {isMermaidCode(step.code) ? (
+                          <MermaidDiagram code={step.code} title={step.title} />
+                        ) : (
+                          <div className="rounded-lg border border-border bg-gray-950 p-4 overflow-x-auto relative">
+                            <button
+                              onClick={() => handleCopyCode(step.code || '', index)}
+                              className="absolute top-2 right-2 p-2 rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+                              title="Copy code"
+                            >
+                              {copiedCodeIndex === index ? (
+                                <BsCheck className="h-4 w-4 text-primary" />
+                              ) : (
+                                <BsClipboard className="h-4 w-4 text-primary" />
+                              )}
+                            </button>
+                            <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap break-words">
+                              <code>{step.code}</code>
+                            </pre>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
+import { MermaidDiagram } from './MermaidDiagram';
 import 'katex/dist/katex.min.css';
 
 interface RichTextProps {
@@ -180,17 +181,33 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
 
     if (currentType === 'code') {
       const codeContent = currentLines.join('\n');
-      elements.push(
-        <div key={key} className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 my-3 shadow-sm group">
-          <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
-            <CopyButton text={codeContent} label="Copy" />
+
+      // Render Mermaid diagram when the language tag is `mermaid`
+      // or when content looks like a Mermaid diagram without explicit tag.
+      const isMermaidBlock =
+        (currentLanguage || '').toLowerCase() === 'mermaid' ||
+        /^(flowchart(\s+[A-Za-z]{2})?|graph\s+[A-Za-z]{2}|sequenceDiagram|classDiagram|stateDiagram(-v2)?|erDiagram|journey|gantt|pie(\s+title|\s+showData|\s*\n)|gitGraph|mindmap|quadrantChart|timeline|sankey-beta|block-beta|architecture(-beta)?)\b/i.test(
+          codeContent.trimStart()
+        );
+
+      if (isMermaidBlock) {
+        elements.push(
+          <MermaidDiagram key={key} code={codeContent} />
+        );
+        currentLanguage = '';
+      } else {
+        elements.push(
+          <div key={key} className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 my-3 shadow-sm group">
+            <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
+              <CopyButton text={codeContent} label="Copy" />
+            </div>
+            <pre className="overflow-x-auto text-[11.5px] font-mono text-[var(--docs-code-text)] leading-relaxed whitespace-pre font-light pr-12">
+              <code>{codeContent}</code>
+            </pre>
           </div>
-          <pre className="overflow-x-auto text-[11.5px] font-mono text-[var(--docs-code-text)] leading-relaxed whitespace-pre font-light pr-12">
-            <code>{codeContent}</code>
-          </pre>
-        </div>
-      );
-      currentLanguage = '';
+        );
+        currentLanguage = '';
+      }
     } else if (currentType === 'table') {
       const parseRow = (rowLine: string) => {
         const trimmed = rowLine.trim().replace(/^\||\|$/g, '');
