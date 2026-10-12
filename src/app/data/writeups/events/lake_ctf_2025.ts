@@ -2,7 +2,7 @@ import type { WriteUp } from "../types";
 
 export const lakeCtf2025Writeups: WriteUp[] = [
   {
-    "id": "8",
+    "id": "lakectf2025-misc-wordler-solver-1",
     "title": "Wordler Solver 1",
     "category": "Misc",
     "difficulty": "Medium",

