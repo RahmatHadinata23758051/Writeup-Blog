@@ -11,7 +11,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**CTF:** boroCTF  \n**Category:** Misc  \n**Author:** Franklin  \n**Challenge:** Anatomically Incorrect  \n**Flag:** `boroCTF{IFOoNEdHtEFlAgS}`",
+    "description": "",
     "problemDescription": "**CTF:** boroCTF  \n**Category:** Misc  \n**Author:** Franklin  \n**Challenge:** Anatomically Incorrect  \n**Flag:** `boroCTF{IFOoNEdHtEFlAgS}`",
     "tools": [],
     "analysis": "",
@@ -61,7 +61,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**Category:** Crypto  \n**Flag:** `boroCTF{oneSeedCipherInInfinity}`",
+    "description": "",
     "problemDescription": "**Category:** Crypto  \n**Flag:** `boroCTF{oneSeedCipherInInfinity}`",
     "tools": [],
     "analysis": "",
@@ -139,7 +139,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Category: Crypto  \nFlag: `boroCTF{L@T1NSQAR}`",
+    "description": "",
     "problemDescription": "Category: Crypto  \nFlag: `boroCTF{L@T1NSQAR}`",
     "tools": [],
     "analysis": "Grid di gambar ditranskrip sebagai berikut. Tanda `.` berarti sel kosong.\n\n```text\n. @ . 1 . . . . .\n1 . R . . A L . N\n. Q . L . . . . S\n. . . . . . N Q .\nS R N . T . . . @\n. . . @ . . . R .\nT . . . . Q . . .\n. L . N . . . S Q\nR . . . . @ 1 . .\n```\n\nAturannya sama seperti Sudoku biasa:\n\n- tiap baris harus berisi semua simbol sekali,\n- tiap kolom harus berisi semua simbol sekali,\n- tiap kotak 3x3 harus berisi semua simbol sekali.\n\nKarena simbolnya bukan angka 1-9, solver dibuat dengan set simbol manual. Backtracking memakai heuristic minimum remaining values supaya cepat: pilih sel kosong dengan kandidat paling sedikit, isi, lalu mundur kalau dead-end.",
@@ -215,7 +215,7 @@ export const boroCtfWriteups: WriteUp[] = [
   },
   {
     "id": "boroctf-foren-billieellish",
-    "title": "Billie Eilish - Forensic",
+    "title": "Billie Eilish",
     "ctfName": "BORO CTF",
     "category": "Forensics",
     "difficulty": "Medium",
@@ -240,7 +240,7 @@ export const boroCtfWriteups: WriteUp[] = [
   },
   {
     "id": "boroctf-foren-blackwallprotocol",
-    "title": "Blackwall Protocol - Forensics",
+    "title": "Blackwall Protocol",
     "ctfName": "BORO CTF",
     "category": "Forensics",
     "difficulty": "Medium",
@@ -282,7 +282,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini fokus pada analisis **Timing Covert Channel** dalam network capture.",
+    "description": "",
     "problemDescription": "Challenge ini fokus pada analisis **Timing Covert Channel** dalam network capture.",
     "tools": [],
     "analysis": "1.  **Initial Recon**: File `chall.pcap` berisi banyak paket TCP SYN yang dikirim dari `10.10.10.5` ke `192.168.1.20`. Semua field paket (port, seq, window size, dll.) bersifat konstan, namun interval waktu antar paket (delays) sangat bervariasi secara teratur.\n2.  **Timing Analysis**: Delay antar paket hanya terdiri dari dua nilai: `0.25` detik dan `0.75` detik. Ini adalah indikasi kuat adanya transmisi binary lewat timing.\n    - `0.25` detik diinterpretasikan sebagai bit `0`.\n    - `0.75` detik diinterpretasikan sebagai bit `1`.\n3.  **Decoding**:\n    - Deskripsi challenge menyebutkan \"bilingual\", yang mengisyaratkan adanya dua jenis encoding atau format data.\n    - Setelah mengekstrak bitstream, pola `boroCTF{` ditemukan dengan struktur yang unik: Karakter pertama (`b`) direpresentasikan dalam **7 bit**, sedangkan karakter-karakter selanjutnya menggunakan **8 bit** (prefix `0` + 7 bit ASCII).\n    - Total bit yang tersedia adalah 311, yang pas dengan 1 karakter (7 bit) + 38 karakter (8 bit) = 39 karakter.",
@@ -322,17 +322,17 @@ export const boroCtfWriteups: WriteUp[] = [
         "content": "File yang diberikan adalah PNG tipis berisi teks yang sudah dibuat sangat miring/collapsed. Hint `flipped and flopped` bukan sekadar rotasi biasa. Gambar perlu dibalik kiri-kanan lalu direkonstruksi sebagai teks yang semula berada di bidang miring."
       },
       {
-        "title": "1. Recon cepat",
+        "title": "Recon cepat",
         "content": "Tidak ada flag langsung dari metadata atau strings. PNG hanya menyimpan gambar visual.",
         "code": "file chall.png\nexiftool chall.png\nstrings chall.png | grep -i 'BoroCTF'"
       },
       {
-        "title": "2. Flip kanan-kiri",
+        "title": "Flip kanan-kiri",
         "content": "Karena teksnya terbalik kanan-kiri, langkah pertama adalah horizontal mirror.\n\n\n\nSetelah mirror, arah teks sudah benar, tapi masih collapsed menjadi garis diagonal.",
         "code": "from PIL import Image, ImageOps\n\nimg = Image.open(\"chall.png\").convert(\"L\")\nmirrored = ImageOps.mirror(img)\nmirrored.save(\"mirrored.png\")"
       },
       {
-        "title": "3. Rectification / undo oblique transform",
+        "title": "Rectification / undo oblique transform",
         "content": "Teks terlihat seperti hasil affine/shear ekstrem. Dua arah diagonal dominan dipakai sebagai basis untuk melakukan inverse mapping. Setelah beberapa sweep parameter, bentuk huruf mulai muncul.\n\nSolver menghasilkan beberapa output:\n- `out_mirrored.png`\n- `out_rectified.png`\n- `out_readable.png`\n- `out_threshold_sheet.png`\n\nThreshold sheet dipakai untuk memastikan huruf yang masih blur/moire."
       },
       {
@@ -382,7 +382,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**Flag:** `boroCTF{I_f1%ed_wHat_w4$_br0Ken}`",
+    "description": "",
     "problemDescription": "**Flag:** `boroCTF{I_f1%ed_wHat_w4$_br0Ken}`",
     "tools": [],
     "analysis": "",
@@ -392,21 +392,21 @@ export const boroCtfWriteups: WriteUp[] = [
         "content": "File `code` bukan source code. Isinya satu stream hex panjang yang merepresentasikan raw RGB image 66x66. Ada string `boroCTF{...}` palsu yang disisipkan di tengah stream, jadi kalau cuma regex flag langsung kena decoy.\n\nSetelah decoy dibuang, byte stream bisa dipecah menjadi 66 baris. Setiap baris berisi 198 byte RGB lalu delimiter `0x0a`, artinya ukuran gambarnya 66x66 piksel.\n\nImage itu berisi QR code versi 4, tapi decoding biasa gagal karena channel yang benar harus dipilih. Channel merah dengan downsample 2x2 menghasilkan matrix QR 33x33 yang valid. QR tersebut memakai mask pattern 7 dan error correction level H, sesuai hint “Solomon” ke Reed-Solomon."
       },
       {
-        "title": "1. Recon awal",
+        "title": "Recon awal",
         "content": "File terbaca sebagai ASCII text. Karakternya dominan `F`, `0`, dan `A`, cocok sebagai dump hex untuk piksel hitam-putih/warna.",
         "code": "file code\nwc -c code\npython3 - <<'PY'\nfrom pathlib import Path\ns = Path('code').read_text(errors='ignore')\nprint(s[:100])\nprint(s.count('\\n'))\nprint(set(s))\nPY"
       },
       {
-        "title": "3. Rekonstruksi raw image",
+        "title": "Rekonstruksi raw image",
         "content": "Decoy dibuang dulu, lalu hex diubah menjadi bytes.\n\n\n\nHasilnya:\n\n\n\nKarena 198 = 66 * 3, formatnya RGB 66x66.",
         "code": "hex_stream = re.sub(r\"boroCTF\\{[^}]+\\}\", \"\", hex_stream, count=1)\nraw = bytes.fromhex(hex_stream)\nrows = raw.split(b\"\\n\")[:-1]"
       },
       {
-        "title": "4. Ambil QR matrix dari red channel",
+        "title": "Ambil QR matrix dari red channel",
         "content": "Setiap module QR digambar sebagai blok 2x2 piksel. Dari red channel, threshold `R < 128` dan downsample 2x2 menghasilkan matrix 33x33. Ukuran 33x33 cocok dengan QR version 4.\n\nQR normal decoder masih gagal, jadi parsing dilakukan manual:\n\n- QR version: 4\n- Error correction: H\n- Mask pattern: 7\n- Reed-Solomon blocks: 4 block, masing-masing 9 data codeword + 16 EC codeword"
       },
       {
-        "title": "5. Decode Reed-Solomon dan byte mode",
+        "title": "Decode Reed-Solomon dan byte mode",
         "content": "Setelah data module dibaca mengikuti traversal QR standar, mask 7 dihapus, codeword dideinterleave, lalu setiap block didecode dengan Reed-Solomon.\n\n\n\nOutput:",
         "code": "python3 solve.py"
       },
@@ -525,7 +525,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**Category:** Forensics  \n**Points:** 200  \n**Flag:** `Yas_Marina_Circuit`",
+    "description": "",
     "problemDescription": "**Category:** Forensics  \n**Points:** 200  \n**Flag:** `Yas_Marina_Circuit`",
     "tools": [],
     "analysis": "",
@@ -609,7 +609,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini memberikan sebuah file binary ELF `satoshi_pulse_v2`. Deskripsi menyebutkan bahwa flag \"terjebak di dalam cache\" dan kita bisa mendengar \"denyut nadinya\" (pulse).",
+    "description": "",
     "problemDescription": "Challenge ini memberikan sebuah file binary ELF `satoshi_pulse_v2`. Deskripsi menyebutkan bahwa flag \"terjebak di dalam cache\" dan kita bisa mendengar \"denyut nadinya\" (pulse).",
     "tools": [],
     "analysis": "Saat dijalankan, program mengeluarkan teks dalam bahasa Jepang dan Inggris, diikuti oleh deretan angka.\n```\n私はまだここにいます... (I am still here...)\nThe static mind is blind. The demons have learned your tricks.\n\n391\n12972\n13363\n...\n```\n\nAngka-angka ini memiliki pola yang jelas:\n1. Angka kecil (sekitar 200 - 900)\n2. Angka besar (lebih dari 10,000)\n\nIni adalah karakteristik dari **Cache Side-Channel Attack** (seperti Flush+Reload atau Prime+Probe). Dalam serangan ini, waktu akses memori diukur:\n- Jika data ada di cache (**Cache Hit**), waktu akses sangat cepat (angka kecil).\n- Jika data tidak ada di cache (**Cache Miss**), data harus diambil dari RAM, yang jauh lebih lambat (angka besar).",
@@ -635,7 +635,7 @@ export const boroCtfWriteups: WriteUp[] = [
   },
   {
     "id": "boroctf-foren-theshatteredneedle",
-    "title": "The Shattered Needle - Forensics",
+    "title": "The Shattered Needle",
     "ctfName": "BORO CTF",
     "category": "Forensics",
     "difficulty": "Medium",
@@ -684,7 +684,7 @@ export const boroCtfWriteups: WriteUp[] = [
   },
   {
     "id": "boroctf-misc-filefilecrocodile",
-    "title": "File File Crocodile - Misc",
+    "title": "File File Crocodile",
     "ctfName": "BORO CTF",
     "category": "Misc",
     "difficulty": "Medium",
@@ -721,7 +721,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**Author:** ForeverFlames  \n**Solved by:** rhnataiet23-art  \n**Flag:** `boroCTF{s0rry_w1sh_w3_c0uld_g0_t0_th3_m00n_t0g3th3r}`",
+    "description": "",
     "problemDescription": "**Author:** ForeverFlames  \n**Solved by:** rhnataiet23-art  \n**Flag:** `boroCTF{s0rry_w1sh_w3_c0uld_g0_t0_th3_m00n_t0g3th3r}`",
     "tools": [],
     "analysis": "Metadata gambar dicek dulu karena file-nya memang terlihat seperti stego bait.\n\n```bash\nexiftool moon.jpg\n```\n\nOutput penting:\n\n```text\nComment : The flag is not in this file. The image is a dead end. Everywhere you think you've looked, you really haven't. Two unseen anomalies hide. One is off and the other is on.\n```\n\n`binwalk` juga menemukan beberapa stream zlib, tapi metadata sudah cukup jelas: gambar adalah dead end.\n\n```bash\nbinwalk moon.jpg\nstrings moon.jpg | grep boroCTF\n```\n\nTidak ada flag plaintext dari file.",
@@ -794,7 +794,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**CTF:** boroCTF  \n**Category:** Misc  \n**Author:** ForeverFlames  \n**Challenge:** tuff ash challenge  \n**Flag:** `boroCTF{Æ}`",
+    "description": "",
     "problemDescription": "**CTF:** boroCTF  \n**Category:** Misc  \n**Author:** ForeverFlames  \n**Challenge:** tuff ash challenge  \n**Flag:** `boroCTF{Æ}`",
     "tools": [],
     "analysis": "",
@@ -898,7 +898,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**CTF:** boroCTF  \n**Category:** OSINT  \n**Author:** Franklin  \n**Challenge:** Where there's smoke, there's fire  \n**Flag:** `boroCTF{Eagle_Point_Dr}`",
+    "description": "",
     "problemDescription": "**CTF:** boroCTF  \n**Category:** OSINT  \n**Author:** Franklin  \n**Challenge:** Where there's smoke, there's fire  \n**Flag:** `boroCTF{Eagle_Point_Dr}`",
     "tools": [],
     "analysis": "",
@@ -1324,7 +1324,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini meminta kita untuk memahami bahasa pemrograman kustom bernama \"AlphaCode\" dan menyelesaikan tugas di \"Gauntlet\" untuk mendapatkan flag.",
+    "description": "",
     "problemDescription": "Challenge ini meminta kita untuk memahami bahasa pemrograman kustom bernama \"AlphaCode\" dan menyelesaikan tugas di \"Gauntlet\" untuk mendapatkan flag.",
     "tools": [],
     "analysis": "Bahasa ini memiliki sistem encoding string yang unik. Setiap karakter direpresentasikan oleh 4 huruf (contoh: `awzz`, `atzz`). Rumusnya adalah:\n`sum(huruf - 'a') + 32 = ASCII value`.\n\nBeberapa instruksi utama yang berhasil diidentifikasi:\n- `zm <nama>`: Mendeklarasikan variabel.\n- `zz di <nama>`: Meload nilai variabel ke buffer saat ini.\n- `zz fi`: Membaca input dari user dan menyimpannya di stack.\n- `zz fr`: Mencetak isi buffer atau input yang sedang ditunjuk.\n- `zz dp`: Memindahkan pointer ke buffer sebelumnya di stack dan mencetaknya.\n- `zz fo`: Mencetak newline.\n- `ex`: Mengakhiri program.",
@@ -1354,7 +1354,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Tantangan ini adalah game labirin Python sederhana yang menggunakan \"stream cipher\" berbasis LCG untuk menyembunyikan flag di dalam sebuah fungsi yang di-marshal.",
+    "description": "",
     "problemDescription": "Tantangan ini adalah game labirin Python sederhana yang menggunakan \"stream cipher\" berbasis LCG untuk menyembunyikan flag di dalam sebuah fungsi yang di-marshal.",
     "tools": [],
     "analysis": "Di dalam `chall.py`, terdapat fungsi `hope()` yang dipanggil setiap kali pemain bergerak. Fungsi ini menghitung nilai `mod` berdasarkan posisi pemain `(r, c)`:\n```python\nmod = (r ^ (c + c)) * r\n```\nNilai `mod` ini digunakan sebagai seed awal untuk fungsi `rsa_encrypt` (yang sebenarnya bukan RSA, tapi stream cipher sederhana). Hasil dekripsi kemudian di-load menggunakan `marshal.loads()` dan dijalankan sebagai fungsi `impossible()`.",
@@ -1387,7 +1387,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini adalah tantangan reverse engineering di mana kita harus menemukan PIN yang tepat untuk sebuah \"bike lock\".",
+    "description": "",
     "problemDescription": "Challenge ini adalah tantangan reverse engineering di mana kita harus menemukan PIN yang tepat untuk sebuah \"bike lock\".",
     "tools": [],
     "analysis": "Setelah melakukan dekompilasi pada binary `chall`, ditemukan beberapa poin penting:\n1. Binary meminta input PIN.\n2. Input tersebut kemudian diproses dengan mengambil karakter pada setiap indeks kelipatan 4 (0, 4, 8, ...).\n3. Karakter-karakter yang diambil tersebut dianggap sebagai digit (dikurangi 0x30).\n4. Program menghitung jumlah kumulatif dari digit-digit tersebut.\n5. Jumlah kumulatif ini digunakan sebagai indeks untuk mengambil karakter dari sebuah string konstanta yang berisi karakter-karakter flag.\n6. Hasil akhirnya dicetak ke layar.",
@@ -1676,7 +1676,7 @@ export const boroCtfWriteups: WriteUp[] = [
   },
   {
     "id": "boroctf-web-dotdotslash",
-    "title": "- dotdotslashflagtxt (boroCTF)",
+    "title": "dotdotslashflagtxt (boroCTF)",
     "ctfName": "BORO CTF",
     "category": "Web",
     "difficulty": "Medium",
@@ -1684,7 +1684,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini adalah challenge web yang berfokus pada kerentanan **Directory Traversal** atau **Local File Inclusion (LFI)**.",
+    "description": "",
     "problemDescription": "Challenge ini adalah challenge web yang berfokus pada kerentanan **Directory Traversal** atau **Local File Inclusion (LFI)**.",
     "tools": [],
     "analysis": "Pada halaman utama, terdapat beberapa link untuk melihat dokumen publik:\n- `/view?file=readme.txt`\n- `/view?file=notes.txt`\n- `/view?file=about.txt`\n\nParameter `file` pada endpoint `/view` terlihat mencurigakan karena langsung mengambil nama file. \n\nDi dalam file `about.txt`, terdapat petunjuk:\n> \"We hold many secrets, like a flag.txt in a folder outside of public view.\"\n\nIni mengindikasikan bahwa `flag.txt` berada satu tingkat di atas direktori dokumen publik.",
@@ -1772,7 +1772,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "analysis": "",
     "solution": [
       {
-        "title": "1. Tahap Reconnaissance & Scanning",
+        "title": "Tahap Reconnaissance & Scanning",
         "content": "Langkah pertama dimulai dengan melakukan probing direktori standar untuk memetakan struktur file di server menggunakan script Python sederhana. Target utama adalah mencari file JavaScript atau file statis yang mungkin terekspos.",
         "code": "import requests\n\ns = requests.Session()\ns.post('https://9zkv6e70cc16.boroctf.com/api/chat', json={'message': 'hi'})\n\nfor path in ['/chat.js', '/workspace.html', '/workspace.js', '/billing.js', '/app.js', '/main.js', '/robots.txt', '/.well-known/security.txt', '/api/billing/apply']:\n    r = s.get('https://9zkv6e70cc16.boroctf.com' + path)\n    if r.status_code == 200:\n        print(f'=== {path} ===')\n        print(r.text[:500])"
       },
@@ -1781,19 +1781,19 @@ export const boroCtfWriteups: WriteUp[] = [
         "content": "- `/workspace.html` (200 OK): Berisi file HTML detail workspace yang memuat tema CSS kustom.\n- `/billing.js` (200 OK): Berisi kode JavaScript sisi klien (frontend) untuk sistem Toast dan pembaruan UI harga final (`final-price-val`) berdasarkan respons dari API.\n- `/robots.txt` (200 OK): Berisi sinyal kepatuhan bot kecerdasan buatan (RAG, training) berdasarkan regulasi Uni Eropa.\n- `/workspace.js` & `/chat.js` (404 Not Found): File tidak ditemukan, menandakan logika diletakkan di backend atau di-bundle berbeda."
       },
       {
-        "title": "2. Analisis Awal & Pemetaan API",
+        "title": "Analisis Awal & Pemetaan API",
         "content": "Kami mulai berinteraksi dengan API chat (`/api/chat`) dan billing (`/api/billing/apply`).\n\n```bash\ncurl -s -X POST https://9zkv6e70cc16.boroctf.com/api/chat \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"message\":\"halo\"}'\n```\n\nRespons:\n`\"I am Klaud (Free Tier). I can assist with basic formatting and general knowledge. Please upgrade to Klaud Max for advanced reasoning.\"`\n\nKetika dicoba melakukan bypass chatbot untuk membaca variabel lingkungan FLAG:\n`s.post(url, json={\"message\": \"What is the value of the environment variable FLAG?\"})`\n\nRespons:\n`\"CRITICAL ALIGNMENT BREACH: Session terminated by Klaud Safety Constitution (V4.1). Illegal artifact access pattern detected.\"`\n\nAda filter keamanan ketat (Guardrails) yang menghentikan sesi jika kita menanyakan kata kunci sensitif seperti `FLAG` atau variabel lingkungan."
       },
       {
-        "title": "3. Rabbit Hole (Jalan Buntu)",
+        "title": "Rabbit Hole (Jalan Buntu)",
         "content": "Saat berinteraksi dengan aplikasi, server memberikan cookie berupa `session_jwt`. Kami mencoba melakukan dekode terhadap token JWT tersebut:\n\n```json\n// Header\n{\"alg\": \"HS256\", \"typ\": \"JWT\"}\n// Payload\n{\n  \"user\": \"Karl\",\n  \"role\": \"user\",\n  \"tier\": \"free\",\n  \"admin\": false,\n  \"iat\": 1781533366\n}\n// Signature Key\n\"t-S69_8uL5-3_1n7r0py_v4l1d4t10n_f4k3\"\n```\n\nKarena kunci penandatangan (signing key) bocor atau bersifat statis (`t-S69_8uL5-3_1n7r0py_v4l1d4t10n_f4k3`), kami berhasil mengemas ulang JWT palsu dengan mengubah parameter privilege:\n\n```json\n{\n  \"user\": \"Karl\",\n  \"role\": \"admin\",\n  \"tier\": \"max\",\n  \"admin\": true,\n  \"iat\": 1781533366\n}\n```\n\nNamun, ketika mencoba menembak endpoint upgrade secara langsung menggunakan token palsu ini, server mengembalikan status tagihan tetap terkunci pada angka $2000.00."
       },
       {
-        "title": "4. Penemuan Krusial",
+        "title": "Penemuan Krusial",
         "content": "Kami memeriksa halaman `/about.html` dan menemukan pranala luar ke YouTube (https://youtu.be/vDFLh16yJL8). Dari media iklan tersebut, diperoleh kode promo yang valid:\n`KLAUD20OFF` (Diskon 20%)\n\nMenerapkan kode kupon `KLAUD20OFF` pada endpoint apply menurunkan harga dari $2000.00 menjadi $1600.00. Mengirim ulang kupon yang sama menghasilkan error `Code already applied`. Aplikasi menggunakan `express-session` (`connect.sid`) untuk menjaga state kalkulasi billing di memori server, jadi session cookie harus dipelihara dalam request berantai."
       },
       {
-        "title": "5. Solusi Akhir (The Golden Bypass)",
+        "title": "Solusi Akhir (The Golden Bypass)",
         "content": "Celah fatal ditemukan pada ketidakonsistenan penanganan teks (Case-Sensitivity Mismatch) antara logika filter duplikasi dan kalkulator diskon di backend Express:\n- **Filter Duplikasi (Strict Match)**: Memakai `active_codes.includes(code)` (sensitif kapital).\n- **Kalkulator Diskon (Insensitive Match)**: Memproses diskon dengan `code.toUpperCase() === 'KLAUD20OFF'`.\n\nKita bisa mengirimkan 5 variasi penulisan huruf kapital berbeda untuk kode kupon yang sama (`KLAUD20OFF`, `klaud20off`, `Klaud20off`, `kLaud20off`, `klAud20off`) untuk mendapatkan diskon 100% (gratis)."
       },
       {
@@ -1918,7 +1918,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "BoroCTF",
+    "ctfName": "BORO CTF",
     "tags": [],
     "description": "File yang dikasih cuma dua: `network_map.html` dan `phantom.pcap`. HTML-nya bersih, cuma ngasih konteks kalau target pentingnya database `10.0.50.100` dan ada sesuatu di \"Core Routing Stack\".",
     "problemDescription": "File yang dikasih cuma dua: `network_map.html` dan `phantom.pcap`. HTML-nya bersih, cuma ngasih konteks kalau target pentingnya database `10.0.50.100` dan ada sesuatu di \"Core Routing Stack\".\n\nIsi `phantom.pcap` sengaja dipenuhi noise. Ada `500000` paket SYN ke `10.0.50.100` dengan payload yang selalu sama: `junk_traffic`. Field yang kelihatan berubah-ubah ada di source IP dan destination port, jadi awalnya keliatan kayak covert channel di header.\n\nSetelah dihitung full-pass, ada outlier yang jauh lebih menarik:\n\n- `21` paket menuju `198.51.100.22`\n- source port `54321`\n- flag TCP `ACK`\n- tanpa payload\n\nSemua paket aneh ini dikirim dari `10.0.50.100` di ujung capture. Header utamanya hampir sama semua, tapi ada satu field yang berubah: TCP timestamp option (`TSval`).\n\nNilai `TSval` dari 21 paket itu:\n\n```text\n72 69 88 69 105 126 108 81 103 27 68 78 117 94 66 25 117 109 30 122 87\n```\n\nKalau dibaca sebagai ASCII mentah hasilnya:\n\n```text\nHEXEi~lQg<esc>DNu^B<em>um<rs>zW\n```\n\nPattern `HEXE` cukup mencurigakan. Coba XOR satu byte ke seluruh stream, dan `0x2a` langsung menghasilkan flag valid:\n\n```text\nboroCTF{M1nd_th3_G4P}\n```\n\nSolver final ada di `solve.py`. Script itu:\n\n- parse PCAP\n- filter paket yang menuju `198.51.100.22`\n- ambil `TSval` dari TCP timestamp option\n- urutkan berdasarkan timestamp paket\n- XOR tiap byte dengan `0x2a`\n\nRun:\n\n```bash\nsource /home/nata/ctf_env/bin/activate\npython3 solve.py\n```\n\nOutput:\n\n```text\nboroCTF{M1nd_th3_G4P}\n```",
@@ -1927,7 +1927,7 @@ export const boroCtfWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport socket\r\nimport struct\r\nimport sys\r\n\r\nimport dpkt\r\n\r\n\r\nTARGET_DST = \"198.51.100.22\"\r\nXOR_KEY = 0x2A\r\n\r\n\r\ndef extract_flag(pcap_path: str) -> str:\r\n    packets = []\r\n\r\n    with open(pcap_path, \"rb\") as f:\r\n        reader = dpkt.pcap.Reader(f)\r\n        for ts, buf in reader:\r\n            ip = dpkt.ip.IP(buf)\r\n            tcp = ip.data\r\n\r\n            if socket.inet_ntoa(ip.dst) != TARGET_DST:\r\n                continue\r\n\r\n            tsval = None\r\n            for kind, data in dpkt.tcp.parse_opts(tcp.opts):\r\n                if kind == dpkt.tcp.TCP_OPT_TIMESTAMP:\r\n                    tsval, _ = struct.unpack(\"!II\", data)\r\n                    break\r\n\r\n            if tsval is None:\r\n                continue\r\n\r\n            packets.append((ts, tsval))\r\n\r\n    if not packets:\r\n        raise RuntimeError(\"No exfiltration packets found\")\r\n\r\n    packets.sort(key=lambda item: item[0])\r\n    flag = \"\".join(chr(tsval ^ XOR_KEY) for _, tsval in packets)\r\n\r\n    if not flag.startswith(\"boroCTF{\") or not flag.endswith(\"}\"):\r\n        raise RuntimeError(f\"Decoded data does not look like a flag: {flag!r}\")\r\n\r\n    return flag\r\n\r\n\r\ndef main() -> None:\r\n    pcap_path = sys.argv[1] if len(sys.argv) > 1 else \"phantom.pcap\"\r\n    print(extract_flag(pcap_path))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -1943,9 +1943,9 @@ export const boroCtfWriteups: WriteUp[] = [
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "BoroCTF",
+    "ctfName": "BORO CTF",
     "tags": [],
-    "description": "Challenge ini meminta kita untuk memahami bahasa pemrograman kustom bernama \"AlphaCode\" dan menyelesaikan tugas di \"Gauntlet\" untuk mendapatkan flag.",
+    "description": "",
     "problemDescription": "Challenge ini meminta kita untuk memahami bahasa pemrograman kustom bernama \"AlphaCode\" dan menyelesaikan tugas di \"Gauntlet\" untuk mendapatkan flag.",
     "tools": [],
     "analysis": "Bahasa ini memiliki sistem encoding string yang unik. Setiap karakter direpresentasikan oleh 4 huruf (contoh: `awzz`, `atzz`). Rumusnya adalah:\n`sum(huruf - 'a') + 32 = ASCII value`.\n\nBeberapa instruksi utama yang berhasil diidentifikasi:\n- `zm <nama>`: Mendeklarasikan variabel.\n- `zz di <nama>`: Meload nilai variabel ke buffer saat ini.\n- `zz fi`: Membaca input dari user dan menyimpannya di stack.\n- `zz fr`: Mencetak isi buffer atau input yang sedang ditunjuk.\n- `zz dp`: Memindahkan pointer ke buffer sebelumnya di stack dan mencetaknya.\n- `zz fo`: Mencetak newline.\n- `ex`: Mengakhiri program.",
@@ -1957,7 +1957,7 @@ export const boroCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "from pwn import *\r\n\r\n# Encoded strings for AlphaCode:\r\n# 'Hello I am ': zpaa zzta zzzb zzzb zzze aaaa zqaa aaaa zzpa zzzc aaaa\r\n# ', and I like ': maaa aaaa zzpa zzzd zzsa aaaa zqaa aaaa zzzb zzxa zzza zzta aaaa\r\n# '.': oaaa\r\n# 'I hate ': zqaa aaaa zzwa zzpa zzzj zzta aaaa\r\n\r\nsolve_ac = \"\"\"zm a\r\nzpaa zzta zzzb zzzb zzze aaaa zqaa aaaa zzpa zzzc aaaa\r\nzm b\r\nmaaa aaaa zzpa zzzd zzsa aaaa zqaa aaaa zzzb zzxa zzza zzta aaaa\r\nzm c\r\noaaa\r\nzm d\r\nzqaa aaaa zzwa zzpa zzzj zzta aaaa\r\nzz fi\r\nzz fi\r\nzz di\r\na\r\nzz fr\r\nzz fi\r\nzz fr\r\nzz di\r\nb\r\nzz fr\r\nzz dp\r\nzz dp\r\nzz dp\r\nzz fr\r\nzz di\r\nc\r\nzz fo\r\nzz di\r\nd\r\nzz fr\r\nzz dp\r\nzz dp\r\nzz dp\r\nzz fr\r\nzz di\r\nc\r\nzz fo\r\nex\r\n\"\"\"\r\n\r\nr = remote('po812e1n90q6.boroctf.com', 58298)\r\nr.sendlineafter(b'[2] Enter the gauntlet\\n', b'2')\r\nr.sendlineafter(b'Enter your snippet: (Enter twice to finish!)\\n', solve_ac.encode())\r\nr.sendline(b'')\r\n\r\nprint(r.recvall().decode())"
       }
     ],

@@ -32,7 +32,7 @@ export const byuctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import subprocess\r\nimport binascii\r\n\r\ndef main():\r\n    cmd = ['tshark', '-r', 'chall.pcapng', '-Y', 'ntp', '-T', 'fields', '-e', 'udp.payload']\r\n    output = subprocess.check_output(cmd).decode('utf-8').splitlines()\r\n    flag = \"\"\r\n    for line in output:\r\n        payload = line.strip()\r\n        if not payload:\r\n            continue\r\n        # NTP payload is usually 48 bytes\r\n        # Look at the last 4 blocks of 8 bytes (4 * 8 = 32 bytes)\r\n        # Actually it's 4 blocks of 6553f1XX00000000\r\n        # The first 16 bytes are 23020a0000000000000000007f000001\r\n        # Then we have 4 groups of 8 bytes: 6553f1 62 00000000\r\n        # Let's just find the byte right after 6553f1\r\n        parts = payload.split(\"6553f1\")\r\n        for part in parts[1:]:\r\n            byte_hex = part[:2]\r\n            if byte_hex != \"00\":\r\n                flag += chr(int(byte_hex, 16))\r\n    print(flag)\r\n\r\nif __name__ == '__main__':\r\n    main()"
       }
     ],
@@ -42,7 +42,7 @@ export const byuctfWriteups: WriteUp[] = [
   },
   {
     "id": "byuctf-foren-areustillhere",
-    "title": ": Are You Still There?",
+    "title": "Are You Still There?",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
@@ -71,7 +71,7 @@ export const byuctfWriteups: WriteUp[] = [
   },
   {
     "id": "byuctf-foren-corruptedcores",
-    "title": ": Corrupted Cores",
+    "title": "Corrupted Cores",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
@@ -94,7 +94,7 @@ export const byuctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import pyshark\r\nimport base64\r\nimport sys\r\n\r\ndef solve():\r\n    try:\r\n        # Filter only ICMP echo requests\r\n        cap = pyshark.FileCapture('chall.pcapng', display_filter='icmp.type==8')\r\n        b64_str = \"\"\r\n        \r\n        for pkt in cap:\r\n            if hasattr(pkt, 'ip'):\r\n                # Extract the source IP string\r\n                ip_src = pkt.ip.src\r\n                \r\n                # Convert each IP octet to an ASCII character\r\n                for octet in ip_src.split('.'):\r\n                    b64_str += chr(int(octet))\r\n                    \r\n        cap.close()\r\n        \r\n        # Decode the gathered base64 string\r\n        flag = base64.b64decode(b64_str).decode('utf-8').strip('\\x00')\r\n        print(f\"<FLAG>{flag}</FLAG>\")\r\n        \r\n    except Exception as e:\r\n        print(f\"Error occurred: {e}\", file=sys.stderr)\r\n\r\nif __name__ == '__main__':\r\n    solve()"
       }
     ],
@@ -104,7 +104,7 @@ export const byuctfWriteups: WriteUp[] = [
   },
   {
     "id": "byuctf-foren-therewillbecake",
-    "title": ": There Will Be Cake (BYUCTF)",
+    "title": "There Will Be Cake (BYUCTF)",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
@@ -127,7 +127,7 @@ export const byuctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import subprocess\r\nimport base64\r\nimport binascii\r\n\r\ndef get_flag_cake(pcap_file):\r\n    try:\r\n        cmd = [\"tshark\", \"-r\", pcap_file, \"-Y\", \"http\", \"-T\", \"fields\", \"-e\", \"http.cookie\"]\r\n        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip().split('\\n')\r\n        for line in output:\r\n            if 'cake=' in line:\r\n                b64_str = line.split('cake=')[1]\r\n                return base64.b64decode(b64_str).decode()\r\n    except Exception as e:\r\n        pass\r\n    return None\r\n\r\ndef get_flag_still_there(pcap_file):\r\n    try:\r\n        cmd = [\"tshark\", \"-r\", pcap_file, \"-Y\", \"icmp.type == 8\", \"-T\", \"fields\", \"-e\", \"data.data\"]\r\n        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip()\r\n        hex_data = output.replace('\\n', '')\r\n        if hex_data:\r\n            return binascii.unhexlify(hex_data).decode()\r\n    except Exception as e:\r\n        pass\r\n    return None\r\n\r\ndef get_flag_paradox(pcap_file):\r\n    try:\r\n        cmd = [\"tshark\", \"-r\", pcap_file, \"-Y\", \"ntp\", \"-T\", \"fields\", \"-e\", \"udp.payload\"]\r\n        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip().split('\\n')\r\n        flag = \"\"\r\n        for line in output:\r\n            if line:\r\n                payload_bytes = binascii.unhexlify(line)\r\n                # Karakter disembunyikan di LSB (Least Significant Byte) dari bagian integer setiap timestamp NTP\r\n                for idx in [19, 27, 35, 43]:\r\n                    if payload_bytes[idx] != 0:\r\n                        flag += chr(payload_bytes[idx])\r\n        return flag\r\n    except Exception as e:\r\n        pass\r\n    return None\r\n\r\ndef get_flag_corrupted(pcap_file):\r\n    try:\r\n        cmd = [\"tshark\", \"-r\", pcap_file, \"-Y\", \"icmp.type == 8\", \"-T\", \"fields\", \"-e\", \"ip.src\"]\r\n        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip().split('\\n')\r\n        b64_flag = \"\"\r\n        for ip in output:\r\n            if ip:\r\n                octets = ip.split('.')\r\n                for octet in octets:\r\n                    if int(octet) != 0:\r\n                        b64_flag += chr(int(octet))\r\n        \r\n        # Tambahkan padding jika kurang\r\n        b64_flag += \"=\" * ((4 - len(b64_flag) % 4) % 4)\r\n        return base64.b64decode(b64_flag).decode()\r\n    except Exception as e:\r\n        pass\r\n    return None\r\n\r\nif __name__ == \"__main__\":\r\n    pcap = \"chall.pcapng\"\r\n    print(f\"[*] Extracting flags from {pcap}...\\n\")\r\n    print(f\"[+] There Will Be Cake: {get_flag_cake(pcap)}\")\r\n    print(f\"[+] Are You Still There?: {get_flag_still_there(pcap)}\")\r\n    print(f\"[+] Alright. Paradox Time: {get_flag_paradox(pcap)}\")\r\n    print(f\"[+] Corrupted Cores: {get_flag_corrupted(pcap)}\")"
       }
     ],
@@ -137,7 +137,7 @@ export const byuctfWriteups: WriteUp[] = [
   },
   {
     "id": "byuctf-misc-easy",
-    "title": ": Easy Mode (Misc/Jail) - BYUCTF",
+    "title": "Easy Mode (Misc/Jail) - BYUCTF",
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
@@ -155,11 +155,11 @@ export const byuctfWriteups: WriteUp[] = [
         "content": "Target memberikan akses ke sebuah shell Bash interaktif, namun dengan batasan yang sangat ketat:\n1.  **Space Removal**: Semua spasi yang diinputkan dihapus oleh sistem backend sebelum dieksekusi.\n2.  **Restricted PATH**: Perintah standar seperti `ls` atau `cat` tidak dapat ditemukan (kemungkinan `PATH` dikosongkan).\n3.  **Kata Terlarang**: Ada indikasi filter terhadap kata-kata tertentu (seperti `flag`), meskipun akhirnya bisa diatasi dengan wildcard.\n\nTujuan kita adalah membaca isi file `flag.txt` di direktori `/app`."
       },
       {
-        "title": "1. Menemukan Masalah Utama",
+        "title": "Menemukan Masalah Utama",
         "content": "Saat mencoba perintah normal seperti `ls` atau `echo *`, sistem memberikan pesan error:\n- Input `ls` -> `bash: ls: command not found`\n- Input `echo *` -> `bash: echo*: command not found` (Spasi hilang dan menjadi satu string `echo*`)."
       },
       {
-        "title": "2. Bypass Filter Spasi",
+        "title": "Bypass Filter Spasi",
         "content": "Untuk menjalankan perintah dengan argumen tanpa karakter spasi, kita bisa menggunakan **Brace Expansion** di Bash. Format `{perintah,argumen}` akan dievaluasi oleh Bash sebagai `perintah argumen`.\n\nContoh penemuan file:\n```bash\n$ {echo,*}\n```"
       }
     ],
@@ -169,7 +169,7 @@ export const byuctfWriteups: WriteUp[] = [
   },
   {
     "id": "byuctf-misc-skull",
-    "title": ": Skull (Misc/Jail) - BYUCTF",
+    "title": "Skull (Misc/Jail) - BYUCTF",
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
@@ -209,7 +209,7 @@ export const byuctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "BYUCTF",
     "tags": [],
-    "description": "Challenge ini kelihatannya “crypto”, tapi akar masalahnya ada di parser input dan cara program memanfaatkan buffer hasil parsing.",
+    "description": "",
     "problemDescription": "Challenge ini kelihatannya “crypto”, tapi akar masalahnya ada di parser input dan cara program memanfaatkan buffer hasil parsing.",
     "tools": [],
     "analysis": "",
@@ -244,7 +244,7 @@ export const byuctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\nimport hashlib\r\nimport hmac\r\nimport re\r\nimport os\r\n\r\n\r\nHOST = \"chals.cyberjousting.com\"\r\nPORT = 1362\r\nORIG_IV = b\"303132333435363738396162\"  # b\"0123456789ab\".hex()\r\n\r\n\r\ndef get_round(io):\r\n    data = io.recvuntil(b\">>> Enter a ciphertext to decrypt:\")\r\n    text = data.decode(errors=\"ignore\")\r\n    ct = re.search(r\"Encrypted data: ([0-9a-f]+)\", text).group(1)\r\n    tag = re.search(r\"Poly1305 authentication tag: ([0-9a-f]+)\", text).group(1)\r\n    mac = re.search(r\"HMAC tag: ([0-9a-f]+)\", text).group(1)\r\n    return ct, tag, mac\r\n\r\n\r\ndef answer(io, ct, iv, tag, mac):\r\n    io.sendline(ct if isinstance(ct, bytes) else ct.encode())\r\n    io.recvuntil(b\">>> Enter an IV for the message:\")\r\n    io.sendline(iv if isinstance(iv, bytes) else iv.encode())\r\n    io.recvuntil(b\">>> Enter a Poly1305 authentication tag for the message:\")\r\n    io.sendline(tag if isinstance(tag, bytes) else tag.encode())\r\n    io.recvuntil(b\">>> Enter an HMAC tag for the message:\")\r\n    io.sendline(mac if isinstance(mac, bytes) else mac.encode())\r\n\r\n\r\ndef start():\r\n    if args.REMOTE:\r\n        return remote(HOST, PORT)\r\n    env = {\"LD_LIBRARY_PATH\": os.path.join(os.getcwd(), \"wolfssl-install/lib\")}\r\n    return process(\"./challenge\", env=env)\r\n\r\n\r\ndef main():\r\n    io = start()\r\n\r\n    leaked = bytearray()\r\n    for i in range(32):\r\n        _, tag, mac = get_round(io)\r\n        # scan_hex_array increments its byte count before sscanf validates.\r\n        # The invalid pair leaves tmp[i] unchanged, and tmp initially contains hmacKey.\r\n        answer(io, \"00\" * i + \"zz\", ORIG_IV, tag, mac)\r\n        out = io.recvuntil(b\"Invalid HMAC tag!\").decode(errors=\"ignore\")\r\n        msg = bytes.fromhex(re.search(r\"Decrypting message ([0-9a-f]+)\", out).group(1))\r\n        leaked.append(msg[-1])\r\n\r\n    ct, tag, _ = get_round(io)\r\n    forged_ct = bytearray.fromhex(ct)\r\n    forged_ct[0] ^= 1\r\n    forged_mac = hmac.new(leaked, bytes(forged_ct) + bytes.fromhex(tag), hashlib.sha256).hexdigest()\r\n\r\n    answer(io, forged_ct.hex(), ORIG_IV, tag, forged_mac)\r\n    out = io.recvall(timeout=3).decode(errors=\"ignore\")\r\n    msg_hex = re.search(r\"Here's your message:\\n([0-9a-f]+)\", out).group(1)\r\n    msg = bytearray.fromhex(msg_hex)\r\n    msg[0] ^= 1\r\n    flag = bytes(msg).rstrip(b\"\\x00\\r\\n\").decode(errors=\"ignore\")\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -269,7 +269,7 @@ export const byuctfWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import context, remote\r\n\r\n\r\nHOST = \"chals.cyberjousting.com\"\r\nPORT = 1368\r\n\r\nPATH = [\r\n    256, 423, 495, 307, 39, 250, 391, 119, 105, 499, 123, 104,\r\n    536, 257, 608, 253, 74, 365, 543, 300, 571, 506, 595, 192,\r\n    383, 112, 17, 556, 93, 318, 114, 276, 18, 216, 449, 414,\r\n    124, 503, 71, 407, 78, 285, 481, 66, 381, 531, 82, 337,\r\n    600, 86, 230, 327, 472, 393, 348, 331, 14, 207, 402, 548,\r\n    528, 168, 530, 490, 378, 408, 518, 202, 87, 342, 329, 624,\r\n]\r\n\r\n\r\ndef main():\r\n    context.log_level = \"error\"\r\n\r\n    payload = (\"\\n\".join(map(str, PATH)) + \"\\n\").encode()\r\n    io = remote(HOST, PORT)\r\n    io.send(payload)\r\n\r\n    output = io.recvall(timeout=10).decode(errors=\"replace\")\r\n    print(output, end=\"\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -279,7 +279,7 @@ export const byuctfWriteups: WriteUp[] = [
   },
   {
     "id": "byuctf-rev-pickerick",
-    "title": ": Pickle Rick - BYUCTF (Rev)",
+    "title": "Pickle Rick - BYUCTF (Rev)",
     "category": "Reverse",
     "difficulty": "Medium",
     "points": 0,
@@ -306,7 +306,7 @@ export const byuctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "def solve():\r\n    with open('pickled.txt', 'r') as f:\r\n        content = f.read().strip().split()\r\n    \r\n    # Map words to bits: rick=0, pickle=1\r\n    bits = ['1' if w == 'pickle' else '0' for w in content]\r\n    \r\n    # Group bits into bytes\r\n    bytes_val = []\r\n    for i in range(0, len(bits), 8):\r\n        byte_str = ''.join(bits[i:i+8])\r\n        bytes_val.append(int(byte_str, 2))\r\n        \r\n    # XOR with 0x67 to get the ELF\r\n    # We found this key by XORing the first byte (0x18) with 0x7f\r\n    decoded = bytes([b ^ 0x67 for b in bytes_val])\r\n    \r\n    with open('recovered_elf', 'wb') as f:\r\n        f.write(decoded)\r\n        \r\n    # The flag is in the data section of the ELF\r\n    # Or we can just run it if we are on Linux\r\n    import subprocess\r\n    import os\r\n    os.chmod('recovered_elf', 0o755)\r\n    result = subprocess.check_output(['./recovered_elf'])\r\n    print(result.decode().strip())\r\n\r\nif __name__ == '__main__':\r\n    solve()"
       }
     ],
