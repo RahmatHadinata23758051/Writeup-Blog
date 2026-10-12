@@ -2,7 +2,7 @@ import type { WriteUp } from "../types";
 
 export const hacktheboxWriteups: WriteUp[] = [
   {
-    "id": "17",
+    "id": "hackthebox-misc-madmath",
     "title": "MadMath",
     "category": "Crypto",
     "difficulty": "Hard",

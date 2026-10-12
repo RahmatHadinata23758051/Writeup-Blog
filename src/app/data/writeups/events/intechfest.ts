@@ -2,7 +2,7 @@ import type { WriteUp } from "../types";
 
 export const intechfestWriteups: WriteUp[] = [
   {
-    "id": "2",
+    "id": "intechfest-web-shaw",
     "title": "Shaw",
     "category": "Crypto",
     "difficulty": "Hard",

