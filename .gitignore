@@ -4,3 +4,9 @@ node_modules
 .env*.local
 dist
 scratch
+__pycache__/
+*.pyc
+
+# Konteks agent lokal (jangan di-push)
+FULL_CHAT_HISTORY.md
+SESSION_HANDOVER.md
