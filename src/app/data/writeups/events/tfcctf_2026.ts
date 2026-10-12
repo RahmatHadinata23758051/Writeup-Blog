@@ -14,7 +14,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Crypto",
       "TFC CTF 2026"
     ],
-    "description": "Challenge Approximate Common Divisor (ACD) dalam SageMath di mana sekumpulan integer $x_i = p \\cdot q_i + r_i$ diberikan. Menggunakan reduksi kisi BKZ pada matriks kisi untuk mengekstraksi flag $p$.",
+    "description": "",
     "problemDescription": "Challenge Approximate Common Divisor (ACD) dalam SageMath di mana sekumpulan integer $x_i = p \\cdot q_i + r_i$ diberikan. Menggunakan reduksi kisi BKZ pada matriks kisi untuk mengekstraksi flag $p$.",
     "tools": [
       "Python 3",
@@ -23,19 +23,19 @@ export const tfcctf2026Writeups: WriteUp[] = [
     "analysis": "# Writeup: 1+1 (Tantangan Kriptografi CTF)\n\nDiberikan sebuah skrip tantangan dalam bahasa SageMath (`chall.sage`) yang menghasilkan sepuluh nilai integer `xs`. Berdasarkan kode sumber:\n\n$$x_i = p \\cdot q_i + r_i \\quad \\text{untuk} \\ i = 0, 1, \\dots, 9$$\n\nDengan parameter yang diketahui:\n\n- **$p$**: Integer rahasia yang merepresentasikan nilai byte dari flag (`bytes_to_long(open('flag','rb').read())`).\n- **$q_i$**: Bilangan prima acak berukuran 512-bit (`getPrime(pbit)` dengan `pbit = 512`).\n- **$r_i$**: Nilai sisa atau noise acak berukuran 444-bit ($1 \\le r_i < 2^{444}$).\n\nUkuran nilai $x_i$ berada pada kisaran 1024-bit (hasil perkalian 512-bit prima dan 512-bit $p$). Karena batas atas noise $r_i$ (444-bit) jauh lebih kecil daripada ukuran modulus utama, permasalahan ini dapat direduksi secara matematis menjadi **Approximate Common Divisor (ACD) Problem**.",
     "solution": [
       {
-        "title": "2. Landasan Teori (Theoretical Foundation)",
+        "title": "Landasan Teori (Theoretical Foundation)",
         "content": "Masalah ACD bertujuan mencari pembagi persekutuan dari sekumpulan bilangan yang tercemar oleh galat (noise). Persamaan di atas dapat disusun ulang menjadi:\n\n$$x_i - r_i = p \\cdot q_i$$\n\nArtinya, rasio antara dua elemen apa pun dalam himpunan `xs` mendekati rasio dari faktor pengalinya:\n\n$$\\frac{x_i}{x_0} \\approx \\frac{q_i}{q_0}$$\n\nPendekatan rasional ini menunjukkan bahwa $q_i$ dan $q_0$ membentuk suatu hubungan linier berbobot kecil. Dalam kriptografi, struktur linier seperti ini diselesaikan menggunakan **Lattice Reduction** melalui algoritma **LLL** (Lenstra–Lenstra–Lovász) atau **BKZ** (Block Korkin-Zolotarev).\n\nDengan menyusun matriks kisi yang merepresentasikan selisih kelipatan elemen-elemen $x_i$ terhadap batas noise $W = 2^{444}$, vektor terpendek di dalam kisi tersebut akan mengeliminasi faktor prima acak $q_i$ dan menyisakan hubungan proporsional yang mengarah pada nilai $p$."
       },
       {
-        "title": "3. Tahapan Penyelesaian (Step-by-Step Solution)",
+        "title": "Tahapan Penyelesaian (Step-by-Step Solution)",
         "content": "1. **Konstruksi Matriks Kisi (Lattice Matrix):**\n   Dibentuk sebuah matriks berukuran $N \\times N$ (dengan $N$ adalah jumlah elemen `xs`). Baris pertama matriks diisi oleh batas noise $W = 2^{444}$ pada diagonal utama dan elemen $x_i$ pada kolom berikutnya. Baris-baris selanjutnya diisi oleh $-x_0$ pada posisi diagonal yang bersesuaian untuk mengeliminasi komponen pengali.\n\n2. **Reduksi Kisi (BKZ Reduction):**\n   Algoritma reduksi BKZ diterapkan pada matriks tersebut untuk menemukan basis vektor terpendek (Shortest Vector Problem / SVP).\n\n3. **Ekstraksi dan Validasi Kandidat:**\n   Dari vektor hasil reduksi, nilai estimasi pengali $q_0$ diekstraksi. Nilai $p$ kandidat dihitung melalui pembagian bilangan bulat:\n\n   $$p_{\\text{cand}} = \\left\\lfloor \\frac{x_0}{q_0} \\right\\rfloor$$\n\n   Kandidat tersebut divalidasi dengan memastikan bahwa sisa pembagian ($x_i \\pmod{p_{\\text{cand}}}$) untuk setiap elemen benar-benar berada di bawah batas maksimum noise ($2^{445}$)."
       },
       {
-        "title": "4. Skrip Otomatis Penyelesaian (SageMath Script)",
+        "title": "Skrip Otomatis Penyelesaian (SageMath Script)",
         "content": "```python\nfrom Crypto.Util.number import long_to_bytes\nimport output\n\nxs = output.xs\nN = len(xs)\nrbit = 444\nW = 2**rbit\n\n# Konstruksi matriks kisi untuk Approximate Common Divisor\nM = Matrix(ZZ, N, N)\nM[0, 0] = W\nfor i in range(1, N):\n    M[0, i] = xs[i]\n    M[i, i] = -xs[0]\n\n# Melakukan reduksi kisi menggunakan BKZ\nL = M.BKZ(block_size=10)\n\np_found = None\nfor row in L:\n    q0 = abs(row[0]) // W\n    if q0 > 0:\n        p_cand = xs[0] // q0\n        valid = True\n        for x in xs:\n            if x % p_cand >= 2**445:\n                valid = False\n                break\n        if valid:\n            p_found = p_cand\n            break\n\nif p_found:\n    flag = long_to_bytes(int(p_found))\n    print(flag.decode())\n```"
       },
       {
-        "title": "5. Hasil Akhir (Flag)",
+        "title": "Hasil Akhir (Flag)",
         "content": "Setelah menjalankan skrip otomatis di atas, nilai integer $p$ berhasil diekstraksi secara akurat dan dikonversi kembali menjadi representasi biner teks terang (plaintext):\n\n```\nTFCCTF{nice_crypto_skillz_kid_you_will_be_great_one_day_af56c3}\n```"
       }
     ],
@@ -55,7 +55,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Crypto",
       "TFC CTF 2026"
     ],
-    "description": "Diberikan dua file:\n\n- `test.py`: source generator output dan enkripsi flag.\n- `out.txt`: 625 angka hasil leak PRNG dan satu ciphertext `Enc flag`.\n\nTarget challenge adalah merekonstruksi state Python `random`/MT19937 dari partial output, lalu memprediksi output berikutnya untuk mendapatkan key dan IV AES-CBC.\n\nFlag yang didapat:\n\n```\nTFCCTF{ursu_ursa_bea_ursus_intrun_urus_verzuliu}\n```",
+    "description": "",
     "problemDescription": "Diberikan dua file:\n\n- `test.py`: source generator output dan enkripsi flag.\n- `out.txt`: 625 angka hasil leak PRNG dan satu ciphertext `Enc flag`.\n\nTarget challenge adalah merekonstruksi state Python `random`/MT19937 dari partial output, lalu memprediksi output berikutnya untuk mendapatkan key dan IV AES-CBC.\n\nFlag yang didapat:\n\n```\nTFCCTF{ursu_ursa_bea_ursus_intrun_urus_verzuliu}\n```",
     "tools": [
       "Python 3",
@@ -151,7 +151,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Misc",
       "TFC CTF 2026"
     ],
-    "description": "Service meminta upload activity Cisco Packet Tracer `.pka` yang selesai 100%.\nFile yang diunduh adalah PKA modern dengan payload XML yang dienkripsi.",
+    "description": "",
     "problemDescription": "Service meminta upload activity Cisco Packet Tracer `.pka` yang selesai 100%.\nFile yang diunduh adalah PKA modern dengan payload XML yang dienkripsi.",
     "tools": [
       "Python 3",
@@ -209,7 +209,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Misc",
       "TFC CTF 2026"
     ],
-    "description": "Service meminta pencarian password acak sepanjang 30 karakter. Jawaban perbandingan hanya jujur jika state yang dikirim cocok dengan mood service.",
+    "description": "",
     "problemDescription": "Service meminta pencarian password acak sepanjang 30 karakter. Jawaban perbandingan hanya jujur jika state yang dikirim cocok dengan mood service.",
     "tools": [
       "Python 3",
@@ -267,7 +267,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Misc",
       "TFC CTF 2026"
     ],
-    "description": "Python jail challenge yang membatasi karakter hanya huruf kecil dan :_.[], serta memblokir substring ass, typ, dan als. Dieksploitasi menggunakan list-comprehension destructuring untuk assignment, memulihkan open() dan ctypes dari docstrings, lalu menduplikasi socket koneksi parent menggunakan pidfd_open/pidfd_getfd untuk mengekstrak /flag.txt.",
+    "description": "",
     "problemDescription": "Python jail challenge yang membatasi karakter hanya huruf kecil dan :_.[], serta memblokir substring ass, typ, dan als. Dieksploitasi menggunakan list-comprehension destructuring untuk assignment, memulihkan open() dan ctypes dari docstrings, lalu menduplikasi socket koneksi parent menggunakan pidfd_open/pidfd_getfd untuk mengekstrak /flag.txt.",
     "tools": [
       "Python 3",
@@ -309,7 +309,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Misc",
       "TFC CTF 2026"
     ],
-    "description": "Service Flask meminta request POST dengan path dan body yang harus persis. Request tersebut juga diperiksa dari hasil capture TCP yang diproses Tulip. Celahnya ada pada perbedaan validasi TCP antara kernel Linux dan reassembler Tulip.",
+    "description": "",
     "problemDescription": "Service Flask meminta request POST dengan path dan body yang harus persis. Request tersebut juga diperiksa dari hasil capture TCP yang diproses Tulip. Celahnya ada pada perbedaan validasi TCP antara kernel Linux dan reassembler Tulip.",
     "tools": [
       "Python 3",
@@ -367,7 +367,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Pwn",
       "TFC CTF 2026"
     ],
-    "description": "Binary memberikan primitive arbitrary bit flip: alamat 64-bit dan nomor bit dikontrol user, lalu program menjalankan `*(unsigned char *)addr ^= 1 << bit`. Program juga membocorkan base libc melalui `dladdr()`. Bit flip dipakai untuk memperbesar `_IO_buf_end` milik `stdin`, sehingga `fgets()` berikutnya membaca payload besar ke area libc dan memungkinkan FSOP.",
+    "description": "",
     "problemDescription": "Binary memberikan primitive arbitrary bit flip: alamat 64-bit dan nomor bit dikontrol user, lalu program menjalankan `*(unsigned char *)addr ^= 1 << bit`. Program juga membocorkan base libc melalui `dladdr()`. Bit flip dipakai untuk memperbesar `_IO_buf_end` milik `stdin`, sehingga `fgets()` berikutnya membaca payload besar ke area libc dan memungkinkan FSOP.",
     "tools": [
       "Python 3",
@@ -421,7 +421,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Pwn",
       "TFC CTF 2026"
     ],
-    "description": "`main()` mencetak alamat `setvbuf`, lalu menerima dua angka dan memakainya langsung sebagai argumen `fgets`. Angka pertama menjadi alamat tujuan dan angka kedua menjadi ukuran baca. Primitive ini dipakai untuk menimpa struktur internal glibc `fork_handlers`, menjalankan callback `setcontext`, lalu membaca flag dengan ORW syscall.",
+    "description": "",
     "problemDescription": "`main()` mencetak alamat `setvbuf`, lalu menerima dua angka dan memakainya langsung sebagai argumen `fgets`. Angka pertama menjadi alamat tujuan dan angka kedua menjadi ukuran baca. Primitive ini dipakai untuk menimpa struktur internal glibc `fork_handlers`, menjalankan callback `setcontext`, lalu membaca flag dengan ORW syscall.",
     "tools": [
       "Python 3",
@@ -471,7 +471,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Pwn",
       "TFC CTF 2026"
     ],
-    "description": "Challenge ini adalah V8 sandbox escape kecil-kecilan. Program memberikan primitive `bitFlip(obj, offset)` yang bisa membalik satu bit relatif terhadap sebuah object internal. Dari primitive itu, targetnya adalah mengubah pointer/code metadata milik fungsi JavaScript supaya eksekusi pindah ke shellcode WebAssembly yang kita kontrol.\n\nPayload akhirnya menjalankan binary `/rdflag`, lalu output flag keluar dari service.",
+    "description": "",
     "problemDescription": "Challenge ini adalah V8 sandbox escape kecil-kecilan. Program memberikan primitive `bitFlip(obj, offset)` yang bisa membalik satu bit relatif terhadap sebuah object internal. Dari primitive itu, targetnya adalah mengubah pointer/code metadata milik fungsi JavaScript supaya eksekusi pindah ke shellcode WebAssembly yang kita kontrol.\n\nPayload akhirnya menjalankan binary `/rdflag`, lalu output flag keluar dari service.",
     "tools": [
       "Python 3",
@@ -537,7 +537,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Reverse",
       "TFC CTF 2026"
     ],
-    "description": "`cadence` adalah binary REV berbentuk aplikasi terminal mirip pemutar musik. Bagian penting ada di menu Encore. Remote memberi `SESSION` 16 byte dalam hex dan sample rate. User harus mengirim base64 WAV mono PCM 16-bit yang waveform-nya lolos fungsi `encore.resonates()`.\n\nFlag tidak disimpan sebagai string plaintext di binary lokal. Binary lokal hanya melakukan validasi waveform. Flag keluar dari service remote setelah payload WAV yang valid disubmit.\n\nFlag yang didapat dari remote:\n\n```\nTFCCTF{the_encore_resonates_over_gf2_7c4e91ab}\n```",
+    "description": "",
     "problemDescription": "`cadence` adalah binary REV berbentuk aplikasi terminal mirip pemutar musik. Bagian penting ada di menu Encore. Remote memberi `SESSION` 16 byte dalam hex dan sample rate. User harus mengirim base64 WAV mono PCM 16-bit yang waveform-nya lolos fungsi `encore.resonates()`.\n\nFlag tidak disimpan sebagai string plaintext di binary lokal. Binary lokal hanya melakukan validasi waveform. Flag keluar dari service remote setelah payload WAV yang valid disubmit.\n\nFlag yang didapat dari remote:\n\n```\nTFCCTF{the_encore_resonates_over_gf2_7c4e91ab}\n```",
     "tools": [
       "Python 3",
@@ -587,7 +587,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Reverse",
       "TFC CTF 2026"
     ],
-    "description": "Binary AArch64 ini ngecek flag dengan white-box AES yang dibikin sengaja ribet. Fungsi `check()` dan `lumaes_encrypt_block()` cuma wrapper; body pentingnya dienkripsi dan baru dibuka lewat `__enc_enter()`.\n\nFlag didapat dengan cara tidak menjalankan binary ARM-nya langsung. Tabel white-box di `.data` diekstrak, lalu transformasinya dibalik per blok 16 byte sampai plaintext keluar.",
+    "description": "",
     "problemDescription": "Binary AArch64 ini ngecek flag dengan white-box AES yang dibikin sengaja ribet. Fungsi `check()` dan `lumaes_encrypt_block()` cuma wrapper; body pentingnya dienkripsi dan baru dibuka lewat `__enc_enter()`.\n\nFlag didapat dengan cara tidak menjalankan binary ARM-nya langsung. Tabel white-box di `.data` diekstrak, lalu transformasinya dibalik per blok 16 byte sampai plaintext keluar.",
     "tools": [
       "Python 3",
@@ -637,7 +637,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Reverse",
       "TFC CTF 2026"
     ],
-    "description": "Binary adalah game terminal statically linked dan stripped. Flag tidak muncul sebagai string biasa. Saat event akhir/vault terbuka, program menyalin 16 byte kunci dari `.rodata`, menjalankan rutinitas PRNG/custom mixer di alamat `0x11ef760`, lalu mendekripsi 39 byte ciphertext ke area global tepat sebelum map.\n\nFlag bisa diambil tanpa memainkan game penuh dengan mereplikasi rutinitas decode tersebut.",
+    "description": "",
     "problemDescription": "Binary adalah game terminal statically linked dan stripped. Flag tidak muncul sebagai string biasa. Saat event akhir/vault terbuka, program menyalin 16 byte kunci dari `.rodata`, menjalankan rutinitas PRNG/custom mixer di alamat `0x11ef760`, lalu mendekripsi 39 byte ciphertext ke area global tepat sebelum map.\n\nFlag bisa diambil tanpa memainkan game penuh dengan mereplikasi rutinitas decode tersebut.",
     "tools": [
       "Python 3",
@@ -687,7 +687,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Reverse",
       "TFC CTF 2026"
     ],
-    "description": "Binary adalah game terminal ELF 64-bit, statically linked, stripped. Flag tidak tersimpan sebagai string plaintext. Setelah syarat game terpenuhi, program menyalin key panel ke buffer global lalu menjalankan fungsi decode di `0x11f0d30`. Versi kedua menambah gate ore ledger sebelum flag dibuka, dan encoding flag dibuat lebih ribet: ciphertext dipecah ke empat tabel kecil, urutan bacanya diacak dengan modulo, lalu tiap byte diputar dan di-XOR dengan byte dari PRNG/mixer custom.\n\nFlag bisa diambil tanpa memainkan game penuh dengan mereplikasi fungsi decode tersebut.",
+    "description": "",
     "problemDescription": "Binary adalah game terminal ELF 64-bit, statically linked, stripped. Flag tidak tersimpan sebagai string plaintext. Setelah syarat game terpenuhi, program menyalin key panel ke buffer global lalu menjalankan fungsi decode di `0x11f0d30`. Versi kedua menambah gate ore ledger sebelum flag dibuka, dan encoding flag dibuat lebih ribet: ciphertext dipecah ke empat tabel kecil, urutan bacanya diacak dengan modulo, lalu tiap byte diputar dan di-XOR dengan byte dari PRNG/mixer custom.\n\nFlag bisa diambil tanpa memainkan game penuh dengan mereplikasi fungsi decode tersebut.",
     "tools": [
       "Python 3",
@@ -737,7 +737,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Reverse",
       "TFC CTF 2026"
     ],
-    "description": "File utama adalah PE Windows 64-bit berbasis Go. Flag tidak muncul sebagai string biasa. `challenge_data/flag.txt` adalah container terenkripsi. Kunci tidak disimpan utuh, tapi dibentuk dari tiga shard di DLL palsu dan program VM di `content/patch_06.dat`.\n\nHasil akhir:\n\n```\nTFCCTF{a_vm_dreams_in_galois_fields_6e91c2}\n```",
+    "description": "",
     "problemDescription": "File utama adalah PE Windows 64-bit berbasis Go. Flag tidak muncul sebagai string biasa. `challenge_data/flag.txt` adalah container terenkripsi. Kunci tidak disimpan utuh, tapi dibentuk dari tiga shard di DLL palsu dan program VM di `content/patch_06.dat`.\n\nHasil akhir:\n\n```\nTFCCTF{a_vm_dreams_in_galois_fields_6e91c2}\n```",
     "tools": [
       "Python 3",
@@ -803,7 +803,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Reverse",
       "TFC CTF 2026"
     ],
-    "description": "Binary `rivers` adalah ELF 64-bit static stripped. Input yang dibaca bukan string, melainkan format biner untuk tiga polinomial sparse dan dua titik 3D.\n\nJika semua validasi lolos, program mengambil environment variable `FLAG` lalu mencetaknya. Kalau `FLAG` tidak ada, program mencetak `bruh{fake_flag}`. Kalau gagal, output-nya `brevski noski`.",
+    "description": "",
     "problemDescription": "Binary `rivers` adalah ELF 64-bit static stripped. Input yang dibaca bukan string, melainkan format biner untuk tiga polinomial sparse dan dua titik 3D.\n\nJika semua validasi lolos, program mengambil environment variable `FLAG` lalu mencetaknya. Kalau `FLAG` tidak ada, program mencetak `bruh{fake_flag}`. Kalau gagal, output-nya `brevski noski`.",
     "tools": [
       "Python 3",
@@ -849,7 +849,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Web",
       "TFC CTF 2026"
     ],
-    "description": "Flag berada di output terenkripsi milik run `admin-provision-approval`. Jalur exploit memanfaatkan beberapa bug pada RPC publik, lalu memakai diagnostic report untuk membocorkan flag melalui pesan error.",
+    "description": "",
     "problemDescription": "Flag berada di output terenkripsi milik run `admin-provision-approval`. Jalur exploit memanfaatkan beberapa bug pada RPC publik, lalu memakai diagnostic report untuk membocorkan flag melalui pesan error.",
     "tools": [
       "Python 3",
@@ -908,7 +908,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "AI",
       "TFC CTF 2026"
     ],
-    "description": "Challenge AI/Web yang mengeksploitasi shared LLM KV Cache handoff window model Qwen2.5-0.5B-Instruct. Dengan menyusun prefix trie dari data training courier dan menjalankan timing oracle batch request melalui HTTP/2 multiplexing, record rahasia resident dipulihkan. KV cache hasil inferensi kemudian diserialisasi via safetensors dan disubmit untuk mendapatkan heat restoration code.",
+    "description": "",
     "problemDescription": "Challenge AI/Web yang mengeksploitasi shared LLM KV Cache handoff window model Qwen2.5-0.5B-Instruct. Dengan menyusun prefix trie dari data training courier dan menjalankan timing oracle batch request melalui HTTP/2 multiplexing, record rahasia resident dipulihkan. KV cache hasil inferensi kemudian diserialisasi via safetensors dan disubmit untuk mendapatkan heat restoration code.",
     "tools": [
       "Python 3",
@@ -945,7 +945,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "Web",
       "TFC CTF 2026"
     ],
-    "description": "Bug utama ada pada cache riwayat chat. Key cache memakai `username.trim()`, tetapi query database memakai ID user. Username seperti `Hacker ` dan `FlagHolder ` bisa dibuat untuk berbagi key cache dengan akun bot asli. Message juga menerima mass assignment pada `tagName`, `attributes`, dan `content`, sehingga bisa dibuat XSS yang dieksekusi browser bot.",
+    "description": "",
     "problemDescription": "Bug utama ada pada cache riwayat chat. Key cache memakai `username.trim()`, tetapi query database memakai ID user. Username seperti `Hacker ` dan `FlagHolder ` bisa dibuat untuk berbagi key cache dengan akun bot asli. Message juga menerima mass assignment pada `tagName`, `attributes`, dan `content`, sehingga bisa dibuat XSS yang dieksekusi browser bot.",
     "tools": [
       "Python 3",
@@ -1004,7 +1004,7 @@ export const tfcctf2026Writeups: WriteUp[] = [
       "SQLi",
       "TFC CTF 2026"
     ],
-    "description": "SQL Injection pada filter parameter /api/query.php di aplikasi PHP/MariaDB. Karena opsi MYSQL_ATTR_MULTI_STATEMENTS diaktifkan pada PDO connection, attacker dapat mengeksekusi stacked statements untuk membuat staging table dan menjalankan LOAD DATA LOCAL INFILE '/flag.txt' guna membaca file flag dari server PHP-FPM.",
+    "description": "",
     "problemDescription": "SQL Injection pada filter parameter /api/query.php di aplikasi PHP/MariaDB. Karena opsi MYSQL_ATTR_MULTI_STATEMENTS diaktifkan pada PDO connection, attacker dapat mengeksekusi stacked statements untuk membuat staging table dan menjalankan LOAD DATA LOCAL INFILE '/flag.txt' guna membaca file flag dari server PHP-FPM.",
     "tools": [
       "Python 3",

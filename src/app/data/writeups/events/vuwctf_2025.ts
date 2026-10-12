@@ -2,7 +2,7 @@ import type { WriteUp } from "../types";
 
 export const vuwctf2025Writeups: WriteUp[] = [
   {
-    "id": "3",
+    "id": "vuwctf2025-pwn-blazingly-fast-memory-unsafe",
     "title": "Blazingly Fast Memory Unsafe",
     "category": "Pwn",
     "difficulty": "Hard",
@@ -54,7 +54,7 @@ export const vuwctf2025Writeups: WriteUp[] = [
     "lessonsLearned": "**JIT Validation** - JIT compilers must validate input constraints (bracket matching) before code generation. Unsafe parsing allows control-flow hijacking.\n\n**Stack Protection** - Stack-based return addresses are dangerous. Use shadow stacks or CFI (Control Flow Integrity) to prevent arbitrary code execution.\n\n**Memory Permissions** - RWX (Read-Write-Execute) memory is a severe security risk. Use RX (Read-Execute only) after code generation to prevent self-modifying attacks.\n\n**Shellcode Initialization** - Shellcode must account for caller-corrupted registers. Always initialize registers before syscalls rather than assuming clean state.\n\n**Encoding Techniques** - Brainfuck loops enable compact encoding of repetitive data, making size-limited payloads viable. Domain-specific languages can be exploited for payload reduction."
   },
   {
-    "id": "6",
+    "id": "vuwctf2025-pwn-1-5x-engineer-1",
     "title": "1.5x-engineer 1",
     "category": "Forensics",
     "difficulty": "Medium",
