@@ -9,10 +9,13 @@ import { bushbashWriteups } from "./events/bushbash";
 import { byuctfWriteups } from "./events/byuctf";
 import { citctfWriteups } from "./events/citctf";
 import { compfest18Writeups } from "./events/compfest_18";
+import { cryovaultWriteups } from "./events/cryovault";
 import { cyberbreakerQualWriteups } from "./events/cyberbreaker_qual";
 import { dalCtf2026Writeups } from "./events/dal_ctf_2026";
 import { flagyardWriteups } from "./events/flagyard";
+import { fortidWriteups } from "./events/fortid";
 import { gpnctf2026Writeups } from "./events/gpnctf_2026";
+import { h7texWriteups } from "./events/h7tex";
 import { hacktheboxWriteups } from "./events/hackthebox";
 import { incognitoWriteups } from "./events/incognito";
 import { intechfestWriteups } from "./events/intechfest";
@@ -21,6 +24,7 @@ import { juniorcryptWriteups } from "./events/juniorcrypt";
 import { k1nd4susCtfWriteups } from "./events/k1nd4sus_ctf";
 import { kaliteamctf2026Writeups } from "./events/kaliteamctf_2026";
 import { kubsctfWriteups } from "./events/kubsctf";
+import { kubsctf2026Writeups } from "./events/kubsctf_2026";
 import { lagWriteups } from "./events/lag";
 import { lakeCtf2025Writeups } from "./events/lake_ctf_2025";
 import { leakctfWriteups } from "./events/leakctf";
@@ -57,10 +61,13 @@ export const writeups: WriteUp[] = [
   ...byuctfWriteups,
   ...citctfWriteups,
   ...compfest18Writeups,
+  ...cryovaultWriteups,
   ...cyberbreakerQualWriteups,
   ...dalCtf2026Writeups,
   ...flagyardWriteups,
+  ...fortidWriteups,
   ...gpnctf2026Writeups,
+  ...h7texWriteups,
   ...hacktheboxWriteups,
   ...incognitoWriteups,
   ...intechfestWriteups,
@@ -69,6 +76,7 @@ export const writeups: WriteUp[] = [
   ...k1nd4susCtfWriteups,
   ...kaliteamctf2026Writeups,
   ...kubsctfWriteups,
+  ...kubsctf2026Writeups,
   ...lagWriteups,
   ...lakeCtf2025Writeups,
   ...leakctfWriteups,
