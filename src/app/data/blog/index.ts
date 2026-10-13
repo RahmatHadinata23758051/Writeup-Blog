@@ -5,6 +5,7 @@ import { aiParadoxCtf } from './ai-paradox-ctf';
 import { buangLanggananGpt } from './buang-langganan-gpt';
 import { claudeVsGptVsKimiCtf } from './claude-vs-gpt-vs-kimi-ctf';
 import { rsaCtfGuide } from './rsa-ctf-guide';
+import { analisisMalwareEclipseRat } from './analisis-malware-eclipse-rat';
 import { BlogPost } from '../blogTypes';
 
 // Export individual posts for direct access
@@ -15,9 +16,11 @@ export { aiParadoxCtf } from './ai-paradox-ctf';
 export { buangLanggananGpt } from './buang-langganan-gpt';
 export { claudeVsGptVsKimiCtf } from './claude-vs-gpt-vs-kimi-ctf';
 export { rsaCtfGuide } from './rsa-ctf-guide';
+export { analisisMalwareEclipseRat } from './analisis-malware-eclipse-rat';
 
 // List of all blog posts, sorted by date descending (newest first)
 export const blogPosts: BlogPost[] = [
+  analisisMalwareEclipseRat,
   rsaCtfGuide,
   claudeVsGptVsKimiCtf,
   buangLanggananGpt,
