@@ -8,6 +8,11 @@ interface TocItem {
 
 interface DocsTocProps {
   items?: TocItem[];
+  /**
+   * 'default' — CTF event tree (category labels are slugified, e.g. Web -> web_exploitation).
+   * 'plain'   — blog/article headings, rendered verbatim with normal casing.
+   */
+  variant?: 'default' | 'plain';
 }
 
 const formatCategoryLabel = (label: string) => {
@@ -19,7 +24,7 @@ const formatCategoryLabel = (label: string) => {
   return lower.replace(/\s+/g, '_');
 };
 
-export function DocsToc({ items }: DocsTocProps) {
+export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
   const [activeId, setActiveId] = useState<string>('');
 
   const defaultItems = [
@@ -146,14 +151,18 @@ export function DocsToc({ items }: DocsTocProps) {
                     block: 'start'
                   });
                 }}
-                className={`block w-full text-left font-mono text-[14px] font-bold tracking-tight lowercase transition-colors duration-150 hover:text-[var(--docs-text)] ${
-                  activeId === group.category.id || group.challenges.some(c => activeId === c.id) 
-                    ? 'text-[var(--docs-text)]' 
+                className={`block w-full text-left transition-colors duration-150 hover:text-[var(--docs-text)] ${
+                  variant === 'plain'
+                    ? 'font-sans text-[13px] leading-snug font-semibold tracking-normal whitespace-normal break-words [overflow-wrap:anywhere]'
+                    : 'font-mono text-[14px] font-bold tracking-tight lowercase'
+                } ${
+                  activeId === group.category.id || group.challenges.some(c => activeId === c.id)
+                    ? 'text-[var(--docs-text)]'
                     : 'text-[var(--docs-text-soft)]'
                 }`}
                 title={group.category.label}
               >
-                {formatCategoryLabel(group.category.label)}
+                {variant === 'plain' ? group.category.label : formatCategoryLabel(group.category.label)}
               </button>
             )}
             {group.challenges.length > 0 && (
@@ -174,7 +183,10 @@ export function DocsToc({ items }: DocsTocProps) {
                           });
                         }}
                         className={`
-                          block w-full text-left text-[14px] py-1 px-2.5 rounded transition-all duration-150 truncate font-sans
+                          block w-full text-left py-1 px-2.5 rounded transition-all duration-150 font-sans
+                          ${variant === 'plain'
+                            ? 'text-[13px] leading-snug whitespace-normal break-words [overflow-wrap:anywhere]'
+                            : 'text-[14px] truncate'}
                           ${
                             isActive
                               ? 'text-[var(--docs-accent)] bg-[var(--docs-accent-soft)]/50 font-semibold'

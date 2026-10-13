@@ -7,6 +7,7 @@ interface DocsLayoutProps {
   children: React.ReactNode;
   sidebar?: React.ReactNode;
   toc?: Array<{ id: string; label: string; depth?: number }>;
+  tocVariant?: 'default' | 'plain';
   title?: string;
   onHomeClick?: () => void;
   onSearchClick?: () => void;
@@ -16,6 +17,7 @@ export function DocsLayout({
   children,
   sidebar,
   toc,
+  tocVariant = 'default',
   title,
   onHomeClick,
   onSearchClick,
@@ -71,7 +73,7 @@ export function DocsLayout({
         {toc && toc.length > 0 && (
           <aside className="hidden w-72 xl:w-80 flex-shrink-0 border-l border-[var(--docs-border-soft)] bg-[var(--docs-bg)] lg:block overflow-y-auto">
             <div className="p-6">
-              <DocsToc items={toc} />
+              <DocsToc items={toc} variant={tocVariant} />
             </div>
           </aside>
         )}

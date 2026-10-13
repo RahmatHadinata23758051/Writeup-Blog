@@ -352,6 +352,7 @@ export default function App() {
       <DocsLayout
         title="Nattt"
         toc={tocItems}
+        tocVariant={docsView.type === 'blog-post' ? 'plain' : 'default'}
         sidebar={
           <DocsSidebar
             mode="events-only"
