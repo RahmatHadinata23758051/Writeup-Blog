@@ -68,7 +68,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|images/|sitemap\\.xml|robots\\.txt|favicon\\.ico|logo\\.png|r3ctf_logo\\.png|og-image\\.png|lofi-bgm\\.mp3).*)",
+      "source": "/((?!assets/|images/|sitemap\\.xml|robots\\.txt|favicon\\.ico|logo\\.png|r3ctf_logo\\.png|og-image\\.png|lofi-bgm\\.mp3|google.*\\.html).*)",
       "destination": "/index.html"
     }
   ],
