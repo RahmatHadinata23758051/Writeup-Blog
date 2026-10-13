@@ -1,5 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { updateMetaTags } from './utils/seoManager';
+import {
+  getCanonicalUrl,
+  generateBlogSchema,
+  generateEventSchema,
+  generateOrganizationSchema,
+  generateWriteupSchema,
+  pageConfigs,
+  updateMetaTags,
+} from './utils/seoManager';
 import { DocsLayout } from './components/docs/DocsLayout';
 import { DocsSidebar } from './components/docs/DocsSidebar';
 import { DocsSearch } from './components/docs/DocsSearch';
@@ -77,82 +85,55 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
-  // Handle Hash Navigation
+  // Read pathname routes and keep accepting legacy hash routes for old links.
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace(/^#\//, '');
-      if (!hash) {
-        setDocsView({ type: 'home' });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      const parts = hash.split('/');
-      let shouldScrollToTop = true;
+    const parseRoute = () => {
+      const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '');
+      const legacyHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+      const route = pathname || legacyHash;
+      const parts = route ? route.split('/').map((part) => decodeURIComponent(part)) : [];
 
       if (parts[0] === 'event' && parts[1]) {
         setDocsView({ type: 'event', eventSlug: parts[1] });
       } else if (parts[0] === 'blog') {
-        if (parts[1]) {
-          setDocsView({ type: 'blog-post', postId: parts.slice(1).join('/') });
-        } else {
-          setDocsView({ type: 'blog-list' });
-        }
+        setDocsView(parts[1] ? { type: 'blog-post', postId: parts.slice(1).join('/') } : { type: 'blog-list' });
       } else if (parts[0] === 'playground') {
         setDocsView({ type: 'hacking-game' });
       } else if (parts[0] === 'writeup' && parts[1]) {
-        const writeupId = parts.slice(1).join('/');
-
-        // Find the event for this writeup
-        let foundEventSlug = '';
-        for (const event of docsTree) {
-          for (const category of event.categories) {
-            if (category.writeups.some((w) => w.id === writeupId)) {
-              foundEventSlug = event.slug;
-              break;
-            }
-          }
-          if (foundEventSlug) break;
-        }
-
-        if (foundEventSlug) {
-          setPendingScrollId(`writeup-${writeupId}`);
-          setDocsView({ type: 'event', eventSlug: foundEventSlug });
-          shouldScrollToTop = false;
-        } else {
-          setDocsView({ type: 'home' });
-        }
+        // Direct writeup URLs must render the writeup page, not its parent event.
+        setDocsView({ type: 'writeup', writeupId: parts.slice(1).join('/') });
       } else {
         setDocsView({ type: 'home' });
       }
 
-      if (shouldScrollToTop) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Initial parse
-    handleHashChange();
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    parseRoute();
+    window.addEventListener('popstate', parseRoute);
+    window.addEventListener('hashchange', parseRoute);
+    return () => {
+      window.removeEventListener('popstate', parseRoute);
+      window.removeEventListener('hashchange', parseRoute);
+    };
   }, []);
 
-  // Update URL hash when state changes
+  // Use crawlable pathname URLs; legacy hash URLs remain readable above.
   const handleNavigate = (view: DocsView) => {
-    if (view.type === 'home') {
-      window.location.hash = '#/';
-    } else if (view.type === 'event') {
-      window.location.hash = `#/event/${view.eventSlug}`;
-    } else if (view.type === 'writeup') {
-      window.location.hash = `#/writeup/${view.writeupId}`;
-    } else if (view.type === 'blog-list') {
-      window.location.hash = '#/blog';
-    } else if (view.type === 'blog-post') {
-      window.location.hash = `#/blog/${view.postId}`;
-    } else if (view.type === 'hacking-game') {
-      window.location.hash = '#/playground';
-    }
+    const path = view.type === 'home'
+      ? '/'
+      : view.type === 'event'
+        ? `/event/${view.eventSlug}`
+        : view.type === 'writeup'
+          ? `/writeup/${view.writeupId}`
+          : view.type === 'blog-list'
+            ? '/blog'
+            : view.type === 'blog-post'
+              ? `/blog/${view.postId}`
+              : '/playground';
+
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   // Scroll to pending element after view renders
@@ -194,61 +175,88 @@ export default function App() {
   ).size;
 
   // Find active event and writeup
-  let activeEvent = undefined;
-  let activeWriteupNode = undefined;
-
-  if (docsView.type === 'event') {
-    activeEvent = docsTree.find((e) => e.slug === docsView.eventSlug);
-    if (!activeEvent) {
-      updateMetaTags({ title: 'Event Not Found - Nattt', description: 'Event not found on Nattt write-ups.' });
-    } else {
-      updateMetaTags({ title: `${activeEvent.name} - Nattt`, description: `Writeups for ${activeEvent.name} event.` });
+  const activeEvent = useMemo(() => {
+    if (docsView.type === 'event') {
+      return docsTree.find((e) => e.slug === docsView.eventSlug);
     }
-  } else if (docsView.type === 'writeup') {
-    for (const event of docsTree) {
-      for (const category of event.categories) {
-        const writeup = category.writeups.find((w) => w.id === docsView.writeupId);
-        if (writeup) {
-          activeWriteupNode = writeup;
-          activeEvent = event;
-          break;
+    if (docsView.type === 'writeup') {
+      for (const event of docsTree) {
+        for (const category of event.categories) {
+          if (category.writeups.some((w) => w.id === docsView.writeupId)) {
+            return event;
+          }
         }
       }
-      if (activeWriteupNode) break;
     }
-    if (activeWriteupNode) {
-      updateMetaTags({ title: `${activeWriteupNode.title} - Nattt`, description: activeWriteupNode.description || `Read writeup for ${activeWriteupNode.title}.` });
-    } else {
-      updateMetaTags({ title: 'Writeup Not Found - Nattt', description: 'Writeup not found on Nattt.' });
+    return undefined;
+  }, [docsView]);
+
+  const activeWriteupNode = useMemo(() => {
+    if (docsView.type === 'writeup') {
+      for (const event of docsTree) {
+        for (const category of event.categories) {
+          const writeup = category.writeups.find((w) => w.id === docsView.writeupId);
+          if (writeup) return writeup;
+        }
+      }
     }
-  } else if (docsView.type === 'blog-list') {
-    updateMetaTags({
-      title: 'Blog - Nattt',
-      description: 'Insights, Tutorials & CTF Adventures by Nattt.',
-    });
-  } else if (docsView.type === 'blog-post') {
-    const post = blogPosts.find((p) => p.id === docsView.postId);
-    if (post) {
-      updateMetaTags({
-        title: `${post.title} - Nattt Blog`,
+    return undefined;
+  }, [docsView]);
+
+  useEffect(() => {
+    if (docsView.type === 'event') {
+      updateMetaTags(activeEvent ? {
+        title: `${activeEvent.name} CTF Writeups - Nattt`,
+        description: `Koleksi solusi challenge dan writeup untuk event ${activeEvent.name}.`,
+        keywords: `${activeEvent.name}, CTF writeup, capture the flag, cybersecurity`,
+        url: getCanonicalUrl(`/event/${activeEvent.slug}`),
+        schema: generateEventSchema(activeEvent),
+      } : {
+        title: 'Event Not Found - Nattt',
+        description: 'Event CTF yang diminta tidak ditemukan.',
+        url: getCanonicalUrl('/event/not-found'),
+      });
+    } else if (docsView.type === 'writeup') {
+      const writeup = activeWriteupNode?.original;
+      updateMetaTags(writeup ? {
+        title: `${writeup.title} - ${writeup.ctfName} CTF Writeup | Nattt`,
+        description: writeup.description || `Solusi dan analisis challenge ${writeup.title} dari ${writeup.ctfName}.`,
+        keywords: `${writeup.title}, ${writeup.category}, ${writeup.ctfName}, CTF writeup, cybersecurity`,
+        author: writeup.author,
+        type: 'writeup',
+        publishedDate: writeup.date,
+        url: getCanonicalUrl(`/writeup/${writeup.id}`),
+        schema: generateWriteupSchema(writeup),
+      } : {
+        title: 'Writeup Not Found - Nattt',
+        description: 'Writeup CTF yang diminta tidak ditemukan.',
+        url: getCanonicalUrl('/writeup/not-found'),
+      });
+    } else if (docsView.type === 'blog-list') {
+      updateMetaTags({ ...pageConfigs.blogList, schema: generateOrganizationSchema() });
+    } else if (docsView.type === 'blog-post') {
+      const post = blogPosts.find((p) => p.id === docsView.postId);
+      updateMetaTags(post ? {
+        title: `${post.title} | Nattt Blog`,
         description: post.excerpt,
-        type: 'article',
+        keywords: post.tags.join(', '),
         author: post.author,
-      });
-    } else {
-      updateMetaTags({
+        type: 'article',
+        publishedDate: post.date,
+        url: getCanonicalUrl(`/blog/${post.id}`),
+        image: post.coverImage,
+        schema: generateBlogSchema(post),
+      } : {
         title: 'Blog Post Not Found - Nattt',
-        description: 'The requested blog post was not found.',
+        description: 'Artikel blog yang diminta tidak ditemukan.',
+        url: getCanonicalUrl('/blog/not-found'),
       });
+    } else if (docsView.type === 'hacking-game') {
+      updateMetaTags({ ...pageConfigs.playground, schema: generateOrganizationSchema() });
+    } else {
+      updateMetaTags({ ...pageConfigs.home, schema: generateOrganizationSchema() });
     }
-  } else if (docsView.type === 'hacking-game') {
-    updateMetaTags({
-      title: 'Breach Protocol - Nattt',
-      description: 'Hack the cyber matrix in our interactive Breach Protocol minigame.',
-    });
-  } else {
-    updateMetaTags({ title: 'Nattt', description: 'Nattt CTF Writeups Collection' });
-  }
+  }, [docsView, activeEvent, activeWriteupNode]);
 
   // Generate TOC based on view
   const tocItems = useMemo(() => {

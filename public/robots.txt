@@ -1,31 +1,6 @@
-# Robots.txt - SEO Configuration
-# Allow all crawlers by default
-
+# Robots.txt for Nattt CTF Writeups & Blog
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /private/
-Disallow: /api/
 
-# Specific rules for major search engines
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Slurp
-Allow: /
-
-# Disallow spam bots
-User-agent: AhrefsBot
-User-agent: SemrushBot
-User-agent: DotBot
-Disallow: /
-
-# Crawl delay for polite crawling
-User-agent: *
-Crawl-delay: 1
-
-# Sitemap location
-Sitemap: https://rblxlabs.vercel.app/sitemap.xml
+# Sitemap
+Sitemap: https://nattts.vercel.app/sitemap.xml

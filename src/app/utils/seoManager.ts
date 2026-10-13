@@ -1,7 +1,9 @@
 /**
- * SEO Meta Tags Management Utility
- * Manages dynamic meta tag updates for different pages and writeups
+ * SEO Meta Tags & Schema Management Utility
  */
+
+export const DOMAIN = 'https://nattts.vercel.app';
+export const DEFAULT_OG_IMAGE = `${DOMAIN}/og-image.png`;
 
 export interface SEOMeta {
   title: string;
@@ -13,171 +15,215 @@ export interface SEOMeta {
   type?: 'website' | 'article' | 'writeup';
   publishedDate?: string;
   modifiedDate?: string;
+  schema?: Record<string, unknown>;
 }
 
-export const updateMetaTags = (meta: SEOMeta) => {
-  // Update basic meta tags
-  document.title = meta.title;
-  updateMetaTag('name', 'description', meta.description);
-  
-  if (meta.keywords) {
-    updateMetaTag('name', 'keywords', meta.keywords);
-  }
-  
-  // Update Open Graph tags
-  updateMetaTag('property', 'og:title', meta.title);
-  updateMetaTag('property', 'og:description', meta.description);
-  updateMetaTag('property', 'og:type', meta.type || 'website');
-  
-  if (meta.image) {
-    updateMetaTag('property', 'og:image', meta.image);
-  }
-  
-  if (meta.url) {
-    updateMetaTag('property', 'og:url', meta.url);
-    updateMetaTag('rel', 'canonical', meta.url);
-  }
-  
-  // Update Twitter tags
-  updateMetaTag('property', 'twitter:title', meta.title);
-  updateMetaTag('property', 'twitter:description', meta.description);
-  
-  if (meta.image) {
-    updateMetaTag('property', 'twitter:image', meta.image);
-  }
-  
-  // Update article-specific tags
-  if (meta.type === 'article' || meta.type === 'writeup') {
-    if (meta.author) {
-      updateMetaTag('name', 'author', meta.author);
-    }
-    if (meta.publishedDate) {
-      updateMetaTag('property', 'article:published_time', meta.publishedDate);
-    }
-    if (meta.modifiedDate) {
-      updateMetaTag('property', 'article:modified_time', meta.modifiedDate);
-    }
-  }
+export const getCanonicalUrl = (path: string = '/'): string => {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${DOMAIN}${cleanPath === '/' ? '/' : cleanPath}`;
 };
 
-const updateMetaTag = (
-  attrType: 'name' | 'property' | 'rel',
-  attrValue: string,
-  content: string
-) => {
-  let element = document.querySelector(`[${attrType}="${attrValue}"]`);
-  
+export const updateMetaTags = (meta: SEOMeta) => {
+  const pageTitle = meta.title.includes('Nattt') ? meta.title : `${meta.title} - Nattt`;
+  const canonicalUrl = meta.url || getCanonicalUrl(window.location.pathname);
+  const imageUrl = meta.image || DEFAULT_OG_IMAGE;
+
+  // Basic tags
+  document.title = pageTitle;
+  setMetaTag('name', 'description', meta.description);
+  setMetaTag('name', 'title', pageTitle);
+
+  if (meta.keywords) {
+    setMetaTag('name', 'keywords', meta.keywords);
+  }
+  if (meta.author) {
+    setMetaTag('name', 'author', meta.author);
+  }
+
+  // Canonical tag
+  setLinkTag('canonical', canonicalUrl);
+
+  // Open Graph
+  setMetaTag('property', 'og:title', pageTitle);
+  setMetaTag('property', 'og:description', meta.description);
+  setMetaTag('property', 'og:url', canonicalUrl);
+  setMetaTag('property', 'og:type', meta.type === 'article' || meta.type === 'writeup' ? 'article' : 'website');
+  setMetaTag('property', 'og:image', imageUrl);
+  setMetaTag('property', 'og:site_name', 'Nattt');
+  setMetaTag('property', 'og:locale', 'id_ID');
+
+  // Twitter (standard uses name="twitter:*")
+  setMetaTag('name', 'twitter:card', 'summary_large_image');
+  setMetaTag('name', 'twitter:title', pageTitle);
+  setMetaTag('name', 'twitter:description', meta.description);
+  setMetaTag('name', 'twitter:image', imageUrl);
+
+  // Article specifics
+  if (meta.type === 'article' || meta.type === 'writeup') {
+    if (meta.publishedDate) {
+      setMetaTag('property', 'article:published_time', meta.publishedDate);
+    }
+    if (meta.modifiedDate) {
+      setMetaTag('property', 'article:modified_time', meta.modifiedDate);
+    }
+    if (meta.author) {
+      setMetaTag('property', 'article:author', meta.author);
+    }
+  }
+
+  // Inject or clean JSON-LD
+  updateJsonLd(meta.schema);
+};
+
+function setMetaTag(attrType: 'name' | 'property', attrValue: string, content: string) {
+  let element = document.querySelector(`meta[${attrType}="${attrValue}"]`);
   if (!element) {
     element = document.createElement('meta');
     element.setAttribute(attrType, attrValue);
     document.head.appendChild(element);
   }
-  
-  if (attrType === 'rel') {
-    // Handle canonical link tags
-    const linkElement = document.querySelector(`link[rel="${attrValue}"]`);
-    if (linkElement) {
-      linkElement.setAttribute('href', content);
-    } else {
-      const newLink = document.createElement('link');
-      newLink.setAttribute('rel', attrValue);
-      newLink.setAttribute('href', content);
-      document.head.appendChild(newLink);
-    }
-  } else {
-    element.setAttribute('content', content);
-  }
-};
+  element.setAttribute('content', content);
+}
 
-// Page-specific SEO configurations
-// Domain configuration
-const DOMAIN = 'https://rblxlabs.vercel.app';
+function setLinkTag(rel: string, href: string) {
+  let element = document.querySelector(`link[rel="${rel}"]`);
+  if (!element) {
+    element = document.createElement('link');
+    element.setAttribute('rel', rel);
+    document.head.appendChild(element);
+  }
+  element.setAttribute('href', href);
+}
+
+function updateJsonLd(schema?: Record<string, unknown>) {
+  let script = document.getElementById('json-ld-schema') as HTMLScriptElement | null;
+  if (!schema) {
+    if (script) script.remove();
+    return;
+  }
+  if (!script) {
+    script = document.createElement('script');
+    script.id = 'json-ld-schema';
+    script.type = 'application/ld+json';
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(schema);
+}
 
 export const pageConfigs = {
   home: {
-    title: 'Nattt - CTF Writeups',
-    description: 'Dokumentasi lengkap CTF write-ups. Jelajahi solusi challenge web, crypto, pwn, reverse engineering dengan analisis mendalam.',
-    keywords: 'CTF, capture the flag, writeup, cybersecurity, hacking, web security, cryptography, pwn, reverse engineering',
+    title: 'Nattt - CTF Writeups & Cybersecurity Research',
+    description: 'Dokumentasi lengkap CTF write-ups dan riset cybersecurity dari Nattt. Solusi tantangan Web, Crypto, Pwn, Reverse Engineering, dan Malware Analysis dengan analisis teknis mendalam.',
+    keywords: 'CTF writeups, capture the flag, cybersecurity, malware analysis, reverse engineering, binary exploitation, web security, cryptography',
+    url: getCanonicalUrl('/'),
     type: 'website' as const,
   },
-  
-  writeups: {
-    title: 'Semua Write-Ups CTF - Nattt',
-    description: 'Koleksi lengkap write-up Capture The Flag dengan solusi, analisis, dan pembelajaran.',
-    keywords: 'CTF writeup, solusi challenge, capture the flag solutions, cybersecurity writeups',
+  blogList: {
+    title: 'Blog & Research - Nattt',
+    description: 'Artikel teknis, tutorial binary exploitation, analisis malware real-world, dan riset keamanan siber oleh Nattt.',
+    keywords: 'cybersecurity blog, malware analysis, reverse engineering tutorial, pwn guide, ctf tutorial',
+    url: getCanonicalUrl('/blog'),
     type: 'website' as const,
   },
-  
-  about: {
-    title: 'Tentang - Nattt',
-    description: 'Misi mendokumentasikan solusi CTF, dan kontribusi kami ke komunitas cybersecurity.',
-    keywords: 'Nattt, tim CTF, cybersecurity team',
+  playground: {
+    title: 'Breach Protocol Minigame - Nattt',
+    description: 'Interactive Cyber Breach Protocol puzzle minigame.',
+    keywords: 'breach protocol, cyber minigame, hacking simulator',
+    url: getCanonicalUrl('/playground'),
     type: 'website' as const,
   },
 };
 
-// Generate writeup-specific SEO metadata
-export const generateWriteupMeta = (writeup: {
+export const generateBlogSchema = (post: {
+  id: string;
   title: string;
-  category: string;
-  difficulty: string;
-  description: string;
+  excerpt: string;
   date: string;
   author: string;
-  ctfName: string;
-  id: string;
-}): SEOMeta => {
-  return {
-    title: `${writeup.title} (${writeup.category}/${writeup.difficulty}) - Nattt`,
-    description: writeup.description || `Solusi CTF challenge ${writeup.title} dari ${writeup.ctfName}. Kategori: ${writeup.category}, Tingkat Kesulitan: ${writeup.difficulty}. Ditulis oleh ${writeup.author}.`,
-    keywords: `${writeup.title}, ${writeup.category}, ${writeup.ctfName}, CTF writeup, ${writeup.difficulty} difficulty, cybersecurity`,
-    author: writeup.author,
-    type: 'article' as const,
-    publishedDate: new Date(writeup.date).toISOString(),
-    url: `${DOMAIN}/writeup/${writeup.id}`,
-  };
-};
-
-// JSON-LD Schema markup for structured data
-export const generateWriteupSchema = (writeup: any) => {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headLine: writeup.title,
-    description: writeup.description,
-    image: 'https://ctfwriteups.example.com/og-image.jpg',
-    author: {
-      '@type': 'Person',
-      name: writeup.author,
-    },
-    datePublished: writeup.date,
-    dateModified: writeup.date,
-    publisher: {
-      '@type': 'Organization',
-      name: 'Nattt',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://ctfwriteups.example.com/logo.png',
-      },
-    },
-    keywords: writeup.category,
-    inLanguage: 'id',
-  };
-};
-
-// Generate Organization Schema
-export const generateOrganizationSchema = () => {
-  return {
-    '@context': 'https://schema.org',
+  tags?: string[];
+  coverImage?: string;
+}) => ({
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  headline: post.title,
+  description: post.excerpt,
+  image: post.coverImage || DEFAULT_OG_IMAGE,
+  author: {
+    '@type': 'Person',
+    name: post.author,
+  },
+  publisher: {
     '@type': 'Organization',
     name: 'Nattt',
-    description: 'Dokumentasi resmi CTF write-ups dari Nattt',
     url: DOMAIN,
-    logo: `${DOMAIN}/logo.png`,
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'General',
-      email: 'contact@rblx-labs.segfault.com',
+    logo: {
+      '@type': 'ImageObject',
+      url: `${DOMAIN}/logo.png`,
     },
-  };
-};
+  },
+  datePublished: post.date,
+  dateModified: post.date,
+  mainEntityOfPage: getCanonicalUrl(`/blog/${post.id}`),
+  keywords: post.tags?.join(', ') || 'Cybersecurity',
+  inLanguage: 'id',
+});
+
+export const generateWriteupSchema = (writeup: {
+  id: string;
+  title: string;
+  category: string;
+  ctfName: string;
+  description?: string;
+  date: string;
+  author: string;
+}) => ({
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  headline: `${writeup.title} - ${writeup.ctfName} (${writeup.category})`,
+  description: writeup.description || `Solusi lengkap dan analisis CTF challenge ${writeup.title} kategori ${writeup.category} dari ${writeup.ctfName}.`,
+  image: DEFAULT_OG_IMAGE,
+  author: {
+    '@type': 'Person',
+    name: writeup.author,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Nattt',
+    url: DOMAIN,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${DOMAIN}/logo.png`,
+    },
+  },
+  datePublished: writeup.date,
+  dateModified: writeup.date,
+  mainEntityOfPage: getCanonicalUrl(`/writeup/${writeup.id}`),
+  keywords: `${writeup.category}, ${writeup.ctfName}, CTF writeup, cybersecurity`,
+  inLanguage: 'id',
+});
+
+export const generateEventSchema = (event: {
+  name: string;
+  slug: string;
+  totalWriteups: number;
+}) => ({
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `${event.name} CTF Writeups`,
+  description: `Koleksi ${event.totalWriteups} solusi challenge untuk event ${event.name}.`,
+  url: getCanonicalUrl(`/event/${event.slug}`),
+  publisher: {
+    '@type': 'Organization',
+    name: 'Nattt',
+    url: DOMAIN,
+  },
+});
+
+export const generateOrganizationSchema = () => ({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Nattt',
+  description: 'Dokumentasi CTF Writeups & Riset Keamanan Siber',
+  url: DOMAIN,
+  logo: `${DOMAIN}/logo.png`,
+});

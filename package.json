@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "vite",
-    "build": "node scripts/validate-writeups.mjs && vite build && npx tsx scripts/generate-sitemap.js",
+    "build": "node scripts/validate-writeups.mjs && vite build && npx tsx scripts/generate-sitemap.js && npx tsx scripts/prerender-seo.mjs",
     "dev": "vite",
     "new:writeup": "node scripts/new-writeup.mjs",
     "validate:writeups": "node scripts/validate-writeups.mjs",
+    "test:seo": "node scripts/test-seo.mjs",
     "ctftime:help": "node scripts/fetch-ctftime-team.mjs"
   },
   "dependencies": {
