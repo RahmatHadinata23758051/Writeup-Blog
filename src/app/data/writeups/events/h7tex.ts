@@ -958,7 +958,7 @@ export const h7texWriteups: WriteUp[] = [
       },
       {
         "title": "Membuka file E:",
-        "content": "Routine `encrypt_file` pada program karantina memanggil CryptoAPI untuk AES-128-CBC, memakai IV nol dan padding blok standar. Routine membuat hash MD5 tanpa memasukkan data; karena itu kunci yang dipakai adalah MD5 dari string kosong:\n\n\n\n`recover.py` menerapkan AES-CBC tersebut ke setiap `.enc` dan membuang padding PKCS#7. Hasilnya cocok dengan magic/header file yang diharapkan: KDBX, PNG, ZIP/DOCX, dan private key PEM. File hasil dekripsi ditulis di folder `E/` dengan ekstensi `.enc` dilepas.",
+        "content": "Routine `encrypt_file` pada program karantina memanggil CryptoAPI untuk AES-128-CBC, memakai IV nol dan padding blok standar. Routine membuat hash MD5 tanpa memasukkan data; karena itu kunci yang dipakai adalah MD5 dari string kosong:\n\n\n\n`recover.py` menerapkan AES-CBC tersebut ke setiap `.enc` dan membuang padding PKCS#7. Hasilnya cocok dengan magic/header file yang diharapkan: KDBX, PNG, ZIP/DOCX, dan private key PEM. File hasil dekripsi ditulis di folder `E/` dengan ekstensi `.enc` dilepas.\n\n![Recovered CFO ID scan](/assets/writeups/h7tex/foren-frozenassets/id_scan_cfo.png)",
         "code": "d41d8cd98f00b204e9800998ecf8427e"
       }
     ],
@@ -993,7 +993,7 @@ export const h7texWriteups: WriteUp[] = [
       },
       {
         "title": "Penyusunan Solve Script",
-        "content": "`solve.py` melakukan semua langkah offline:\n\n1. Baca `panel.rom`.\n2. Hitung service code dari seed ROM.\n3. Generate parameter LFSR.\n4. Dekripsi 8 page unit tag.\n5. Rekonstruksi framebuffer 32×256.\n6. Simpan hasil ke `unit_tag.pgm`, `unit_tag.png`, dan `unit_tag_plane7.png`.\n7. Print flag hasil pembacaan panel.\n\nOutput solver:",
+        "content": "`solve.py` melakukan semua langkah offline:\n\n1. Baca `panel.rom`.\n2. Hitung service code dari seed ROM.\n3. Generate parameter LFSR.\n4. Dekripsi 8 page unit tag.\n5. Rekonstruksi framebuffer 32×256.\n6. Simpan hasil ke `unit_tag.pgm`, `unit_tag.png`, dan `unit_tag_plane7.png`.\n7. Print flag hasil pembacaan panel.\n\n![Reconstructed unit tag](/assets/writeups/h7tex/hardware-afterglow/unit_tag.png)\n\n![Recovered plane 7](/assets/writeups/h7tex/hardware-afterglow/unit_tag_plane7.png)\n\nOutput solver:",
         "code": "[+] service code / QEMU input : 22957a2d\n[+] wrote unit_tag.pgm\n[+] wrote unit_tag.png\n[+] wrote unit_tag_plane7.png\n<FLAG>H7CTF{d8ef6da3-c256-49f5-84eb-ba97fd0389a9}</FLAG>"
       },
       {
@@ -1319,7 +1319,7 @@ export const h7texWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "File Challenge",
-        "content": "- `overexposed.png` — PNG RGB 520×220."
+        "content": "- `overexposed.png` — PNG RGB 520×220.\n\n![Original challenge image](/assets/writeups/h7tex/misc-overexposed/overexposed.png)\n\n![Autocontrast view](/assets/writeups/h7tex/misc-overexposed/autocontrast.png)"
       },
       {
         "title": "Temuan Penting",
@@ -2291,7 +2291,7 @@ export const h7texWriteups: WriteUp[] = [
       },
       {
         "title": "Eksploitasi",
-        "content": "Setelah upload WAV valid, render pertama memberikan workspace ID, misalnya `df50734fb543f26b`. Payload render kedua yang berhasil:\n\n\n\nFFmpeg membuka `/flag.txt` sebagai sumber teks `drawtext`, lalu menuliskannya pada output PNG kedua. API mengembalikan URL output, misalnya `/m/<workspace-id>/reveal.png.png`; PNG tersebut mengandung teks flag yang terlihat jelas.\n\nRequest yang membuktikan pembacaan file adalah render dengan `textfile=/flag.txt`. Percobaan `/flag` menghasilkan error `Cannot read file '/flag'`, sedangkan `/flag.txt` menghasilkan render sukses dan PNG yang menampilkan flag.",
+        "content": "Setelah upload WAV valid, render pertama memberikan workspace ID, misalnya `df50734fb543f26b`. Payload render kedua yang berhasil:\n\n\n\nFFmpeg membuka `/flag.txt` sebagai sumber teks `drawtext`, lalu menuliskannya pada output PNG kedua. API mengembalikan URL output, misalnya `/m/<workspace-id>/reveal.png.png`; PNG tersebut mengandung teks flag yang terlihat jelas.\n\n![Rendered flag output](/assets/writeups/h7tex/web-splice/flag.png)\n\nRequest yang membuktikan pembacaan file adalah render dengan `textfile=/flag.txt`. Percobaan `/flag` menghasilkan error `Cannot read file '/flag'`, sedangkan `/flag.txt` menghasilkan render sukses dan PNG yang menampilkan flag.",
         "code": "poster.png -f image2 -map 1:v:0 -vf drawtext=textfile=/flag.txt:fontcolor=white:fontsize=40:x=10:y=10 -frames:v 1 -threads 1 /opt/app/media/<workspace-id>/reveal.png"
       },
       {

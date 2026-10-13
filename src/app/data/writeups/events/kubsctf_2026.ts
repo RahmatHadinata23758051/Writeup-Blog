@@ -302,7 +302,7 @@ export const kubsctf2026Writeups: WriteUp[] = [
       },
       {
         "title": "Sinyal",
-        "content": "Spektrum menunjukkan delapan kanal dengan jarak 480 Hz:\n\n\n\nSetiap kanal adalah satu bit pada mask 8-bit. Contoh mask awal yang terdeteksi adalah `0xfe`, `0x08`, `0x14`, dan `0x22`. Mask ini bukan ASCII langsung; mask tersebut adalah kolom-kolom glyph bitmap.\n\nDurasi satu kolom sekitar 70 ms. Run yang lebih panjang harus diperluas, misalnya mask yang bertahan sekitar 210 ms menjadi tiga kolom identik. Setelah bit order dibalik, kolom dipisahkan oleh mask kosong `0x00` dan membentuk glyph 5x7.",
+        "content": "Spektrum menunjukkan delapan kanal dengan jarak 480 Hz:\n\n\n\nSetiap kanal adalah satu bit pada mask 8-bit. Contoh mask awal yang terdeteksi adalah `0xfe`, `0x08`, `0x14`, dan `0x22`. Mask ini bukan ASCII langsung; mask tersebut adalah kolom-kolom glyph bitmap.\n\nDurasi satu kolom sekitar 70 ms. Run yang lebih panjang harus diperluas, misalnya mask yang bertahan sekitar 210 ms menjadi tiga kolom identik. Setelah bit order dibalik, kolom dipisahkan oleh mask kosong `0x00` dan membentuk glyph 5x7.\n\n![Decoded bitmap](/assets/writeups/kubsctf_2026/ppc-transmission/decoded_bitmap.png)\n\n![First decoded bitmap](/assets/writeups/kubsctf_2026/ppc-transmission/decoded_first.png)",
         "code": "2440, 2920, 3400, 3880, 4360, 4840, 5320, 5800 Hz"
       },
       {
@@ -724,7 +724,7 @@ export const kubsctf2026Writeups: WriteUp[] = [
       },
       {
         "title": "Memulihkan kurva dari PNG",
-        "content": "Ukuran `curve.png` adalah `4003 x 4003`, sama dengan ukuran koordinat di `F_4003`. Gambar berisi marker hitam 3x3, ditambah titik-titik noise dan beberapa marker yang saling menempel. Center tiap connected component diambil sebagai titik `(x, y)`.\n\nSource code menyebut keluarga Weierstrass:\n\n\n\nUntuk setiap titik kurva, nilai berikut harus memenuhi persamaan garis di `F_4003`:\n\n\n\nNilai `A` hanya punya 4003 kemungkinan. Untuk setiap `A`, script menghitung `B = r - A*x` untuk semua titik dan memilih `B` dengan vote terbanyak. Noise tidak membentuk vote yang konsisten.\n\nHasil voting:\n\n\n\nTitik yang rusak tidak perlu dipulihkan satu per satu karena pasangan koefisien tetap muncul sebagai puncak histogram.",
+        "content": "Ukuran `curve.png` adalah `4003 x 4003`, sama dengan ukuran koordinat di `F_4003`.\n\n![Corrupted finite-field curve](/assets/writeups/kubsctf_2026/crypto-whatdoyouknowaboutperelman/curve.png) Gambar berisi marker hitam 3x3, ditambah titik-titik noise dan beberapa marker yang saling menempel. Center tiap connected component diambil sebagai titik `(x, y)`.\n\nSource code menyebut keluarga Weierstrass:\n\n\n\nUntuk setiap titik kurva, nilai berikut harus memenuhi persamaan garis di `F_4003`:\n\n\n\nNilai `A` hanya punya 4003 kemungkinan. Untuk setiap `A`, script menghitung `B = r - A*x` untuk semua titik dan memilih `B` dengan vote terbanyak. Noise tidak membentuk vote yang konsisten.\n\nHasil voting:\n\n\n\nTitik yang rusak tidak perlu dipulihkan satu per satu karena pasangan koefisien tetap muncul sebagai puncak histogram.",
         "code": "y^2 = x^3 + A*x + B"
       },
       {
@@ -935,7 +935,7 @@ export const kubsctf2026Writeups: WriteUp[] = [
       },
       {
         "title": "1. Memulihkan QR dari metadata",
-        "content": "Decode Base64 `/Author` dan `/Subject` menjadi dua gambar PNG RGB dengan ukuran masing-masing **145×72** dan **145×73**. Susun secara vertikal (`Author` di atas, `Subject` di bawah) untuk membentuk QR **145×145**. Hasil scan QR:\n\n\n\nDalam solver, data PNG dibaca lewat Pillow dan dideteksi dengan OpenCV, semuanya offline.",
+        "content": "Decode Base64 `/Author` dan `/Subject` menjadi dua gambar PNG RGB dengan ukuran masing-masing **145×72** dan **145×73**. Susun secara vertikal (`Author` di atas, `Subject` di bawah) untuk membentuk QR **145×145**.\n\n![Reconstructed QR](/assets/writeups/kubsctf_2026/foren-lastchance/qr_joined.png) Hasil scan QR:\n\n\n\nDalam solver, data PNG dibaca lewat Pillow dan dideteksi dengan OpenCV, semuanya offline.",
         "code": "salt=7f3c92a1b4e5"
       },
       {
@@ -1090,7 +1090,7 @@ export const kubsctf2026Writeups: WriteUp[] = [
       "kubsuctf",
       "2026"
     ],
-    "description": "`colors.gif` terlihat seperti pola garis warna biasa. Hint pada metadata menyuruh memeriksa palette index, bukan hanya warna hasil render.",
+    "description": "`colors.gif` terlihat seperti pola garis warna biasa. Hint pada metadata menyuruh memeriksa palette index, bukan hanya warna hasil render.\n\n![Palette-index challenge image](/assets/writeups/kubsctf_2026/stegano-colorillusion/colors.gif)",
     "problemDescription": "- `colors.gif` — GIF89a berukuran 220×220.\n\n`exiftool` menemukan comment:",
     "tools": [],
     "analysis": "",
@@ -2135,7 +2135,7 @@ export const kubsctf2026Writeups: WriteUp[] = [
       "2026"
     ],
     "description": "Tantangan misc visual melibatkan gambar `wonderful.png` yang mereferensikan elemen komputasi lawas atau easter egg nostaljik tersembunyi.",
-    "problemDescription": "File challenge: `wonderful.png` (~1.9MB PNG image).",
+    "problemDescription": "File challenge: `wonderful.png` (~1.9MB PNG image).\n\n![Challenge image](/assets/writeups/kubsctf_2026/misc-yougotnostaligic/wonderful.png)",
     "tools": [
       "binwalk",
       "zsteg",
@@ -2168,7 +2168,7 @@ export const kubsctf2026Writeups: WriteUp[] = [
       "2026"
     ],
     "description": "Tantangan geolocation dan Open Source Intelligence berdasarkan foto resolusi tinggi `biba_boba.jpg` (~6.4MB). Mencari lokasi geografis, nama bangunan, atau landmark yang tertangkap dalam kamera.",
-    "problemDescription": "File challenge: `biba_boba.jpg`.",
+    "problemDescription": "File challenge: `biba_boba.jpg`.\n\n![Biba & Boba photo](/assets/writeups/kubsctf_2026/osint-bibaboba/biba_boba.jpg)",
     "tools": [
       "google lens",
       "yandex visual search",
@@ -2233,7 +2233,7 @@ export const kubsctf2026Writeups: WriteUp[] = [
       "2026"
     ],
     "description": "Tantangan steganografi gambar `bro_stego_with_hint.png` (~1.8MB). Berkas menyematkan petunjuk visual dan manipulasi kanal warna untuk menyembunyikan flag.",
-    "problemDescription": "File challenge: `bro_stego_with_hint.png`.",
+    "problemDescription": "File challenge: `bro_stego_with_hint.png`.\n\n![Steganography source image](/assets/writeups/kubsctf_2026/stegano-brosorry/bro_stego_with_hint.png)",
     "tools": [
       "stegsolve",
       "zsteg",

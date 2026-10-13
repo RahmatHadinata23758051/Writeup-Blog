@@ -214,7 +214,7 @@ export const fortidWriteups: WriteUp[] = [
       },
       {
         "title": "Membuat dan Mengirim QR Code",
-        "content": "Endpoint `/check` tidak menerima JSON langsung. Berdasarkan `public/index.php`, server menerima upload gambar dan memanggil:\n\n\n\nSource `ticket_art.php` memakai `zbarimg` untuk membaca QR.\n\nKarena itu, forged JSON harus dimasukkan ke gambar QR terlebih dahulu.",
+        "content": "Endpoint `/check` tidak menerima JSON langsung. Berdasarkan `public/index.php`, server menerima upload gambar dan memanggil:\n\n\n\nSource `ticket_art.php` memakai `zbarimg` untuk membaca QR.\n\nKarena itu, forged JSON harus dimasukkan ke gambar QR terlebih dahulu.\n\n![Forged ticket QR](/assets/writeups/fortid/crypto-hackercinema/forged_ticket.png)",
         "code": "$payload = decode_qr_image(\n    (string)file_get_contents($_FILES['qr']['tmp_name'])\n);\n\n[$ticket, $valid] = verify_envelope($payload);"
       },
       {
@@ -301,7 +301,7 @@ export const fortidWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "File Challenge",
-        "content": "- `eu_gift/app.py` — alur sesi, evaluasi negara, dan route flag.\n- `eu_gift/config.yml` — endpoint verifier, API key yang dipakai app, trust config, dan daftar negara blokir.\n- `eu_gift/private/flag.svg` — placeholder lokal yang secara eksplisit menyebut dirinya fake.\n- `remote-flag.jpg` — gambar flag yang diambil dari halaman hasil challenge."
+        "content": "- `eu_gift/app.py` — alur sesi, evaluasi negara, dan route flag.\n- `eu_gift/config.yml` — endpoint verifier, API key yang dipakai app, trust config, dan daftar negara blokir.\n- `eu_gift/private/flag.svg` — placeholder lokal yang secara eksplisit menyebut dirinya fake.\n- `remote-flag.jpg` — gambar flag yang diambil dari halaman hasil challenge.\n\n![Flag hasil challenge](/assets/writeups/fortid/misc-eugift/remote-flag.jpg)"
       },
       {
         "title": "Temuan Penting",
@@ -342,7 +342,7 @@ export const fortidWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "Artefak dan identifikasi grid",
-        "content": "File masukan: `screenshot.png` (2048×192 px, RGBA). Setiap sel hidup berwarna abu-abu; background hitam. Pengulangan jarak sel menunjukkan papan **384×36** dengan pitch tampilan sekitar **5,35 px per sel**. Pitch ini **bukan** `2048 / 384`. Membaginya langsung menyebabkan kesalahan pembacaan sel, terutama pada separuh kanan screenshot.\n\nAmbil sampling di koordinat sekitar `(x+0.25)*5.35, (y+0.25)*5.35`, lalu threshold intensitas >= 140. Hasilnya **909 sel hidup**."
+        "content": "File masukan: `screenshot.png` (2048×192 px, RGBA). Setiap sel hidup berwarna abu-abu; background hitam.\n\n![Screenshot state Game of Life](/assets/writeups/fortid/misc-flagfromthefuture/screenshot.png) Pengulangan jarak sel menunjukkan papan **384×36** dengan pitch tampilan sekitar **5,35 px per sel**. Pitch ini **bukan** `2048 / 384`. Membaginya langsung menyebabkan kesalahan pembacaan sel, terutama pada separuh kanan screenshot.\n\nAmbil sampling di koordinat sekitar `(x+0.25)*5.35, (y+0.25)*5.35`, lalu threshold intensitas >= 140. Hasilnya **909 sel hidup**."
       },
       {
         "title": "Temuan reversing",
@@ -355,7 +355,7 @@ export const fortidWriteups: WriteUp[] = [
       },
       {
         "title": "Validasi / reproduksi",
-        "content": "Output yang diharapkan:\n\n\n\n`reconstructed_initial.png` berisi teks yang dirender sebelum evolusi; `reconstructed_future.png` menampilkan hasil setelah 18 generasi. Perbandingan bitmap dilakukan di resolusi asli papan, **bukan** dengan OCR atau tebakan visual.",
+        "content": "Output yang diharapkan:\n\n\n\n`reconstructed_initial.png` berisi teks yang dirender sebelum evolusi; `reconstructed_future.png` menampilkan hasil setelah 18 generasi.\n\n![Bitmap awal](/assets/writeups/fortid/misc-flagfromthefuture/reconstructed_initial.png)\n\n![Bitmap setelah 18 generasi](/assets/writeups/fortid/misc-flagfromthefuture/reconstructed_future.png) Perbandingan bitmap dilakukan di resolusi asli papan, **bukan** dengan OCR atau tebakan visual.",
         "code": "python3 -m pip install pillow numpy\npython3 solve.py"
       },
       {
@@ -431,7 +431,7 @@ export const fortidWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "File Challenge",
-        "content": "- `flag.jpg`: JPEG 1152 × 2048, foto cetakan QR di atas kertas."
+        "content": "- `flag.jpg`: JPEG 1152 × 2048, foto cetakan QR di atas kertas.\n\n![QR tertutup ampas teh](/assets/writeups/fortid/misc-spillthetea/flag.jpg)"
       },
       {
         "title": "Memisahkan QR dari Ampas Teh",
@@ -477,7 +477,7 @@ export const fortidWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "File Challenge",
-        "content": "- `handout_file_1.txt` — Factorio blueprint berisi **290 entities**, **104 wire records**, dan **841 tiles**.\n- `handout_file_2.txt` — Factorio blueprint berisi **330 tiles** bertipe `landfill`.\n\nFile pendamping hasil analisis:\n\n- `solve.py` — decoder blueprint, rekontruksi kedua QR, dan visualisasi 29 kelompok kabel.\n- `qr_first.png`, `qr_second.png` — QR yang dibentuk kembali oleh script.\n- `wire_glyphs.png` — glyph yang digambar oleh jaringan kabel."
+        "content": "- `handout_file_1.txt` — Factorio blueprint berisi **290 entities**, **104 wire records**, dan **841 tiles**.\n- `handout_file_2.txt` — Factorio blueprint berisi **330 tiles** bertipe `landfill`.\n\nFile pendamping hasil analisis:\n\n- `solve.py` — decoder blueprint, rekontruksi kedua QR, dan visualisasi 29 kelompok kabel.\n- `wire_glyphs.png` — glyph yang digambar oleh jaringan kabel (/assets/writeups/fortid/misc-tangled/wire_glyphs.png)."
       },
       {
         "title": "Temuan Penting",
@@ -485,17 +485,17 @@ export const fortidWriteups: WriteUp[] = [
       },
       {
         "title": "Menemukan QR pertama melalui tile",
-        "content": "Blueprint pertama mempunyai **841 tile**, tepat sebesar **29 × 29**. Koordinat tile berada di `x=-69..-41`, `y=-5..23`.\n\nUntuk membuat matriks QR, normalisasi koordinat terhadap posisi minimum. Gunakan `landfill` sebagai bit `1` dan `foundation` sebagai bit `0`. Dalam citra, bit `1` digambar hitam, sedangkan bit `0` putih.\n\n\n\nSimpan matriks menjadi PNG, tambahkan margin putih, lalu decode menggunakan QRCodeDetector dari OpenCV. Hasilnya:\n\n\n\n![QR pertama](qr_first.png)",
+        "content": "Blueprint pertama mempunyai **841 tile**, tepat sebesar **29 × 29**. Koordinat tile berada di `x=-69..-41`, `y=-5..23`.\n\nUntuk membuat matriks QR, normalisasi koordinat terhadap posisi minimum. Gunakan `landfill` sebagai bit `1` dan `foundation` sebagai bit `0`. Dalam citra, bit `1` digambar hitam, sedangkan bit `0` putih.\n\n\n\nSimpan matriks menjadi PNG, tambahkan margin putih, lalu decode menggunakan QRCodeDetector dari OpenCV. Hasilnya:\n\n",
         "code": "x0 = min(t['position']['x'] for t in bp['tiles'])\ny0 = min(t['position']['y'] for t in bp['tiles'])\n\nqr = [[0] * 29 for _ in range(29)]\nfor tile in bp['tiles']:\n    x = tile['position']['x'] - x0\n    y = tile['position']['y'] - y0\n    qr[y][x] = int(tile['name'] == 'landfill')"
       },
       {
         "title": "Membongkar QR kedua dengan XOR",
-        "content": "Handout kedua menyimpan `landfill` pada area `x=-12..12`, `y=-12..12`. Matriks **25 × 25** dibangun dari keberadaan tile (`1` untuk `landfill`, `0` jika tidak ada).\n\nMatriks tersebut belum menghasilkan QR yang bisa dibaca langsung. Untuk membukanya, gunakan mask posisi `entities` blueprint pertama:\n\n- Tentukan posisi entity minimum, yaitu `x=-66.5`, `y=-2.5`.\n- Hitung `round(position.x - min_x)` dan `round(position.y - min_y)` untuk semua entity.\n- Masukkan koordinat hasil normalisasi ke occupancy grid 25×25 dengan nilai `1`.\n- XOR kedua grid (`tiles_2 XOR entity_mask`).\n\nPersamaan layer:\n\n\n\nDengan OpenCV, hasil XOR adalah QR valid, menghasilkan:\n\n\n\n![QR kedua](qr_second.png)\n\nGabungan sementara menjadi:",
+        "content": "Handout kedua menyimpan `landfill` pada area `x=-12..12`, `y=-12..12`. Matriks **25 × 25** dibangun dari keberadaan tile (`1` untuk `landfill`, `0` jika tidak ada).\n\nMatriks tersebut belum menghasilkan QR yang bisa dibaca langsung. Untuk membukanya, gunakan mask posisi `entities` blueprint pertama:\n\n- Tentukan posisi entity minimum, yaitu `x=-66.5`, `y=-2.5`.\n- Hitung `round(position.x - min_x)` dan `round(position.y - min_y)` untuk semua entity.\n- Masukkan koordinat hasil normalisasi ke occupancy grid 25×25 dengan nilai `1`.\n- XOR kedua grid (`tiles_2 XOR entity_mask`).\n\nPersamaan layer:\n\n\n\nDengan OpenCV, hasil XOR adalah QR valid, menghasilkan:\n\n\n\nGabungan sementara menjadi:",
         "code": "QR_2[y, x] = TILE_2[y, x] XOR ENTITY_MASK_1[y, x]"
       },
       {
         "title": "Membaca huruf dari jaringan kabel",
-        "content": "Blueprint pertama menyimpan **104 wire records**. Setiap record berisi pasangan endpoint dengan struktur `[entity_A, connector_A, entity_B, connector_B]`.\n\nKabel dianalisis sebagai **graf tak berarah**: entity adalah node, sedangkan koneksi kabel adalah edge. Dengan DFS/BFS, setiap jaringan yang tidak tersambung ke jaringan lain dipisahkan menjadi *connected component*.\n\nHasilnya ada **29 komponen**. Masing-masing memiliki penanda indeks `1..29` melalui `control_behavior.circuit_condition.constant` pada salah satu entity di komponen tersebut.\n\nSetiap komponen lalu dirender secara terpisah. Semua edge digambar sebagai garis berdasarkan posisi asli kedua endpoint. Skala X dan Y dijaga sama serta tidak dilakukan rotasi/mirroring, sehingga bentuk huruf tetap terlihat.\n\n![Visualisasi 29 glyph kabel](wire_glyphs.png)\n\nBaca komponen berdasarkan nomor indeks, **bukan urutan record `wires` dalam JSON**:\n\n\n\nSehingga bagian terakhir:\n\n\n\nKesalahan paling mudah terjadi saat menafsirkan karakter berbentuk mirip, terutama glyph `e/3`, `s/5`, dan `t/+`. Transkripsi yang dipakai di sini telah dikonfirmasi oleh flag yang diterima checker.",
+        "content": "Blueprint pertama menyimpan **104 wire records**. Setiap record berisi pasangan endpoint dengan struktur `[entity_A, connector_A, entity_B, connector_B]`.\n\nKabel dianalisis sebagai **graf tak berarah**: entity adalah node, sedangkan koneksi kabel adalah edge. Dengan DFS/BFS, setiap jaringan yang tidak tersambung ke jaringan lain dipisahkan menjadi *connected component*.\n\nHasilnya ada **29 komponen**. Masing-masing memiliki penanda indeks `1..29` melalui `control_behavior.circuit_condition.constant` pada salah satu entity di komponen tersebut.\n\nSetiap komponen lalu dirender secara terpisah. Semua edge digambar sebagai garis berdasarkan posisi asli kedua endpoint. Skala X dan Y dijaga sama serta tidak dilakukan rotasi/mirroring, sehingga bentuk huruf tetap terlihat.\n\n![Visualisasi 29 glyph kabel](/assets/writeups/fortid/misc-tangled/wire_glyphs.png)\n\nBaca komponen berdasarkan nomor indeks, **bukan urutan record `wires` dalam JSON**:\n\n\n\nSehingga bagian terakhir:\n\n\n\nKesalahan paling mudah terjadi saat menafsirkan karakter berbentuk mirip, terutama glyph `e/3`, `s/5`, dan `t/+`. Transkripsi yang dipakai di sini telah dikonfirmasi oleh flag yang diterima checker.",
         "code": "#01–#09  th3_0n1y_\n#10–#19  r34s0n4b1e\n#20–#29  _50lut10n}"
       },
       {
@@ -1011,7 +1011,7 @@ export const fortidWriteups: WriteUp[] = [
     "solution": [
       {
         "title": "File Challenge",
-        "content": "`meteor_shower.nes` — iNES ROM dengan 32 KiB PRG-ROM dan 8 KiB CHR-ROM."
+        "content": "`meteor_shower.nes` — iNES ROM dengan 32 KiB PRG-ROM dan 8 KiB CHR-ROM.\n\n![Title screen](/assets/writeups/fortid/rev-meteorshower/title.png)\n\n![CHR character sheet](/assets/writeups/fortid/rev-meteorshower/chr_sheet.png)"
       },
       {
         "title": "Algoritma Validasi atau Encoding",
@@ -1226,7 +1226,7 @@ export const fortidWriteups: WriteUp[] = [
       },
       {
         "title": "Menjalankan Exploit Stage 1",
-        "content": "Payload CSP nonce dan fetch interception digabungkan ke `solve.py`.\n\nSolver melakukan:\n\n- Membuka issuer dan mengambil session.\n- Menghitung sepuluh CSP nonce.\n- Mengirim stored XSS ke `/announcement`.\n- Memicu admin bot lewat `/api/bot/run`.\n- Melakukan polling sampai `offer_uri` ditemukan di announcement.\n- Membuat gambar QR dari credential offer.\n\nPerintah:\n\n\n\nOutput yang diperoleh:\n\n\n\nOutput ini membuktikan bahwa JavaScript berhasil dijalankan pada browser administrator dan `offer_uri` berhasil diekstrak.\n\nSolver menyimpan dua file:\n\n\n\n`admin_offer_uri.txt` berisi URI pengambilan credential, sedangkan `admin_offer.png` berisi QR yang bisa dipindai menggunakan FortID Wallet.\n\nURI menggunakan skema:\n\n\n\nCredential belum otomatis masuk ke wallet hanya karena URI berhasil ditangkap. Kita masih harus menjalankan proses issuance menggunakan FortID Wallet.",
+        "content": "Payload CSP nonce dan fetch interception digabungkan ke `solve.py`.\n\nSolver melakukan:\n\n- Membuka issuer dan mengambil session.\n- Menghitung sepuluh CSP nonce.\n- Mengirim stored XSS ke `/announcement`.\n- Memicu admin bot lewat `/api/bot/run`.\n- Melakukan polling sampai `offer_uri` ditemukan di announcement.\n- Membuat gambar QR dari credential offer.\n\nPerintah:\n\n\n\nOutput yang diperoleh:\n\n\n\nOutput ini membuktikan bahwa JavaScript berhasil dijalankan pada browser administrator dan `offer_uri` berhasil diekstrak.\n\nSolver menyimpan dua file:\n\n\n\n`admin_offer_uri.txt` berisi URI pengambilan credential, sedangkan `admin_offer.png` berisi QR yang bisa dipindai menggunakan FortID Wallet.\n\n![Administrator credential offer](/assets/writeups/fortid/web-kingadmin/admin_offer.png)\n\nURI menggunakan skema:\n\n\n\nCredential belum otomatis masuk ke wallet hanya karena URI berhasil ditangkap. Kita masih harus menjalankan proses issuance menggunakan FortID Wallet.",
         "code": "python3 solve.py issuer-b70d992794fe.inst11.ctf.fortid.com --issue-only"
       },
       {
@@ -1241,7 +1241,7 @@ export const fortidWriteups: WriteUp[] = [
       },
       {
         "title": "Menjalankan stage 2",
-        "content": "Perintah:\n\n\n\nOutput awal:\n\n\n\nFile `treasury_login.png` berisi authorization request untuk presentasi credential.\n\nBerbeda dengan tahap issuance, sekarang wallet harus membagikan bukti kepemilikan credential yang telah disimpan.\n\nAlurnya:\n\n\n\nSolver kemudian melakukan polling:\n\n\n\nSampai status berubah menjadi `AUTHORIZED`.",
+        "content": "Perintah:\n\n\n\nOutput awal:\n\n\n\nFile `treasury_login.png` berisi authorization request untuk presentasi credential.\n\n![Treasury login request](/assets/writeups/fortid/web-kingadmin/treasury_login.png)\n\nBerbeda dengan tahap issuance, sekarang wallet harus membagikan bukti kepemilikan credential yang telah disimpan.\n\nAlurnya:\n\n\n\nSolver kemudian melakukan polling:\n\n\n\nSampai status berubah menjadi `AUTHORIZED`.",
         "code": "python3 solve.py issuer-b70d992794fe.inst11.ctf.fortid.com --verify-only"
       },
       {
