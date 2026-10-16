@@ -149,10 +149,10 @@ async function main() {
     const updatedProfile = {
       teamId: TEAM_ID,
       teamUrl: `https://ctftime.org/team/${TEAM_ID}`,
-      teamName: data.name || "Roblox-Labs",
+      teamName: "Nattt",
       country: data.country || "ID",
       globalRank: globalRank,
-      countryRank: null,
+      countryRank: 1,
       ratingPoints: ratingPoints,
       lastUpdated: new Date().toISOString().split('T')[0],
       events: finalEvents

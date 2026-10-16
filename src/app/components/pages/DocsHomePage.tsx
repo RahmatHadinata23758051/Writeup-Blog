@@ -100,25 +100,25 @@ export function DocsHomePage({
           <div className="flex items-end gap-6 flex-wrap">
             <div>
               <div className="text-2xl font-black font-mono text-[var(--docs-accent)] leading-none">
-                {ctftimeProfile?.countryRank !== null && ctftimeProfile?.countryRank !== undefined ? `#${ctftimeProfile.countryRank}` : '#1'}
+                {ctftimeProfile?.countryRank ? `#${ctftimeProfile.countryRank}` : '#1'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🇮🇩 Indonesia</p>
             </div>
             <div>
               <div className="text-2xl font-black font-mono text-[var(--docs-text)] leading-none">
-                {ctftimeProfile?.globalRank ? `#${ctftimeProfile.globalRank}` : '#72'}
+                {ctftimeProfile?.globalRank ? `#${ctftimeProfile.globalRank}` : '#71'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🌍 Worldwide</p>
             </div>
             <div>
               <div className="text-xl font-bold font-mono text-[var(--docs-success)] leading-none">
-                {ctftimeProfile?.ratingPoints ? Number(ctftimeProfile.ratingPoints).toFixed(2) : '393.19'}
+                {ctftimeProfile?.ratingPoints ? Number(ctftimeProfile.ratingPoints).toFixed(2) : '441.04'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Points</p>
             </div>
             <div>
               <div className="text-xl font-bold font-mono text-[var(--docs-text-muted)] leading-none">
-                {ctftimeProfile?.events ? ctftimeProfile.events.length : '130'}
+                {ctftimeProfile?.events ? ctftimeProfile.events.length : '157'}
               </div>
               <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Events</p>
             </div>
@@ -129,10 +129,13 @@ export function DocsHomePage({
 
       {/* HISTORICAL STATS TABLE */}
       <div id="stats-table-section" className="pt-6 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <h3 className="text-[10px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase font-sans">
-            CTF Performance & Solves
+            CTF Performance & Writeups
           </h3>
+          <p className="text-[10px] font-mono text-[var(--docs-text-soft)]">
+            {tree.length} events · {totalWriteups} writeups
+          </p>
         </div>
 
         <div className="overflow-x-auto rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/20 shadow-sm">
@@ -140,7 +143,7 @@ export function DocsHomePage({
             <thead>
               <tr className="bg-[var(--docs-bg-soft)] border-b border-[var(--docs-border-soft)] text-[var(--docs-text-muted)] uppercase tracking-widest text-[9px] font-bold font-sans">
                 <th className="p-3">Event Name</th>
-                <th className="p-3">Solves</th>
+                <th className="p-3">Writeups</th>
                 <th className="p-3">Categories</th>
                 <th className="p-3">Latest Solved</th>
                 <th className="p-3">Rank/Place</th>
@@ -217,11 +220,11 @@ export function DocsHomePage({
                     <td className="p-3 text-[var(--docs-text-muted)] font-mono">
                       {latestDate}
                     </td>
-                    <td className="p-3 font-bold text-[var(--docs-text)]">
-                      {place}
+                    <td className="p-3 font-bold text-[var(--docs-text)] font-mono">
+                      {typeof place === 'number' ? `#${place}` : place}
                     </td>
                     <td className="p-3 font-mono text-[var(--docs-text-muted)]">
-                      {points}
+                      {typeof points === 'number' ? points.toLocaleString('en-US') : points}
                     </td>
                     <td className="p-3 text-[var(--docs-text-soft)] font-sans uppercase tracking-wider text-[10px] font-medium">
                       {team}
