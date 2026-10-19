@@ -4843,13 +4843,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nattts.vercel.app/writeup/securinets-hardware-gelatino</loc>
+    <loc>https://nattts.vercel.app/writeup/securinets-hardware-awhisperintheair</loc>
     <lastmod>2026-10-17</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nattts.vercel.app/writeup/securinets-hardware-whisper</loc>
+    <loc>https://nattts.vercel.app/writeup/securinets-hardware-gelatino</loc>
     <lastmod>2026-10-17</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
@@ -4885,19 +4885,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nattts.vercel.app/writeup/securinets-rev-encrypt</loc>
+    <loc>https://nattts.vercel.app/writeup/securinets-reverse-encrypt</loc>
     <lastmod>2026-10-17</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nattts.vercel.app/writeup/securinets-rev-letmethink</loc>
+    <loc>https://nattts.vercel.app/writeup/securinets-reverse-letmethink</loc>
     <lastmod>2026-10-17</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nattts.vercel.app/writeup/securinets-rev-revenant</loc>
+    <loc>https://nattts.vercel.app/writeup/securinets-reverse-revenant</loc>
     <lastmod>2026-10-17</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
