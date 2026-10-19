@@ -104,7 +104,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-crypto-newcalculator",
-    "title": "New Calculator — Timing Side Channel on 8-bit Coefficient",
+    "title": "New Calculator",
     "category": "Crypto",
     "difficulty": "Hard",
     "points": 350,
@@ -117,7 +117,7 @@ export const securinetsWriteups: WriteUp[] = [
       "Algebraic Reconstruction",
       "Group Testing"
     ],
-    "description": "Eksploitasi timing side-channel pada arbitrary-precision integer arithmetic untuk merekonstruksi koefisien kuadratik rahasia 8-bit sepanjang 16 ronde berturut-turut tanpa melanggar batasan submit server.",
+    "description": "Eksploitasi timing side-channel pada arbitrary-precision integer arithmetic untuk merekonstruksi koefisien kuadratik rahasia 8-bit (16 ronde).",
     "problemDescription": "## Overview\nNew Calculator provides two arrays, `x` and `y`, related by a secret quadratic function:\n\\[ y_i = ax_i^2 \\]\nThe coefficient `a` is randomly generated as an 8-bit integer. The calculator supports arithmetic operations through a JSON interface, but only permits one valid 8-bit submission before asking for the secret coefficient.\n\nOur objective is to recover `a` across 16 consecutive rounds without exhausting the submission mechanism.",
     "tools": [
       "Python 3",
@@ -144,7 +144,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-crypto-oldcalculator",
-    "title": "Old Calculator — Timing Side Channel on Affine Function",
+    "title": "Old Calculator",
     "category": "Crypto",
     "difficulty": "Hard",
     "points": 350,
@@ -157,7 +157,7 @@ export const securinetsWriteups: WriteUp[] = [
       "Affine Function",
       "Group Testing"
     ],
-    "description": "Pemulihan parameter fungsi affine rahasia F(x) = ax + b melalui timing side-channel aritmatika presisi tinggi dan binary group testing sepanjang 16 ronde berturut-turut.",
+    "description": "Pemulihan parameter fungsi affine rahasia F(x) = ax + b melalui timing side-channel aritmatika presisi tinggi dan binary group testing.",
     "problemDescription": "## Overview\nThe challenge provides a JSON-based calculator with two arrays, `x` and `y`, each containing 100 elements. It supports basic arithmetic operations, including addition, multiplication, and operations involving constants.\n\nThe calculator allows one `submit` operation to reveal an 8-bit value. After submission, the server presents a random number and asks us to predict the output of a hidden mathematical function:\n\\[ F(x) = ax + b \\]\nTo obtain the flag, we must correctly answer **16 consecutive rounds**.",
     "tools": [
       "Python 3",
@@ -184,7 +184,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-forensics-dumpwn",
-    "title": "DumPwn — Windows Crash Dump Analysis",
+    "title": "DumPwn",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 250,
@@ -226,7 +226,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-forensics-silenttone",
-    "title": "Silent Tone — SDR/QPSK Signal Analysis",
+    "title": "Silent Tone",
     "category": "Forensics",
     "difficulty": "Hard",
     "points": 400,
@@ -269,7 +269,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-hardware-awhisperintheair",
-    "title": "A Whisper in the Air (Dead-Keys) — BLE Keyboard Sniffing",
+    "title": "A Whisper in the Air",
     "category": "Hardware",
     "difficulty": "Hard",
     "points": 400,
@@ -318,7 +318,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-hardware-gelatino",
-    "title": "Gelatino — Disk Image, LUKS2, EFI Loader",
+    "title": "Gelatino",
     "category": "Hardware",
     "difficulty": "Medium",
     "points": 300,
@@ -361,7 +361,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-mobile-backdrop",
-    "title": "Backdrop — Flutter App, AES-GCM, Dart AOT, RLE, SplitMix64",
+    "title": "Backdrop",
     "category": "Mobile",
     "difficulty": "Hard",
     "points": 450,
@@ -405,7 +405,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-pwn-houseofekko",
-    "title": "House of Ekko — Cross-Bin Heap Corruption to FSOP (glibc 2.43)",
+    "title": "House of Ekko",
     "category": "Pwn",
     "difficulty": "Hard",
     "points": 500,
@@ -450,7 +450,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-pwn-overflow",
-    "title": "Over?flow — Negative Length memcpy Wrapper",
+    "title": "Over?flow",
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 300,
@@ -492,7 +492,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-pwn-bitflip",
-    "title": "Bitflip — Single Bit Flip via /proc/self/mem to SROP",
+    "title": "Bitflip",
     "category": "Pwn",
     "difficulty": "Hard",
     "points": 400,
@@ -535,7 +535,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-pwn-crust",
-    "title": "Crust — Use-After-Free in Shadow Registry, Vtable Confusion",
+    "title": "Crust",
     "category": "Pwn",
     "difficulty": "Medium",
     "points": 350,
@@ -578,7 +578,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-reverse-encrypt",
-    "title": "Encrypt — Multi-layer PE Encryption Pipeline Reversal",
+    "title": "Encrypt",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 500,
@@ -624,7 +624,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-reverse-letmethink",
-    "title": "letmethink — Go Binary with Custom VM",
+    "title": "letmethink",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 450,
@@ -676,7 +676,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-reverse-revenant",
-    "title": "Revenant — Two-Stage ELF, Vulkan Shader Decryption, Obfuscated Validator",
+    "title": "Revenant",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 500,
@@ -720,7 +720,7 @@ export const securinetsWriteups: WriteUp[] = [
   },
   {
     "id": "securinets-web-nyoom",
-    "title": "Nyoom — Breaking CSP with CSS and ESI",
+    "title": "Nyoom",
     "category": "Web",
     "difficulty": "Hard",
     "points": 450,
@@ -736,7 +736,7 @@ export const securinetsWriteups: WriteUp[] = [
       "Admin Bot",
       "Nonce Leak"
     ],
-    "description": "Bypass CSP berbasis nonce dan pembobolan session admin HttpOnly di balik Varnish reverse proxy. Rantai 4 eksploitasi: Stored HTML injection pada bio profil, ekstraksi 32-karakter CSP nonce via CSS attribute selectors, penundaan race condition via pending stylesheet gate, dan Edge Side Includes (ESI) injection untuk mengekstrak /fragments/session-info.",
+    "description": "Bypass CSP berbasis nonce dan pembobolan session admin HttpOnly di balik Varnish. Rantai: Stored HTML injection, CSS nonce leak, race condition gate, ESI session disclosure.",
     "problemDescription": "# Nyoom — Breaking CSP with CSS and ESI\n\n> **Securinets CTF 2026 · Web · Solved**  \n> Challenge: **nyoom** — *\"go fast. write stuff. go nyoom.\"*\n\n**Flag:** `Securinets{a2643ebb4ee735b5dd519aec1856e012}`\n\n## Overview\n\nNyoom is a small profile-sharing application behind a Varnish reverse proxy. Users can register, edit their bio, and report a dashboard URL for an admin bot to visit. The challenge is to recover the admin session, which is also the flag.\n\nA straightforward stored XSS payload is blocked by a nonce-based Content Security Policy (CSP). Direct attempts to read the session also fail: the session cookie is `HttpOnly`, and Varnish rejects top-level access to `/fragments/session-info`.\n\nThe solution chains **four behaviors**:\n\n1. **Stored HTML injection:** a profile bio is inserted into the dashboard as HTML, with no effective HTML sanitization.\n2. **CSS-based nonce disclosure:** an attacker-controlled stylesheet matches substrings of the nonce exposed in a CSP `<meta>` element.\n3. **Stylesheet-gated race:** a second stylesheet remains pending until the solver updates the profile, so the legitimate nonce-authorized script fetches the updated bio on the *same document*.\n4. **ESI session disclosure:** the resulting JavaScript submits an ESI include to `/preview`; Varnish expands it using the admin's cookies, exposing the session in the response.",
     "tools": [
       "Python 3",
