@@ -2,13 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://nattts.vercel.app/</loc>
-    <lastmod>2026-10-16</lastmod>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://nattts.vercel.app/blog</loc>
-    <lastmod>2026-10-16</lastmod>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -279,6 +279,12 @@
   <url>
     <loc>https://nattts.vercel.app/event/scriptctf</loc>
     <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/event/securinets-ctf-2026</loc>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1040,7 +1046,7 @@
   </url>
   <url>
     <loc>https://nattts.vercel.app/writeup/boroctf-web-borogpt</loc>
-    <lastmod>2026-10-16</lastmod>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
@@ -4797,6 +4803,108 @@
   <url>
     <loc>https://nattts.vercel.app/writeup/scriptctf-web-wpm-game</loc>
     <lastmod>2026-08-16</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-crypto-misdirection1</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-crypto-misdirection2</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-crypto-newcalculator</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-crypto-oldcalculator</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-forensics-dumpwn</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-forensics-silenttone</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-hardware-gelatino</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-hardware-whisper</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-mobile-backdrop</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-pwn-bitflip</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-pwn-crust</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-pwn-houseofekko</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-pwn-overflow</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-rev-encrypt</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-rev-letmethink</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-rev-revenant</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/securinets-web-nyoom</loc>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>

@@ -36,6 +36,7 @@ import { putcyberWriteups } from "./events/putcyber";
 import { r3ctfWriteups } from "./events/r3ctf";
 import { ramWriteups } from "./events/ram";
 import { scriptctfWriteups } from "./events/scriptctf";
+import { securinetsWriteups } from "./events/securinets";
 import { siebersecCtfWriteups } from "./events/siebersec_ctf";
 import { sunshinectfWriteups } from "./events/sunshinectf";
 import { squ1rrelCtfWriteups } from "./events/squ1rrel_ctf";
@@ -89,6 +90,7 @@ export const writeups: WriteUp[] = [
   ...r3ctfWriteups,
   ...ramWriteups,
   ...scriptctfWriteups,
+  ...securinetsWriteups,
   ...siebersecCtfWriteups,
   ...sunshinectfWriteups,
   ...squ1rrelCtfWriteups,

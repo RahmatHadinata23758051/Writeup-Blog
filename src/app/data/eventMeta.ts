@@ -39,6 +39,7 @@ const EVENT_NAME_ALIASES: Record<string, string> = {
   "tracebash": "tracebash2026", // "Tracebash" -> "TraceBash CTF 2026"
   "v1t": "v12026", // "V 1tCtf" -> "V1T CTF 2026"
   "vuw2025": "vuw2026", // "VuwCTF 2025" -> "VuwCTF 2026"
+  "securinets": "securinets2026quals", // "Securinets" -> "Securinets CTF Quals 2026"
 };
 
 /**
