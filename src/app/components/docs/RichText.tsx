@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import { MermaidDiagram } from './MermaidDiagram';
+import { CollapsibleCodeBlock } from './CollapsibleCodeBlock';
 import 'katex/dist/katex.min.css';
 
 interface RichTextProps {
@@ -197,14 +198,11 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
         currentLanguage = '';
       } else {
         elements.push(
-          <div key={key} className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 my-3 shadow-sm group">
-            <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
-              <CopyButton text={codeContent} label="Copy" />
-            </div>
-            <pre className="overflow-x-auto text-[11.5px] font-mono text-[var(--docs-code-text)] leading-relaxed whitespace-pre font-light pr-12">
-              <code>{codeContent}</code>
-            </pre>
-          </div>
+          <CollapsibleCodeBlock
+            key={key}
+            code={codeContent}
+            language={currentLanguage}
+          />
         );
         currentLanguage = '';
       }

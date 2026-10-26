@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { WriteUp } from '../../data/writeups';
 import { RichText } from '../docs/RichText';
 import { MermaidDiagram, isMermaidCode } from '../docs/MermaidDiagram';
+import { CollapsibleCodeBlock } from '../docs/CollapsibleCodeBlock';
 
 interface DocsWriteupPageProps {
   writeup: WriteUp;
@@ -217,14 +218,7 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
                       {isMermaidCode(step.code as string) ? (
                         <MermaidDiagram code={step.code as string} title={step.title} />
                       ) : (
-                        <div className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 shadow-sm group">
-                          <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <CopyButton text={step.code as string} />
-                          </div>
-                          <pre className="overflow-x-auto text-[11.5px] font-mono text-[var(--docs-code-text)] leading-relaxed whitespace-pre font-light pr-12">
-                            <code>{step.code}</code>
-                          </pre>
-                        </div>
+                        <CollapsibleCodeBlock code={step.code as string} />
                       )}
                     </div>
                   )}
@@ -245,29 +239,11 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
             {(writeup.terminalOutputs as Array<{ command: string; output: string }>).map(
               (term, idx) => (
                 <div key={idx} className="space-y-2 pl-4 border-l-2 border-[var(--docs-border-soft)]">
-                  {isNonEmptyString(term.command) && (
-                    <div className="flex items-center">
-                      <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-[var(--docs-text-soft)]">
-                        Command
-                      </span>
-                    </div>
-                  )}
-                  <div className="relative rounded bg-[var(--docs-code-bg)] border border-[var(--docs-code-border)] p-3.5 shadow-sm group">
-                    <div className="absolute right-2 top-2 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <CopyButton 
-                        text={isNonEmptyString(term.command) ? term.command : term.output} 
-                      />
-                    </div>
-                    <pre className="overflow-x-auto text-[11.5px] font-mono text-[var(--docs-code-text)] leading-relaxed whitespace-pre font-light pr-12">
-                      {isNonEmptyString(term.command) && (
-                        <code className="text-[var(--docs-accent)] font-semibold">
-                          $ {term.command}
-                          {isNonEmptyString(term.output) && '\n'}
-                        </code>
-                      )}
-                      <code>{term.output}</code>
-                    </pre>
-                  </div>
+                  <CollapsibleCodeBlock
+                    code={term.output || ''}
+                    command={term.command}
+                    language="terminal"
+                  />
                 </div>
               )
             )}
