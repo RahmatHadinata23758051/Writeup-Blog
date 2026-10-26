@@ -378,6 +378,8 @@ export default function App() {
         }
         onHomeClick={() => handleNavigate({ type: 'home' })}
         onSearchClick={() => setIsSearchOpen(true)}
+        fullWidth={docsView.type === 'home'}
+        showProgressBar={docsView.type === 'home'}
       >
         {renderDocsContent()}
       </DocsLayout>

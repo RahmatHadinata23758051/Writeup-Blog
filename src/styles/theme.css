@@ -3,7 +3,22 @@
 :root {
   --font-size: 16px;
   
-  /* Clean Docs Theme Variables (GitBook-like - krauq aesthetic) */
+  /* Home Page Redesign Tokens */
+  --home-page-bg: #F5F1E6;
+  --home-sidebar-bg: #EFE9D8;
+  --home-border: #DDD5C0;
+  --home-text: #1B1A17;
+  --home-text-muted: #5C574C;
+  --home-ink: #141413;
+  --home-cream: #F6F0E0;
+  --home-accent: #BF3511;
+  --home-accent-hover: #A52D0F;
+  
+  --home-rank-color: #FF7A52;
+  --home-points-color: #4FE3A0;
+  --home-terminal-prompt: #FF9B7A;
+  
+  /* Original Docs Theme Variables (GitBook-like - krauq aesthetic) */
   --docs-bg: #F2F0E9;
   --docs-bg-soft: #E9E6DC;
   --docs-surface: #E9E6DC;
@@ -104,6 +119,7 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Lora", Georgia, Cambria, "Times New Roman", Times, serif;
   --font-display: "Playfair Display", Georgia, serif;
+  --font-anton: "Anton", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-background: var(--background);
@@ -163,6 +179,20 @@
   --color-docs-success: var(--docs-success);
   --color-docs-warning: var(--docs-warning);
   --color-docs-danger: var(--docs-danger);
+  
+  /* Home Page Redesign Colors */
+  --color-home-bg: var(--home-page-bg);
+  --color-home-sidebar-bg: var(--home-sidebar-bg);
+  --color-home-border: var(--home-border);
+  --color-home-text: var(--home-text);
+  --color-home-text-muted: var(--home-text-muted);
+  --color-home-ink: var(--home-ink);
+  --color-home-cream: var(--home-cream);
+  --color-home-accent: var(--home-accent);
+  --color-home-accent-hover: var(--home-accent-hover);
+  --color-home-rank: var(--home-rank-color);
+  --color-home-points: var(--home-points-color);
+  --color-home-terminal-prompt: var(--home-terminal-prompt);
 }
 
 @layer base {

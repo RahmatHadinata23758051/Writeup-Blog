@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { DocsEventNode } from '../../data/docsTree';
-import { getEventIcon } from '../docs/DocsSidebar';
-import { FaHome } from 'react-icons/fa';
 import type { CtftimeTeamProfile } from '../../data/ctftimeTypes';
 import { findCtftimeEvent } from '../../data/eventMeta';
+import './home-page.css';
 
 interface DocsHomePageProps {
   tree: DocsEventNode[];
@@ -15,271 +14,566 @@ interface DocsHomePageProps {
 }
 
 const EVENT_PLACES: Record<string, string> = {
-  'INTECHFEST': 'Participant',
+  INTECHFEST: 'Participant',
   'VuwCTF 2025': 'Participant',
   'Lake CTF 2025': 'Participant',
-  'FlagYard': 'Participant',
-  'HackTheBox': 'Participant',
-  'JerseyCTF': 'Participant'
+  FlagYard: 'Participant',
+  HackTheBox: 'Participant',
+  JerseyCTF: 'Participant',
 };
+
+/* ------------------------------------------------------------------ */
+/* helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+
+const pad = (s: string, n: number) => (s.length >= n ? s : s + ' '.repeat(n - s.length));
+
+/** Fade + rise when the block enters the viewport. Content stays visible without JS. */
+function Reveal({
+  children,
+  delay = 0,
+  mode = 'self',
+  className = '',
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  mode?: 'self' | 'rows';
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const base = mode === 'rows' ? 'hp-reveal-rows' : 'hp-reveal';
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion() || typeof IntersectionObserver === 'undefined') return;
+
+    // Already on screen at load: leave it visible, no flash.
+    const r = el.getBoundingClientRect();
+    if (r.top < window.innerHeight * 0.85 && r.bottom > 0) return;
+
+    el.classList.add(base);
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('hp-in');
+          io.disconnect();
+        }
+      },
+      { threshold: 0.05, rootMargin: '0px 0px -8% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [base]);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{ '--hp-d': `${delay}ms` } as React.CSSProperties}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Counts from 0 to `to` once, when it becomes visible. Final value is always in the DOM. */
+function CountUp({ to, decimals = 0, prefix = '' }: { to: number; decimals?: number; prefix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [val, setVal] = useState(to);
+  const finalText = `${prefix}${to.toFixed(decimals)}`;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion() || typeof IntersectionObserver === 'undefined') {
+      setVal(to);
+      return;
+    }
+    setVal(0);
+    let raf = 0;
+    let started = false;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || started) return;
+        started = true;
+        io.disconnect();
+        const t0 = performance.now();
+        const dur = 1200;
+        const tick = (now: number) => {
+          const p = Math.min((now - t0) / dur, 1);
+          setVal(to * (1 - Math.pow(1 - p, 3)));
+          if (p < 1) raf = requestAnimationFrame(tick);
+          else setVal(to);
+        };
+        raf = requestAnimationFrame(tick);
+      },
+      { threshold: 0.4 }
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [to]);
+
+  return (
+    <>
+      <span className="hp-sr">{finalText}</span>
+      <span ref={ref} aria-hidden="true">
+        {prefix}
+        {val.toFixed(decimals)}
+      </span>
+    </>
+  );
+}
+
+type TabId = 'ls' | 'rank' | 'stats';
+type TermLine = { text: string; prompt?: boolean };
+
+/* ------------------------------------------------------------------ */
+/* component                                                           */
+/* ------------------------------------------------------------------ */
 
 export function DocsHomePage({
   tree,
   totalWriteups,
   totalCategories,
   onEventClick,
-  onWriteupClick,
   ctftimeProfile,
 }: DocsHomePageProps) {
-  // Get featured writeups (first 6 from all events)
-  const featuredWriteups = tree
-    .flatMap((event) =>
-      event.categories.flatMap((cat) =>
-        cat.writeups.map((wu) => ({
-          ...wu,
-          eventName: event.name,
-          categoryName: cat.name,
-        }))
-      )
-    )
-    .slice(0, 6);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const artRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const marqueeAnimRef = useRef<Animation | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('ls');
 
+  /* ---------- data ---------- */
+  const sortedEvents = [...tree].sort((a, b) => (b.latestDate || '').localeCompare(a.latestDate || ''));
+  const latestEvents = sortedEvents.slice(0, 3);
+  const latestEventName = sortedEvents[0]?.name || 'HITCON CTF 2026';
+  const eventCount = tree.length;
+
+  const categoryStats = tree
+    .flatMap((event) => event.categories)
+    .reduce((acc, cat) => {
+      acc[cat.name] = (acc[cat.name] || 0) + cat.writeups.length;
+      return acc;
+    }, {} as Record<string, number>);
+
+  const categoryEntries = Object.entries(categoryStats).sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+  );
+  const topCategories = categoryEntries.slice(0, 3);
+
+  const countryRank = ctftimeProfile?.countryRank ?? 1;
+  const globalRank = ctftimeProfile?.globalRank ?? 71;
+  const ratingPoints = Number(ctftimeProfile?.ratingPoints ?? 441.04);
+  const totalCtfEvents = ctftimeProfile?.events.length ?? 157;
+
+  const marqueeEvents = tree.map((e) => e.name.toUpperCase());
+
+  const terminal: Record<TabId, TermLine[]> = {
+    ls: [
+      { text: '$ ls writeups/ --latest', prompt: true },
+      ...latestEvents.map((ev) => ({
+        text: `${pad(ev.latestDate || '----------', 12)}${pad(`${ev.slug}/`, 32)}${ev.totalWriteups}`,
+      })),
+    ],
+    rank: [
+      { text: '$ cat rank.txt', prompt: true },
+      { text: `indonesia   #${countryRank}` },
+      { text: `worldwide   #${globalRank}` },
+      { text: `points      ${ratingPoints.toFixed(2)}` },
+      { text: `events      ${totalCtfEvents}` },
+    ],
+    stats: [
+      { text: '$ ./stats --all', prompt: true },
+      { text: `events      ${tree.length}` },
+      { text: `writeups    ${totalWriteups}` },
+      { text: `categories  ${totalCategories}` },
+      ...topCategories.map(([name, n]) => ({ text: `  ${pad(name.toLowerCase(), 16)}${n}` })),
+    ],
+  };
+
+  /* ---------- actions ---------- */
+  const scrollToWriteups = () => {
+    document.getElementById('performance-table')?.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  };
+  const openLatestEvent = () => {
+    const slug = sortedEvents[0]?.slug;
+    if (slug) onEventClick?.(slug);
+  };
+
+  /* ---------- hero mouse parallax (CSS vars, no re-render) ---------- */
+  const onHeroPointerMove = useCallback((e: React.PointerEvent<HTMLElement>) => {
+    if (e.pointerType !== 'mouse' || !artRef.current) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const nx = clamp(((e.clientX - r.left) / r.width - 0.5) * 2, -1, 1);
+    const ny = clamp(((e.clientY - r.top) / r.height - 0.5) * 2, -1, 1);
+    artRef.current.style.setProperty('--mx', nx.toFixed(3));
+    artRef.current.style.setProperty('--my', ny.toFixed(3));
+  }, []);
+  const onHeroPointerLeave = useCallback(() => {
+    artRef.current?.style.setProperty('--mx', '0');
+    artRef.current?.style.setProperty('--my', '0');
+  }, []);
+
+  /* ---------- marquee: seamless loop via Web Animations API ---------- */
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || prefersReducedMotion() || typeof track.animate !== 'function') return;
+    const half = track.scrollWidth / 2;
+    if (!half) return;
+    const anim = track.animate(
+      [{ transform: 'translateX(0)' }, { transform: 'translateX(-50%)' }],
+      { duration: (half / 70) * 1000, iterations: Infinity, easing: 'linear' }
+    );
+    marqueeAnimRef.current = anim;
+    return () => {
+      anim.cancel();
+      marqueeAnimRef.current = null;
+    };
+  }, [marqueeEvents.length]);
+
+  /* ---------- scroll: hero parallax progress + marquee speed ----------
+     One capture listener on document, so it works whether the page scrolls
+     on window or inside a layout container. Position is derived from the
+     root's bounding rect, so sidebar scrolling does not count. */
+  useEffect(() => {
+    const root = rootRef.current;
+    const hero = heroRef.current;
+    if (!root || !hero || prefersReducedMotion()) return;
+
+    const posY = () => -root.getBoundingClientRect().top;
+    let lastY = posY();
+    let vel = 0;
+    let rate = 1;
+    let raf = 0;
+
+    const setRate = (r: number) => {
+      const a = marqueeAnimRef.current;
+      if (!a) return;
+      if (typeof a.updatePlaybackRate === 'function') a.updatePlaybackRate(r);
+      else a.playbackRate = r;
+    };
+    const applyProgress = (y: number) => {
+      const h = hero.offsetHeight || 1;
+      hero.style.setProperty('--sy', clamp(y / h, 0, 1).toFixed(4));
+    };
+
+    const frame = () => {
+      const y = posY();
+      const dy = y - lastY;
+      lastY = y;
+      vel = vel * 0.85 + dy * 0.15; // smoothed px per frame, signed
+      applyProgress(y);
+
+      const target = clamp(1 + vel * 0.12, -4, 5); // scroll down = faster, scroll up = reverses
+      rate += (target - rate) * 0.1;
+      setRate(rate);
+
+      const active = Math.abs(vel) > 0.05 || Math.abs(rate - 1) > 0.02;
+      if (active) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        raf = 0;
+        rate = 1;
+        setRate(1);
+      }
+    };
+    const kick = () => {
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+
+    applyProgress(lastY);
+    document.addEventListener('scroll', kick, { passive: true, capture: true });
+    window.addEventListener('resize', kick);
+    return () => {
+      document.removeEventListener('scroll', kick, true);
+      window.removeEventListener('resize', kick);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  /* ---------- render ---------- */
   return (
-    <div className="space-y-8">
-      {/* Header Banner */}
-      <div className="flex items-start justify-between border-b border-[var(--docs-border)] pb-4">
-        <div className="flex items-center gap-3">
-          <FaHome className="text-2xl text-[var(--docs-accent)]" />
-          <h1 className="text-3xl font-bold font-display text-[var(--docs-text)] tracking-tighter">Home</h1>
-        </div>
-      </div>
-
-      {/* Subtitle / desc */}
-      <p className="text-lg font-serif text-[var(--docs-text-muted)] leading-relaxed max-w-2xl italic font-light">
-        A collection of CTF challenge writeups and notes, aimed towards cybersecurity education and technical walk-throughs.
-      </p>
-
-      {/* Intro details */}
-      <div className="space-y-4 pt-1 text-sm leading-relaxed text-[var(--docs-text)] font-serif">
-        <p>
-          Welcome to the write-up catalog. Here, we document solutions for various categories including Cryptography, Reverse Engineering, Binary Exploitation, Web Security, Forensics, and more.
-        </p>
-
-        <p className="text-[var(--docs-text-soft)] italic font-light text-xs font-sans">
-          (This archive is regularly updated as new events are completed and analyzed)
-        </p>
-
-      </div>
-
-      {/* Origin + CTFtime Rank */}
-      <div className="flex flex-col sm:flex-row gap-4 pt-2">
-        {/* Indonesia Badge */}
-        <div className="flex items-center gap-4 rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/30 px-5 py-4 flex-shrink-0">
-          {/* Indonesian Flag SVG */}
-          <div className="relative flex-shrink-0 w-12 h-8 rounded overflow-hidden shadow-md border border-white/10" aria-label="Bendera Indonesia">
-            <div className="absolute inset-0 top-0 h-1/2 bg-[#CE1126]" />
-            <div className="absolute inset-0 top-1/2 h-1/2 bg-white" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[var(--docs-text-soft)] font-sans">Asal</p>
-            <p className="text-sm font-semibold text-[var(--docs-text)] font-serif">Indonesia 🇮🇩</p>
-          </div>
-        </div>
-
-        {/* CTFtime Ranking Card */}
-        <a
-          href="https://ctftime.org/team/408130"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex-1 rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/30 px-5 py-4 transition-all hover:border-[var(--docs-accent-border)] hover:bg-[var(--docs-bg-soft)]/50 cursor-pointer"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--docs-text-soft)] font-sans">CTFtime Ranking 2026</p>
-            <span className="text-[10px] font-mono text-[var(--docs-accent)] group-hover:underline">ctftime.org →</span>
-          </div>
-          <div className="flex items-end gap-6 flex-wrap">
+    <div className="hp-root" ref={rootRef}>
+      {/* ===== HERO ===== */}
+      <section
+        className="hp-hero"
+        ref={heroRef}
+        aria-labelledby="hp-title"
+        onPointerMove={onHeroPointerMove}
+        onPointerLeave={onHeroPointerLeave}
+      >
+        <div className="hp-inner">
+          <div className="hp-hero-grid">
             <div>
-              <div className="text-2xl font-black font-mono text-[var(--docs-accent)] leading-none">
-                {ctftimeProfile?.countryRank ? `#${ctftimeProfile.countryRank}` : '#1'}
-              </div>
-              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🇮🇩 Indonesia</p>
-            </div>
-            <div>
-              <div className="text-2xl font-black font-mono text-[var(--docs-text)] leading-none">
-                {ctftimeProfile?.globalRank ? `#${ctftimeProfile.globalRank}` : '#71'}
-              </div>
-              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">🌍 Worldwide</p>
-            </div>
-            <div>
-              <div className="text-xl font-bold font-mono text-[var(--docs-success)] leading-none">
-                {ctftimeProfile?.ratingPoints ? Number(ctftimeProfile.ratingPoints).toFixed(2) : '441.04'}
-              </div>
-              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Points</p>
-            </div>
-            <div>
-              <div className="text-xl font-bold font-mono text-[var(--docs-text-muted)] leading-none">
-                {ctftimeProfile?.events ? ctftimeProfile.events.length : '157'}
-              </div>
-              <p className="text-[10px] font-sans text-[var(--docs-text-soft)] uppercase tracking-wider mt-0.5">Events</p>
-            </div>
-          </div>
-        </a>
-      </div>
+              <p className="hp-kicker hp-rise" style={{ '--hp-d': '0ms' } as React.CSSProperties}>
+                {'// CTF WRITEUP ARCHIVE · '}
+                {eventCount} EVENTS
+              </p>
 
-
-      {/* HISTORICAL STATS TABLE */}
-      <div id="stats-table-section" className="pt-6 space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h3 className="text-[10px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase font-sans">
-            CTF Performance & Writeups
-          </h3>
-          <p className="text-[10px] font-mono text-[var(--docs-text-soft)]">
-            {tree.length} events · {totalWriteups} writeups
-          </p>
-        </div>
-
-        <div className="overflow-x-auto rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/20 shadow-sm">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-[var(--docs-bg-soft)] border-b border-[var(--docs-border-soft)] text-[var(--docs-text-muted)] uppercase tracking-widest text-[9px] font-bold font-sans">
-                <th className="p-3">Event Name</th>
-                <th className="p-3">Writeups</th>
-                <th className="p-3">Categories</th>
-                <th className="p-3">Latest Solved</th>
-                <th className="p-3">Rank/Place</th>
-                <th className="p-3">Points</th>
-                <th className="p-3">Team</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--docs-border-soft)]">
-              {tree.map((event) => {
-                const icon = getEventIcon(event.name);
-
-                // Find matching CTFtime metadata
-                const ctftimeEvent = ctftimeProfile
-                  ? findCtftimeEvent(event.name, ctftimeProfile)
-                  : undefined;
-
-                // Determine Rank/Place with EVENT_PLACES fallback (case-insensitive lookup)
-                let place: string | number = '—';
-                if (ctftimeEvent?.place !== undefined && ctftimeEvent?.place !== null) {
-                  place = ctftimeEvent.place;
-                } else {
-                  const matchedKey = Object.keys(EVENT_PLACES).find(
-                    (k) => k.toLowerCase() === event.name.toLowerCase()
-                  );
-                  if (matchedKey) {
-                    place = EVENT_PLACES[matchedKey];
-                  }
-                }
-
-                // Determine Points with local writeups sum fallback
-                let points: string | number = '—';
-                if (ctftimeEvent?.points !== undefined && ctftimeEvent?.points !== null) {
-                  points = ctftimeEvent.points;
-                } else {
-                  const totalLocalPoints = event.categories.reduce((sum, cat) => {
-                    return sum + cat.writeups.reduce((catSum, w) => {
-                      const pts = Number(w.points);
-                      return catSum + (isNaN(pts) ? 0 : pts);
-                    }, 0);
-                  }, 0);
-                  if (totalLocalPoints > 0) {
-                    points = totalLocalPoints;
-                  }
-                }
-                const team = ctftimeEvent?.team || ctftimeProfile?.teamName || 'Personal';
-
-                // Find latest writeup date
-                const dates = event.categories
-                  .flatMap((cat) => cat.writeups.map((w) => w.date))
-                  .filter(Boolean) as string[];
-                const latestDate = dates.length > 0
-                  ? dates.sort().reverse()[0]
-                  : '—';
-
-                return (
-                  <tr
-                    key={event.slug}
-                    onClick={() => {
-                      onEventClick?.(event.slug);
-                      document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="hover:bg-[var(--docs-bg-soft)]/60 transition cursor-pointer group"
-                  >
-                    <td className="p-3 font-semibold text-[var(--docs-accent)] group-hover:underline font-serif text-sm">
-                      <span className="mr-2 inline-flex items-center align-middle">{icon}</span>
-                      {event.name}
-                    </td>
-                    <td className="p-3 text-[var(--docs-text-muted)] font-mono">
-                      {event.totalWriteups}
-                    </td>
-                    <td className="p-3 text-[var(--docs-text-muted)] font-mono">
-                      {event.categories.length}
-                    </td>
-                    <td className="p-3 text-[var(--docs-text-muted)] font-mono">
-                      {latestDate}
-                    </td>
-                    <td className="p-3 font-bold text-[var(--docs-text)] font-mono">
-                      {typeof place === 'number' ? `#${place}` : place}
-                    </td>
-                    <td className="p-3 font-mono text-[var(--docs-text-muted)]">
-                      {typeof points === 'number' ? points.toLocaleString('en-US') : points}
-                    </td>
-                    <td className="p-3 text-[var(--docs-text-soft)] font-sans uppercase tracking-wider text-[10px] font-medium">
-                      {team}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Featured Writeups */}
-      {featuredWriteups.length > 0 && (
-        <section id="featured-writeups" className="space-y-4 pt-4">
-          <h3 className="text-[10px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase font-sans">
-            Featured Solutions
-          </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {featuredWriteups.map((writeup) => (
-              <button
-                key={writeup.id}
-                onClick={() => onWriteupClick?.(writeup.id)}
-                className="rounded border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/10 p-5 text-left transition-all hover:border-[var(--docs-border)] hover:bg-[var(--docs-bg-soft)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--docs-accent-border)] cursor-pointer group"
+              <h1
+                id="hp-title"
+                className="hp-display hp-h1 hp-rise"
+                style={{ '--hp-d': '100ms' } as React.CSSProperties}
               >
-                <div className="space-y-2">
-                  <h4 className="font-bold text-sm font-serif text-[var(--docs-text)] group-hover:underline">
-                    {writeup.title}
-                  </h4>
-                  <div className="space-y-1">
-                    <p className="text-xs text-[var(--docs-text-soft)]">{writeup.eventName}</p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      <span className="rounded bg-[var(--docs-bg-soft)] px-2 py-0.5 text-[10px] font-mono text-[var(--docs-text-muted)] border border-[var(--docs-border-soft)]">
-                        {writeup.categoryName}
-                      </span>
-                      {writeup.difficulty && (
-                        <span
-                          className={`rounded px-2 py-0.5 text-[10px] font-sans font-semibold border ${writeup.difficulty === 'Easy'
-                            ? 'bg-[var(--docs-success)]/10 text-[var(--docs-success)] border-[var(--docs-success)]/20'
-                            : writeup.difficulty === 'Medium'
-                              ? 'bg-[var(--docs-accent)]/10 text-[var(--docs-accent)] border-[var(--docs-accent)]/20'
-                              : 'bg-[var(--docs-danger)]/10 text-[var(--docs-danger)] border-[var(--docs-danger)]/20'
-                            }`}
-                        >
-                          {writeup.difficulty}
-                        </span>
-                      )}
+                <span>CTF</span> <span>Writeups</span> <span>That Teach.</span>
+              </h1>
+
+              <p className="hp-tag hp-rise" style={{ '--hp-d': '200ms' } as React.CSSProperties}>
+                A collection of CTF challenge writeups and notes, aimed towards cybersecurity
+                education and technical walk-throughs.
+              </p>
+
+              <div className="hp-cta hp-rise" style={{ '--hp-d': '300ms' } as React.CSSProperties}>
+                <button type="button" className="hp-btn hp-btn--solid" onClick={scrollToWriteups}>
+                  Browse writeups
+                </button>
+                <button type="button" className="hp-btn hp-btn--ghost" onClick={openLatestEvent}>
+                  Latest: {latestEventName}
+                </button>
+              </div>
+
+              {/* terminal */}
+              <div className="hp-term hp-rise" style={{ '--hp-d': '400ms' } as React.CSSProperties}>
+                <div className="hp-term-tabs" role="tablist" aria-label="Archive summary">
+                  {(
+                    [
+                      ['ls', '$ ls'],
+                      ['rank', '$ cat rank'],
+                      ['stats', '$ ./stats'],
+                    ] as [TabId, string][]
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      id={`hp-tab-${id}`}
+                      aria-selected={activeTab === id}
+                      aria-controls="hp-term-panel"
+                      className="hp-tab"
+                      onClick={() => setActiveTab(id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div
+                  className="hp-term-body"
+                  role="tabpanel"
+                  id="hp-term-panel"
+                  aria-labelledby={`hp-tab-${activeTab}`}
+                >
+                  {terminal[activeTab].map((line, i) => (
+                    <div key={`${activeTab}-${i}`} className={`hp-line${line.prompt ? ' hp-line--prompt' : ''}`}>
+                      {line.text}
                     </div>
+                  ))}
+                  <div className="hp-line hp-line--prompt">
+                    {'$ '}
+                    <span className="hp-cursor" aria-hidden="true" />
                   </div>
                 </div>
-              </button>
-            ))}
+              </div>
+            </div>
+
+            {/* illustration: transparent PNG, so no blend mode is needed */}
+            <div className="hp-art hp-rise" ref={artRef} style={{ '--hp-d': '200ms' } as React.CSSProperties}>
+              <div className="hp-rays" aria-hidden="true" />
+              <div className="hp-fig">
+                <picture>
+                  <source srcSet="/images/PenjagaBerjubahEnamTangan-ink.webp" type="image/webp" />
+                  <img
+                    src="/images/PenjagaBerjubahEnamTangan-ink.png"
+                    alt="Hooded six-armed guardian holding a key, a bug, a gear, a magnifying glass, a skull and a flag, symbolizing CTF skills across disciplines"
+                    width={520}
+                    height={520}
+                    decoding="async"
+                    loading="eager"
+                    fetchPriority="high"
+                    draggable={false}
+                  />
+                </picture>
+              </div>
+            </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
+
+      {/* ===== MARQUEE ===== */}
+      <section className="hp-marquee" aria-label="Events played">
+        <div className="hp-track" ref={trackRef} aria-hidden="true">
+          {[0, 1].map((copy) => (
+            <div className="hp-mq-group" key={copy}>
+              {marqueeEvents.map((name, i) => (
+                <React.Fragment key={`${copy}-${i}`}>
+                  <span className="hp-mq-item">{name}</span>
+                  <span className="hp-mq-dot" />
+                </React.Fragment>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== STATS ===== */}
+      <section className="hp-stats" id="stats-block" aria-label="CTFtime ranking">
+        <div className="hp-inner">
+          <div className="hp-stats-head">
+            <span className="hp-label">CTFtime ranking 2026</span>
+            <a
+              className="hp-stats-link"
+              href="https://ctftime.org/team/408130"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ctftime.org →
+            </a>
+          </div>
+
+          <div className="hp-stats-row">
+            <div className="hp-origin">
+              <div className="hp-flag" role="img" aria-label="Indonesian flag" />
+              <div>
+                <div className="hp-label">Asal</div>
+                <div className="hp-origin-name">Indonesia</div>
+              </div>
+            </div>
+
+            <div>
+              <div className="hp-display hp-big hp-big--hot">
+                <CountUp to={countryRank} prefix="#" />
+              </div>
+              <div className="hp-big-cap">Indonesia</div>
+            </div>
+            <div>
+              <div className="hp-display hp-big">
+                <CountUp to={globalRank} prefix="#" />
+              </div>
+              <div className="hp-big-cap">Worldwide</div>
+            </div>
+            <div>
+              <div className="hp-display hp-big hp-big--mint">
+                <CountUp to={ratingPoints} decimals={2} />
+              </div>
+              <div className="hp-big-cap">Points</div>
+            </div>
+            <div>
+              <div className="hp-display hp-big">
+                <CountUp to={totalCtfEvents} />
+              </div>
+              <div className="hp-big-cap">Events</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== TABLE ===== */}
+      <section className="hp-section hp-section--table" id="performance-table">
+        <div className="hp-inner">
+          <Reveal className="hp-table-head">
+            <h2 className="hp-display hp-h2">CTF Performance &amp; Writeups</h2>
+            <span className="hp-count">
+              {tree.length} events · {totalWriteups} writeups
+            </span>
+          </Reveal>
+
+          <Reveal mode="rows" className="hp-tablewrap">
+            <table className="hp-table">
+              <thead>
+                <tr>
+                  <th scope="col">Event name</th>
+                  <th scope="col" className="r">Writeups</th>
+                  <th scope="col" className="r">Categories</th>
+                  <th scope="col">Latest solved</th>
+                  <th scope="col" className="r">Rank / Place</th>
+                  <th scope="col" className="r">Points</th>
+                  <th scope="col" className="r">Team</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tree.map((event, rowIndex) => {
+                  const ctftimeEvent = ctftimeProfile
+                    ? findCtftimeEvent(event.name, ctftimeProfile)
+                    : undefined;
+
+                  let place: string | number = '—';
+                  if (ctftimeEvent?.place !== undefined && ctftimeEvent?.place !== null) {
+                    place = ctftimeEvent.place;
+                  } else {
+                    const matchedKey = Object.keys(EVENT_PLACES).find(
+                      (k) => k.toLowerCase() === event.name.toLowerCase()
+                    );
+                    if (matchedKey) place = EVENT_PLACES[matchedKey];
+                  }
+
+                  let points: string | number = '—';
+                  if (ctftimeEvent?.points !== undefined && ctftimeEvent?.points !== null) {
+                    points = ctftimeEvent.points;
+                  } else {
+                    const totalLocalPoints = event.categories.reduce(
+                      (sum, cat) =>
+                        sum +
+                        cat.writeups.reduce((catSum, w) => {
+                          const pts = Number(w.points);
+                          return catSum + (isNaN(pts) ? 0 : pts);
+                        }, 0),
+                      0
+                    );
+                    if (totalLocalPoints > 0) points = totalLocalPoints;
+                  }
+
+                  const team = ctftimeEvent?.team || ctftimeProfile?.teamName || 'Personal';
+
+                  const dates = event.categories
+                    .flatMap((cat) => cat.writeups.map((w) => w.date))
+                    .filter(Boolean) as string[];
+                  const latestDate = dates.length > 0 ? [...dates].sort().reverse()[0] : '—';
+
+                  return (
+                    <tr
+                      key={event.slug}
+                      className="hp-row"
+                      style={{ '--hp-d': `${Math.min(rowIndex, 10) * 60}ms` } as React.CSSProperties}
+                      onClick={() => onEventClick?.(event.slug)}
+                    >
+                      <td>
+                        <button type="button" className="hp-name">
+                          {event.name}
+                        </button>
+                      </td>
+                      <td className="r">{event.totalWriteups}</td>
+                      <td className="r">{event.categories.length}</td>
+                      <td>{latestDate}</td>
+                      <td className="r hp-strong">{typeof place === 'number' ? `#${place}` : place}</td>
+                      <td className="r">
+                        {typeof points === 'number' ? points.toLocaleString('en-US') : points}
+                      </td>
+                      <td className="r hp-team">{team}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Reveal>
+        </div>
+      </section>
+
+      <p className="hp-foot">
+        (This archive is regularly updated as new events are completed and analyzed)
+      </p>
     </div>
   );
 }

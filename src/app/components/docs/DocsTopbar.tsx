@@ -153,7 +153,7 @@ export function DocsTopbar({
   onSearchClick,
 }: DocsTopbarProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--docs-border-soft)] bg-[var(--docs-bg)] backdrop-blur-sm">
+    <header className="sticky top-0 z-40 border-b-2 border-[var(--hp-ink,#141413)] bg-[var(--hp-bg,#f5f1e6)] backdrop-blur-sm">
       <div className="flex items-center justify-between gap-4 px-6 py-4">
         {/* Left: Brand & Menu Toggle */}
         <div className="flex items-center gap-4">
