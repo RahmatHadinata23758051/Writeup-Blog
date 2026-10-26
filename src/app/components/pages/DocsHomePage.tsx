@@ -319,15 +319,10 @@ export function DocsHomePage({
         <div className="hp-inner">
           <div className="hp-hero-grid">
             <div>
-              <p className="hp-kicker hp-rise" style={{ '--hp-d': '0ms' } as React.CSSProperties}>
-                {'// CTF WRITEUP ARCHIVE · '}
-                {eventCount} EVENTS
-              </p>
-
               <h1
                 id="hp-title"
                 className="hp-display hp-h1 hp-rise"
-                style={{ '--hp-d': '100ms' } as React.CSSProperties}
+                style={{ '--hp-d': '0ms' } as React.CSSProperties}
               >
                 <span>CTF</span> <span>Writeups</span> <span>That Teach.</span>
               </h1>
@@ -452,29 +447,31 @@ export function DocsHomePage({
               </div>
             </div>
 
-            <div>
-              <div className="hp-display hp-big hp-big--hot">
-                <CountUp to={countryRank} prefix="#" />
+            <div className="hp-stats-grid">
+              <div className="hp-stat-item">
+                <div className="hp-display hp-big hp-big--hot">
+                  <CountUp to={countryRank} prefix="#" />
+                </div>
+                <div className="hp-big-cap">Indonesia</div>
               </div>
-              <div className="hp-big-cap">Indonesia</div>
-            </div>
-            <div>
-              <div className="hp-display hp-big">
-                <CountUp to={globalRank} prefix="#" />
+              <div className="hp-stat-item">
+                <div className="hp-display hp-big">
+                  <CountUp to={globalRank} prefix="#" />
+                </div>
+                <div className="hp-big-cap">Worldwide</div>
               </div>
-              <div className="hp-big-cap">Worldwide</div>
-            </div>
-            <div>
-              <div className="hp-display hp-big hp-big--mint">
-                <CountUp to={ratingPoints} decimals={2} />
+              <div className="hp-stat-item">
+                <div className="hp-display hp-big hp-big--mint">
+                  <CountUp to={ratingPoints} decimals={2} />
+                </div>
+                <div className="hp-big-cap">Points</div>
               </div>
-              <div className="hp-big-cap">Points</div>
-            </div>
-            <div>
-              <div className="hp-display hp-big">
-                <CountUp to={totalCtfEvents} />
+              <div className="hp-stat-item">
+                <div className="hp-display hp-big">
+                  <CountUp to={totalCtfEvents} />
+                </div>
+                <div className="hp-big-cap">Events</div>
               </div>
-              <div className="hp-big-cap">Events</div>
             </div>
           </div>
         </div>

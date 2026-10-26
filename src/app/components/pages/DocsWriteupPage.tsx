@@ -27,10 +27,11 @@ function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) 
     <button
       type="button"
       onClick={handleCopy}
-      className="rounded bg-[var(--docs-surface)] px-2.5 py-1 text-[10px] font-sans font-bold uppercase tracking-wider text-[var(--docs-text-muted)] hover:bg-[var(--docs-surface-hover)] hover:text-[var(--docs-text)] transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--docs-accent)] cursor-pointer"
+      className="relative px-3 py-1 bg-[#F6F0E0] text-[#141413] font-mono text-[10px] uppercase tracking-wider border-2 border-[#141413] cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+      style={{ boxShadow: '2px 2px 0 0 #141413' }}
       title="Copy to clipboard"
     >
-      {copied ? 'Copied!' : label}
+      {copied ? 'COPIED!' : label}
     </button>
   );
 }
@@ -58,25 +59,7 @@ function renderTextBlock(value: unknown) {
 
   const text = normalizeToString(value);
   return (
-    <RichText text={text} className="text-[var(--docs-text-muted)] text-sm" />
-  );
-}
-
-function renderStringList(values: unknown) {
-  if (!isNonEmptyArray(values)) return null;
-
-  const items = (values as unknown[])
-    .filter((v) => isNonEmptyString(v))
-    .map((v) => String(v));
-
-  if (items.length === 0) return null;
-
-  return (
-    <ul className="list-inside space-y-1 text-[var(--docs-text-muted)]">
-      {items.map((item, idx) => (
-        <li key={idx}>• {item}</li>
-      ))}
-    </ul>
+    <RichText text={text} className="text-[#1B1A17]/90 text-base leading-relaxed font-serif" />
   );
 }
 
@@ -92,192 +75,277 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
   const hasFlag = isNonEmptyString(writeup.flag);
   const hasLessonsLearned = isNonEmptyString(writeup.lessonsLearned);
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <section className="space-y-4 border-b border-[var(--docs-border-soft)] pb-8">
-        <h1 className="text-4xl font-bold text-[var(--docs-text)]">{writeup.title}</h1>
-        {hasDescription && (
-          <p className="text-lg text-[var(--docs-text-muted)]">{writeup.description}</p>
-        )}
+  // Classification label based on difficulty
+  const getClassification = () => {
+    switch (writeup.difficulty) {
+      case 'Easy': return { label: 'UNCLASSIFIED', color: '#4FE3A0' };
+      case 'Medium': return { label: 'CONFIDENTIAL', color: '#BF3511' };
+      case 'Hard': return { label: 'TOP SECRET', color: '#BF3511' };
+      default: return { label: 'RESTRICTED', color: '#5C574C' };
+    }
+  };
 
-        {/* Metadata */}
-        <div className="flex flex-wrap gap-6 text-sm">
-          {writeup.ctfName && (
-            <div>
-              <span className="text-[var(--docs-text-soft)]">Event:</span>{' '}
-              <span className="text-[var(--docs-text)]">{writeup.ctfName}</span>
-            </div>
-          )}
-          {writeup.category && (
-            <div>
-              <span className="text-[var(--docs-text-soft)]">Category:</span>{' '}
-              <span className="text-[var(--docs-text)]">{writeup.category}</span>
-            </div>
-          )}
-          {writeup.difficulty && (
-            <div>
-              <span className="text-[var(--docs-text-soft)]">Difficulty:</span>{' '}
-              <span
-                className={
-                  writeup.difficulty === 'Easy'
-                    ? 'text-[var(--docs-success)]'
-                    : writeup.difficulty === 'Medium'
-                      ? 'text-[var(--docs-accent)]'
-                      : 'text-[var(--docs-danger)]'
-                }
-              >
-                {writeup.difficulty}
+  const classification = getClassification();
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* CASE FILE HEADER */}
+      <header className="relative border-2 border-[#141413] bg-[#F6F0E0] p-6 overflow-hidden">
+        {/* Classification watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-10">
+          <span className="font-[Anton] text-[8rem] tracking-widest text-[#141413] transform rotate-[-15deg] whitespace-nowrap">
+            {classification.label}
+          </span>
+        </div>
+
+        {/* Top meta bar */}
+        <div className="relative flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#BF3511]">// CASE FILE</span>
+            <span className="px-2 py-0.5 bg-[#141413] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+              {writeup.ctfName || 'UNKNOWN EVENT'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413] ${classification.color === '#4FE3A0' ? 'bg-[#4FE3A0] text-[#141413]' : 'bg-[#BF3511] text-[#F6F0E0]'}`}>
+              {classification.label}
+            </span>
+            {writeup.difficulty && (
+              <span className="px-2 py-0.5 bg-[#F6F0E0] text-[#141413] font-mono text-[10px] uppercase tracking-wider border-2 border-[#141413]">
+                {writeup.difficulty.toUpperCase()}
               </span>
-            </div>
-          )}
-          {writeup.points !== undefined && writeup.points !== null && (
-            <div>
-              <span className="text-[var(--docs-text-soft)]">Points:</span>{' '}
-              <span className="text-[var(--docs-text)]">{writeup.points}</span>
-            </div>
-          )}
-          {writeup.date && (
-            <div>
-              <span className="text-[var(--docs-text-soft)]">Date:</span>{' '}
-              <span className="text-[var(--docs-text)]">{writeup.date}</span>
-            </div>
-          )}
-          {writeup.author && (
-            <div>
-              <span className="text-[var(--docs-text-soft)]">Author:</span>{' '}
-              <span className="text-[var(--docs-text)]">{writeup.author}</span>
-            </div>
+            )}
+          </div>
+        </div>
+
+        {/* Title & Description */}
+        <div className="relative space-y-3">
+          <h1 className="font-[Anton] text-[2.5rem] sm:text-[3.5rem] tracking-tighter text-[#141413] uppercase leading-tight">
+            {writeup.title}
+          </h1>
+          {(hasProblemDescription || hasDescription) && (
+            <p className="font-serif text-lg text-[#1B1A17]/80 leading-relaxed max-w-3xl">
+              {hasProblemDescription ? writeup.problemDescription : writeup.description}
+            </p>
           )}
         </div>
-      </section>
 
-      {/* Challenge Description */}
-      {(hasProblemDescription || hasDescription) && (
-        <section id="description" className="space-y-4">
-          <h2 className="text-2xl font-semibold text-[var(--docs-text)]">Challenge Description</h2>
-          {hasProblemDescription
-            ? renderTextBlock(writeup.problemDescription)
-            : renderTextBlock(writeup.description)}
-        </section>
-      )}
-
-      {/* Tools */}
-      {hasTools && (
-        <section id="tools" className="space-y-4">
-          <h2 className="text-2xl font-semibold text-[var(--docs-text)]">Tools Used</h2>
-          <div className="flex flex-wrap gap-2">
-            {(writeup.tools as string[]).map((tool) => (
-              <span
-                key={tool}
-                className="rounded bg-[var(--docs-surface)] px-3 py-1 text-xs text-[var(--docs-text-muted)] border border-[var(--docs-border)]"
-              >
-                {tool}
-              </span>
-            ))}
+        {/* Bottom meta row */}
+        <div className="relative flex flex-wrap items-center gap-3 mt-4 pt-4 border-t-2 border-[#141413]">
+          <div className="flex items-center gap-4 text-sm">
+            {writeup.category && (
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-[10px] text-[#BF3511]">CAT:</span>
+                <span className="font-mono uppercase tracking-wider text-[#141413]">{writeup.category}</span>
+              </div>
+            )}
+            {writeup.points !== undefined && writeup.points !== null && (
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-[10px] text-[#BF3511]">PTS:</span>
+                <span className="font-[Anton] text-xl text-[#BF3511]">{writeup.points}</span>
+              </div>
+            )}
+            {writeup.date && (
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-[10px] text-[#BF3511]">DATE:</span>
+                <span className="font-mono text-[#141413]">{writeup.date}</span>
+              </div>
+            )}
+            {writeup.author && (
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-[10px] text-[#BF3511]">OPERATIVE:</span>
+                <span className="font-mono uppercase tracking-wider text-[#141413]">{writeup.author}</span>
+              </div>
+            )}
           </div>
-        </section>
-      )}
+        </div>
+      </header>
 
-      {/* Analysis */}
-      {hasAnalysis && (
-        <section id="analysis" className="space-y-4">
-          <h2 className="text-2xl font-semibold text-[var(--docs-text)]">Analysis</h2>
-          {renderTextBlock(writeup.analysis)}
-        </section>
-      )}
-
-      {/* Solution */}
-      {hasSolution && (
-        <section id="solution" className="space-y-4">
-          <h2 className="text-2xl font-semibold text-[var(--docs-text)]">Solution</h2>
-          <div className="space-y-6">
-            {(writeup.solution as Array<{ title: string; content: string; code?: string }>).map(
-              (step, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-lg border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)] p-4 space-y-3"
+      {/* MAIN CONTENT - Tactical Phases */}
+      <main className="space-y-8">
+        {/* Tools Section */}
+        {hasTools && (
+          <section id="tools" className="relative border-2 border-[#141413] bg-[#F6F0E0] p-6">
+            <div className="relative flex items-center gap-3 mb-4">
+              <span className="px-2 py-1 bg-[#141413] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                PHASE 1
+              </span>
+              <h2 className="font-[Anton] text-xl tracking-tight text-[#141413] uppercase">ARSENAL DEPLOYED</h2>
+              <div className="flex-1 border-t-2 border-[#141413]" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(writeup.tools as string[]).map((tool) => (
+                <span
+                  key={tool}
+                  className="relative px-3 py-1.5 bg-[#141413] text-[#F6F0E0] font-mono text-xs uppercase tracking-wider border-2 border-[#141413] cursor-default"
+                  style={{ boxShadow: '2px 2px 0 0 #141413' }}
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-[var(--docs-accent)]">
-                        Step {idx + 1}
+                  {tool}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Analysis Section */}
+        {hasAnalysis && (
+          <section id="analysis" className="relative border-2 border-[#141413] bg-[#F6F0E0] p-6">
+            <div className="relative flex items-center gap-3 mb-4">
+              <span className="px-2 py-1 bg-[#141413] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                PHASE 2
+              </span>
+              <h2 className="font-[Anton] text-xl tracking-tight text-[#141413] uppercase">INTEL ANALYSIS</h2>
+              <div className="flex-1 border-t-2 border-[#141413]" />
+            </div>
+            <div className="prose prose-sm max-w-none text-[#1B1A17]/90">
+              {renderTextBlock(writeup.analysis)}
+            </div>
+          </section>
+        )}
+
+        {/* Solution Section */}
+        {hasSolution && (
+          <section id="solution" className="relative border-2 border-[#141413] bg-[#F6F0E0] p-6">
+            <div className="relative flex items-center gap-3 mb-4">
+              <span className="px-2 py-1 bg-[#141413] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                PHASE 3
+              </span>
+              <h2 className="font-[Anton] text-xl tracking-tight text-[#141413] uppercase">EXECUTION LOG</h2>
+              <div className="flex-1 border-t-2 border-[#141413]" />
+            </div>
+            <div className="space-y-4">
+              {(writeup.solution as Array<{ title: string; content: string; code?: string }>).map(
+                (step, idx) => (
+                  <div
+                    key={idx}
+                    className="relative border-2 border-[#141413] bg-[#E6DFCB] p-4 space-y-3"
+                    style={{ boxShadow: '3px 3px 0 0 #141413' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="px-2 py-0.5 bg-[#BF3511] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                        STEP {String(idx + 1).padStart(2, '0')}
                       </span>
                       {step.title && (
-                        <h3 className="font-semibold text-[var(--docs-text)]">{step.title}</h3>
+                        <h3 className="font-[Anton] text-lg tracking-tight text-[#141413]">{step.title}</h3>
                       )}
                     </div>
+
+                    {isNonEmptyString(step.content) && (
+                      <div className="prose prose-sm max-w-none text-[#1B1A17]/90">
+                        {renderTextBlock(step.content)}
+                      </div>
+                    )}
+
+                    {isNonEmptyString(step.code) && (
+                      <div className="space-y-2 pt-2 border-t border-[#141413]/30">
+                        {isMermaidCode(step.code as string) ? (
+                          <MermaidDiagram code={step.code as string} title={step.title} />
+                        ) : (
+                          <CollapsibleCodeBlock code={step.code as string} />
+                        )}
+                      </div>
+                    )}
                   </div>
+                )
+              )}
+            </div>
+          </section>
+        )}
 
-                  {isNonEmptyString(step.content) && (
-                    <RichText text={step.content} className="text-[var(--docs-text-muted)] text-sm" />
-                  )}
-
-                  {isNonEmptyString(step.code) && (
-                    <div className="space-y-2 pt-1">
-                      {isMermaidCode(step.code as string) ? (
-                        <MermaidDiagram code={step.code as string} title={step.title} />
-                      ) : (
-                        <CollapsibleCodeBlock code={step.code as string} />
-                      )}
+        {/* Terminal Output Section */}
+        {hasTerminalOutputs && (
+          <section id="terminal-output" className="relative border-2 border-[#141413] bg-[#141413] p-6">
+            <div className="relative flex items-center justify-between gap-3 mb-4">
+              <span className="px-2 py-1 bg-[#BF3511] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                PHASE 4
+              </span>
+              <h2 className="font-[Anton] text-xl tracking-tight text-[#F6F0E0] uppercase">TERMINAL TRANSCRIPTS</h2>
+              <div className="flex-1 border-t-2 border-[#BF3511]" />
+            </div>
+            <div className="space-y-4">
+              {(writeup.terminalOutputs as Array<{ command: string; output: string }>).map(
+                (term, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <div className="flex items-center gap-2 text-[#BF3511] font-mono text-xs">
+                      <span>&gt; {term.command}</span>
                     </div>
-                  )}
-                </div>
-              )
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Terminal Output */}
-      {hasTerminalOutputs && (
-        <section id="terminal-output" className="space-y-3">
-          <h4 className="text-xs uppercase tracking-widest text-[var(--docs-text-soft)] font-bold font-sans">
-            Terminal Output
-          </h4>
-          <div className="space-y-4">
-            {(writeup.terminalOutputs as Array<{ command: string; output: string }>).map(
-              (term, idx) => (
-                <div key={idx} className="space-y-2 pl-4 border-l-2 border-[var(--docs-border-soft)]">
-                  <CollapsibleCodeBlock
-                    code={term.output || ''}
-                    command={term.command}
-                    language="terminal"
-                  />
-                </div>
-              )
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Flag */}
-      {hasFlag && (
-        <section id="flag" className="space-y-2">
-          <h4 className="text-xs uppercase tracking-widest text-[var(--docs-text-soft)] font-bold font-sans">
-            Flag
-          </h4>
-          <div className="flex items-stretch rounded border border-[var(--docs-accent)] bg-[var(--docs-accent-soft)] max-w-xl shadow-sm overflow-hidden">
-            <div className="bg-[var(--docs-accent)] px-4 flex items-center shrink-0 text-[var(--docs-bg)] font-sans font-bold text-[10px] uppercase tracking-widest">
-              Flag
+                    <CollapsibleCodeBlock
+                      code={term.output || ''}
+                      command=""
+                      language="terminal"
+                    />
+                  </div>
+                )
+              )}
             </div>
-            <div className="p-3 px-4 font-mono text-sm text-[var(--docs-accent)] select-all truncate flex-1 font-bold">
-              {writeup.flag}
-            </div>
-            <div className="flex items-center px-3 shrink-0 border-l border-[var(--docs-border-soft)]">
-              <CopyButton text={writeup.flag} />
-            </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* Lessons Learned */}
-      {hasLessonsLearned && (
-        <section id="lessons-learned" className="space-y-4">
-          <h2 className="text-2xl font-semibold text-[var(--docs-text)]">Lessons Learned</h2>
-          {renderTextBlock(writeup.lessonsLearned)}
-        </section>
-      )}
+        {/* FLAG BANNER */}
+        {hasFlag && (
+          <section id="flag" className="relative border-4 border-[#BF3511] bg-[#141413] p-6 overflow-hidden">
+            {/* Corner markers */}
+            <div className="absolute top-2 left-2 w-8 h-8 border-t-4 border-l-4 border-[#BF3511]" />
+            <div className="absolute top-2 right-2 w-8 h-8 border-t-4 border-r-4 border-[#BF3511]" />
+            <div className="absolute bottom-2 left-2 w-8 h-8 border-b-4 border-l-4 border-[#BF3511]" />
+            <div className="absolute bottom-2 right-2 w-8 h-8 border-b-4 border-r-4 border-[#BF3511]" />
+            
+            {/* CLASSIFIED stamp */}
+            <div className="absolute top-4 right-4 transform rotate-6 opacity-20">
+              <span className="px-3 py-1 bg-[#BF3511] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                CLASSIFIED
+              </span>
+            </div>
+
+            <div className="relative flex flex-col items-center text-center space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 bg-[#BF3511] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                  FLAG CAPTURED
+                </span>
+              </div>
+              <div className="font-[Anton] text-2xl sm:text-3xl text-[#BF3511] tracking-wider select-all">
+                {writeup.flag}
+              </div>
+              <div className="flex items-center gap-3">
+                <CopyButton text={writeup.flag} label="EXTRACT INTEL" />
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#BF3511]/60">
+                  // MISSION COMPLETE
+                </span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Lessons Learned Section */}
+        {hasLessonsLearned && (
+          <section id="lessons-learned" className="relative border-2 border-[#141413] bg-[#F6F0E0] p-6">
+            <div className="relative flex items-center gap-3 mb-4">
+              <span className="px-2 py-1 bg-[#141413] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+                PHASE 5
+              </span>
+              <h2 className="font-[Anton] text-xl tracking-tight text-[#141413] uppercase">AFTER ACTION REPORT</h2>
+              <div className="flex-1 border-t-2 border-[#141413]" />
+            </div>
+            <div className="prose prose-sm max-w-none text-[#1B1A17]/90">
+              {renderTextBlock(writeup.lessonsLearned)}
+            </div>
+          </section>
+        )}
+      </main>
+
+      {/* FOOTER - Case Closure */}
+      <footer className="relative border-t-4 border-[#BF3511] pt-6 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-px bg-[#141413]" />
+            <span className="font-[Anton] text-xl tracking-widest text-[#BF3511]">CASE CLOSED</span>
+            <span className="w-12 h-px bg-[#141413]" />
+          </div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-[#5C574C]">
+            ARCHIVED BY NATTT TACTICAL DIVISION
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

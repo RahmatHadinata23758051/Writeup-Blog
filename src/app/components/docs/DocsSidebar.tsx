@@ -125,11 +125,17 @@ export function DocsSidebar({
 }: DocsSidebarProps) {
   // Sort order: default 'newest' (newest writeups / events at the top)
   const [sortOrder, setSortOrder] = useState<EventSortOrder>('newest');
+  const [filterQuery, setFilterQuery] = useState('');
 
   const sortedTree = useMemo(() => {
     if (!tree) return [];
-    return sortDocsEvents(tree, sortOrder);
-  }, [tree, sortOrder]);
+    let list = sortDocsEvents(tree, sortOrder);
+    if (filterQuery.trim()) {
+      const q = filterQuery.toLowerCase();
+      list = list.filter((e) => e.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [tree, sortOrder, filterQuery]);
 
   const cycleSortOrder = () => {
     setSortOrder((current) => {
@@ -153,88 +159,148 @@ export function DocsSidebar({
     setExpandedEvents(newExpanded);
   };
 
-  const renderSidebarFooter = () => null;
+  const renderSidebarFooter = () => (
+    <div className="mt-4 pt-3 border-t-2 border-[#141413] bg-[#E6DFCB] p-2.5 text-[11px] font-mono border-2 border-[#141413]" style={{ boxShadow: '2px 2px 0 0 #141413' }}>
+      <div className="text-[10px] uppercase tracking-wider text-[#BF3511] font-bold mb-1">
+        // OPERATIVE PROFILE
+      </div>
+      <div className="flex items-center justify-between font-bold text-[#141413]">
+        <span>TEAM: NATTT</span>
+        <span className="text-[#BF3511]">ID 🇮🇩</span>
+      </div>
+      <div className="text-[#5C574C] text-[10px] mt-0.5">
+        RANK: #1 NAT · #71 WORLD
+      </div>
+    </div>
+  );
 
   if (mode === 'events-only') {
     return (
       <div className="flex flex-col h-full min-h-[calc(100vh-10rem)]">
-        <nav className="space-y-1.5 flex-1">
-          {/* Home button */}
-          <button
-            type="button"
-            onClick={onHomeClick}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${(!activeEventSlug && !isBlogActive && !isPlaygroundActive)
-                ? 'bg-[#141413] text-[#F6F0E0]'
-                : 'text-[#5C574C] hover:text-[#141413] hover:bg-[#E6DFCB]'
+        <nav className="space-y-2 flex-1">
+          {/* Navigation Keycaps */}
+          <div className="grid grid-cols-3 gap-1.5">
+            {/* Home button */}
+            <button
+              type="button"
+              onClick={onHomeClick}
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-center font-mono uppercase tracking-wider text-[11px] font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+                (!activeEventSlug && !isBlogActive && !isPlaygroundActive)
+                  ? 'bg-[#141413] text-[#F6F0E0] translate-x-[1px] translate-y-[1px]'
+                  : 'bg-[#F6F0E0] text-[#141413] hover:bg-[#E6DFCB] active:translate-x-[2px] active:translate-y-[2px]'
               }`}
-          >
-            <FaHome className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
-            <span className="font-mono uppercase tracking-[0.12em] text-[12px] font-bold">Home</span>
-          </button>
+              style={{
+                boxShadow: (!activeEventSlug && !isBlogActive && !isPlaygroundActive)
+                  ? 'none'
+                  : '2px 2px 0 0 #141413',
+              }}
+            >
+              <FaHome className="h-3 w-3 shrink-0" />
+              <span>HOME</span>
+            </button>
 
-          {/* Blog button */}
-          <button
-            type="button"
-            onClick={onBlogClick}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${isBlogActive
-                ? 'bg-[#141413] text-[#F6F0E0]'
-                : 'text-[#5C574C] hover:text-[#141413] hover:bg-[#E6DFCB]'
+            {/* Blog button */}
+            <button
+              type="button"
+              onClick={onBlogClick}
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-center font-mono uppercase tracking-wider text-[11px] font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+                isBlogActive
+                  ? 'bg-[#141413] text-[#F6F0E0] translate-x-[1px] translate-y-[1px]'
+                  : 'bg-[#F6F0E0] text-[#141413] hover:bg-[#E6DFCB] active:translate-x-[2px] active:translate-y-[2px]'
               }`}
-          >
-            <SiBloglovin className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
-            <span className="font-mono uppercase tracking-[0.12em] text-[12px] font-bold">Blog</span>
-          </button>
+              style={{
+                boxShadow: isBlogActive
+                  ? 'none'
+                  : '2px 2px 0 0 #141413',
+              }}
+            >
+              <SiBloglovin className="h-3 w-3 shrink-0" />
+              <span>BLOG</span>
+            </button>
 
-          {/* Playground / Game button */}
-          <button
-            type="button"
-            onClick={onPlaygroundClick}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${isPlaygroundActive
-                ? 'bg-[#141413] text-[#F6F0E0]'
-                : 'text-[#5C574C] hover:text-[#141413] hover:bg-[#E6DFCB]'
+            {/* Playground / Game button */}
+            <button
+              type="button"
+              onClick={onPlaygroundClick}
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-center font-mono uppercase tracking-wider text-[11px] font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+                isPlaygroundActive
+                  ? 'bg-[#141413] text-[#F6F0E0] translate-x-[1px] translate-y-[1px]'
+                  : 'bg-[#F6F0E0] text-[#141413] hover:bg-[#E6DFCB] active:translate-x-[2px] active:translate-y-[2px]'
               }`}
-          >
-            <PiGameControllerFill className="h-4.5 w-4.5 shrink-0 transition-transform group-hover:scale-110" />
-            <span className="font-mono uppercase tracking-[0.12em] text-[12px] font-bold">Game</span>
-          </button>
+              style={{
+                boxShadow: isPlaygroundActive
+                  ? 'none'
+                  : '2px 2px 0 0 #141413',
+              }}
+            >
+              <PiGameControllerFill className="h-3.5 w-3.5 shrink-0" />
+              <span>GAME</span>
+            </button>
+          </div>
 
-          <div className="py-2">
-            <div className="flex items-center justify-between px-3 pb-2 border-b-2 border-[#141413] mb-2">
+          <div className="pt-3 pb-1">
+            {/* Header rule & sort */}
+            <div className="flex items-center justify-between px-1 pb-2 border-b-2 border-[#141413] mb-2">
               <span className="text-[11px] font-bold tracking-[0.12em] text-[#141413] uppercase font-mono">
-                CTF EVENTS ({sortedTree.length})
+                CTF EVENTS ({tree?.length || sortedTree.length})
               </span>
               
-              {/* Ascending / Descending toggle button with React Icon */}
               <button
                 type="button"
                 onClick={cycleSortOrder}
-                title={`Urutan: ${sortOrder === 'newest' ? 'Terbaru di atas (Descending)' : sortOrder === 'oldest' ? 'Terlama di atas (Ascending)' : 'Alfabetis (A-Z)'}. Klik untuk ganti.`}
-                className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono transition-all border border-[#141413]/20 bg-white/40 hover:bg-[#E6DFCB] text-[#141413] cursor-pointer group"
+                title={`Urutan: ${sortOrder === 'newest' ? 'Terbaru di atas' : sortOrder === 'oldest' ? 'Terlama di atas' : 'Alfabetis (A-Z)'}`}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono transition-all border border-[#141413] bg-[#F6F0E0] hover:bg-[#E6DFCB] text-[#141413] cursor-pointer group"
+                style={{ boxShadow: '1.5px 1.5px 0 0 #141413' }}
               >
                 {sortOrder === 'newest' && (
                   <>
-                    <FaSortAmountDown className="h-3 w-3 text-[#BF3511] transition-transform group-hover:scale-110" />
-                    <span className="text-[10px] font-mono font-semibold text-[#BF3511]">Newest</span>
+                    <FaSortAmountDown className="h-2.5 w-2.5 text-[#BF3511]" />
+                    <span className="font-semibold text-[#BF3511]">NEW</span>
                   </>
                 )}
                 {sortOrder === 'oldest' && (
                   <>
-                    <FaSortAmountUpAlt className="h-3 w-3 text-[#141413] transition-transform group-hover:scale-110" />
-                    <span className="text-[10px] font-mono font-semibold text-[#141413]">Oldest</span>
+                    <FaSortAmountUpAlt className="h-2.5 w-2.5 text-[#141413]" />
+                    <span className="font-semibold text-[#141413]">OLD</span>
                   </>
                 )}
                 {sortOrder === 'az' && (
                   <>
-                    <FaSortAlphaDown className="h-3 w-3 text-[#141413] transition-transform group-hover:scale-110" />
-                    <span className="text-[10px] font-mono font-semibold text-[#141413]">A-Z</span>
+                    <FaSortAlphaDown className="h-2.5 w-2.5 text-[#141413]" />
+                    <span className="font-semibold text-[#141413]">A-Z</span>
                   </>
                 )}
               </button>
             </div>
 
+            {/* Quick Filter Box */}
+            <div className="mb-2.5 px-0.5">
+              <div className="relative flex items-center bg-[#F6F0E0] border border-[#141413]">
+                <span className="pl-2 pr-1 font-mono text-[11px] text-[#BF3511] font-bold">&gt;</span>
+                <input
+                  type="text"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  placeholder="filter event..."
+                  className="w-full bg-transparent py-1 pr-2 text-xs font-mono text-[#141413] placeholder-[#5C574C]/60 focus:outline-none"
+                />
+                {filterQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterQuery('')}
+                    className="pr-2 font-mono text-[10px] text-[#5C574C] hover:text-[#141413]"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Event List */}
             <div className="space-y-1">
-              {sortedTree.map((event) => {
+              {sortedTree.map((event, index) => {
                 const isActive = activeEventSlug === event.slug;
+                const indexNum = String(index + 1).padStart(2, '0');
                 return (
                   <button
                     key={event.slug}
@@ -244,21 +310,29 @@ export function DocsSidebar({
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className={`
-                      w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all cursor-pointer group outline-none rounded-sm
+                      w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-all cursor-pointer group outline-none
                       ${isActive
                         ? 'bg-[#141413] text-[#F6F0E0] border-l-4 border-l-[#BF3511] font-semibold'
                         : 'text-[#1B1A17] hover:bg-[#141413] hover:text-[#F6F0E0] focus:bg-[#141413] focus:text-[#F6F0E0] border-l-4 border-l-transparent'
                       }
                     `}
                   >
-                    <span className="shrink-0">{getEventIcon(event.name)}</span>
-                    <span className="truncate font-serif text-[16px]">{event.name}</span>
-                    <span className={`text-[12px] ml-auto font-mono shrink-0 ${isActive ? 'text-[#F6F0E0]/80' : 'text-[#5C574C] group-hover:text-[#F6F0E0]/80 group-focus:text-[#F6F0E0]/80'}`}>
-                      {event.totalWriteups}
+                    <span className={`font-mono text-[11px] shrink-0 ${isActive ? 'text-[#BF3511]' : 'text-[#5C574C] group-hover:text-[#BF3511]'}`}>
+                      {indexNum}.
+                    </span>
+                    <span className="shrink-0 scale-90">{getEventIcon(event.name)}</span>
+                    <span className="truncate font-serif text-[14.5px]">{event.name}</span>
+                    <span className={`text-[11px] ml-auto font-mono shrink-0 ${isActive ? 'text-[#F6F0E0]/80' : 'text-[#5C574C] group-hover:text-[#F6F0E0]/80 group-focus:text-[#F6F0E0]/80'}`}>
+                      [{event.totalWriteups}]
                     </span>
                   </button>
                 );
               })}
+              {sortedTree.length === 0 && (
+                <div className="p-3 text-center font-mono text-xs text-[#5C574C] italic">
+                  No matching events found
+                </div>
+              )}
             </div>
           </div>
         </nav>
@@ -270,78 +344,125 @@ export function DocsSidebar({
   // Fallback tree rendering
   return (
     <div className="flex flex-col h-full min-h-[calc(100vh-10rem)]">
-      <nav className="space-y-1.5 flex-1">
-        {/* Home button */}
-        <button
-          onClick={onHomeClick}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${(!activeEventSlug && !isBlogActive && !isPlaygroundActive)
-            ? 'bg-[#141413] text-[#F6F0E0]'
-            : 'text-[#5C574C] hover:text-[#141413] hover:bg-[#E6DFCB]'
-          }`}
-        >
-          <FaHome className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
-          <span className="font-mono uppercase tracking-[0.12em] text-[12px] font-bold">Home</span>
-        </button>
+      <nav className="space-y-2 flex-1">
+        {/* Navigation Keycaps */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {/* Home button */}
+          <button
+            onClick={onHomeClick}
+            className={`flex items-center justify-center gap-1.5 py-2 px-1 text-center font-mono uppercase tracking-wider text-[11px] font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+              (!activeEventSlug && !isBlogActive && !isPlaygroundActive)
+                ? 'bg-[#141413] text-[#F6F0E0] translate-x-[1px] translate-y-[1px]'
+                : 'bg-[#F6F0E0] text-[#141413] hover:bg-[#E6DFCB] active:translate-x-[2px] active:translate-y-[2px]'
+            }`}
+            style={{
+              boxShadow: (!activeEventSlug && !isBlogActive && !isPlaygroundActive)
+                ? 'none'
+                : '2px 2px 0 0 #141413',
+            }}
+          >
+            <FaHome className="h-3 w-3 shrink-0" />
+            <span>HOME</span>
+          </button>
 
-        {/* Blog button */}
-        <button
-          onClick={onBlogClick}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${isBlogActive
-            ? 'bg-[#141413] text-[#F6F0E0]'
-            : 'text-[#5C574C] hover:text-[#141413] hover:bg-[#E6DFCB]'
-          }`}
-        >
-          <SiBloglovin className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
-          <span className="font-mono uppercase tracking-[0.12em] text-[12px] font-bold">Blog</span>
-        </button>
+          {/* Blog button */}
+          <button
+            onClick={onBlogClick}
+            className={`flex items-center justify-center gap-1.5 py-2 px-1 text-center font-mono uppercase tracking-wider text-[11px] font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+              isBlogActive
+                ? 'bg-[#141413] text-[#F6F0E0] translate-x-[1px] translate-y-[1px]'
+                : 'bg-[#F6F0E0] text-[#141413] hover:bg-[#E6DFCB] active:translate-x-[2px] active:translate-y-[2px]'
+            }`}
+            style={{
+              boxShadow: isBlogActive
+                ? 'none'
+                : '2px 2px 0 0 #141413',
+            }}
+          >
+            <SiBloglovin className="h-3 w-3 shrink-0" />
+            <span>BLOG</span>
+          </button>
 
-        {/* Playground / Game button */}
-        <button
-          onClick={onPlaygroundClick}
-          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition-colors cursor-pointer group ${isPlaygroundActive
-            ? 'bg-[#141413] text-[#F6F0E0]'
-            : 'text-[#5C574C] hover:text-[#141413] hover:bg-[#E6DFCB]'
-          }`}
-        >
-          <PiGameControllerFill className="h-4.5 w-4.5 shrink-0 transition-transform group-hover:scale-110" />
-          <span className="font-mono uppercase tracking-[0.12em] text-[12px] font-bold">Game</span>
-        </button>
+          {/* Playground / Game button */}
+          <button
+            onClick={onPlaygroundClick}
+            className={`flex items-center justify-center gap-1.5 py-2 px-1 text-center font-mono uppercase tracking-wider text-[11px] font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+              isPlaygroundActive
+                ? 'bg-[#141413] text-[#F6F0E0] translate-x-[1px] translate-y-[1px]'
+                : 'bg-[#F6F0E0] text-[#141413] hover:bg-[#E6DFCB] active:translate-x-[2px] active:translate-y-[2px]'
+            }`}
+            style={{
+              boxShadow: isPlaygroundActive
+                ? 'none'
+                : '2px 2px 0 0 #141413',
+            }}
+          >
+            <PiGameControllerFill className="h-3.5 w-3.5 shrink-0" />
+            <span>GAME</span>
+          </button>
+        </div>
 
-        <div className="py-2">
-          <div className="flex items-center justify-between px-3 pb-2 border-b-2 border-[#141413] mb-2">
+        <div className="pt-3 pb-1">
+          {/* Header rule & sort */}
+          <div className="flex items-center justify-between px-1 pb-2 border-b-2 border-[#141413] mb-2">
             <span className="text-[11px] font-bold tracking-[0.12em] text-[#141413] uppercase font-mono">
-              CTF EVENTS ({sortedTree.length})
+              CTF EVENTS ({tree?.length || sortedTree.length})
             </span>
             <button
               type="button"
               onClick={cycleSortOrder}
-              title={`Urutan: ${sortOrder === 'newest' ? 'Terbaru di atas (Descending)' : sortOrder === 'oldest' ? 'Terlama di atas (Ascending)' : 'Alfabetis (A-Z)'}. Klik untuk ganti.`}
-              className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono transition-all border border-[#141413]/20 bg-white/40 hover:bg-[#E6DFCB] text-[#141413] cursor-pointer group"
+              title={`Urutan: ${sortOrder === 'newest' ? 'Terbaru di atas' : sortOrder === 'oldest' ? 'Terlama di atas' : 'Alfabetis (A-Z)'}`}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono transition-all border border-[#141413] bg-[#F6F0E0] hover:bg-[#E6DFCB] text-[#141413] cursor-pointer group"
+              style={{ boxShadow: '1.5px 1.5px 0 0 #141413' }}
             >
               {sortOrder === 'newest' && (
                 <>
-                  <FaSortAmountDown className="h-3 w-3 text-[#BF3511] transition-transform group-hover:scale-110" />
-                  <span className="text-[10px] font-mono font-semibold text-[#BF3511]">Newest</span>
+                  <FaSortAmountDown className="h-2.5 w-2.5 text-[#BF3511]" />
+                  <span className="font-semibold text-[#BF3511]">NEW</span>
                 </>
               )}
               {sortOrder === 'oldest' && (
                 <>
-                  <FaSortAmountUpAlt className="h-3 w-3 text-[#141413] transition-transform group-hover:scale-110" />
-                  <span className="text-[10px] font-mono font-semibold text-[#141413]">Oldest</span>
+                  <FaSortAmountUpAlt className="h-2.5 w-2.5 text-[#141413]" />
+                  <span className="font-semibold text-[#141413]">OLD</span>
                 </>
               )}
               {sortOrder === 'az' && (
                 <>
-                  <FaSortAlphaDown className="h-3 w-3 text-[#141413] transition-transform group-hover:scale-110" />
-                  <span className="text-[10px] font-mono font-semibold text-[#141413]">A-Z</span>
+                  <FaSortAlphaDown className="h-2.5 w-2.5 text-[#141413]" />
+                  <span className="font-semibold text-[#141413]">A-Z</span>
                 </>
               )}
             </button>
           </div>
 
+          {/* Quick Filter Box */}
+          <div className="mb-2.5 px-0.5">
+            <div className="relative flex items-center bg-[#F6F0E0] border border-[#141413]">
+              <span className="pl-2 pr-1 font-mono text-[11px] text-[#BF3511] font-bold">&gt;</span>
+              <input
+                type="text"
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                placeholder="filter event..."
+                className="w-full bg-transparent py-1 pr-2 text-xs font-mono text-[#141413] placeholder-[#5C574C]/60 focus:outline-none"
+              />
+              {filterQuery && (
+                <button
+                  type="button"
+                  onClick={() => setFilterQuery('')}
+                  className="pr-2 font-mono text-[10px] text-[#5C574C] hover:text-[#141413]"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Events */}
-          {sortedTree.map((event) => {
+          {sortedTree.map((event, index) => {
             const isActive = activeEventSlug === event.slug;
+            const indexNum = String(index + 1).padStart(2, '0');
             return (
               <div key={event.slug} className="space-y-1">
                 <div className="flex items-center gap-0">
@@ -351,7 +472,7 @@ export function DocsSidebar({
                       toggleEvent(event.slug);
                     }}
                     aria-expanded={expandedEvents.has(event.slug)}
-                    className="rounded p-2 text-[#5C574C] hover:bg-[#E6DFCB] hover:text-[#141413] transition-colors cursor-pointer"
+                    className="p-1 text-[#5C574C] hover:bg-[#E6DFCB] hover:text-[#141413] transition-colors cursor-pointer"
                     title="Expand/collapse"
                   >
                     <span className={`inline-block text-xs transition-transform duration-200 ${expandedEvents.has(event.slug) ? 'rotate-90' : ''}`}>
@@ -367,19 +488,22 @@ export function DocsSidebar({
                       onEventClick?.(event.slug);
                     }}
                     className={`
-                      flex-1 px-3 py-2 text-left transition-all flex items-center justify-between cursor-pointer group outline-none rounded-sm
+                      flex-1 px-2.5 py-1.5 text-left transition-all flex items-center justify-between cursor-pointer group outline-none
                       ${isActive
                         ? 'bg-[#141413] text-[#F6F0E0] border-l-4 border-l-[#BF3511] font-semibold'
                         : 'text-[#1B1A17] hover:bg-[#141413] hover:text-[#F6F0E0] focus:bg-[#141413] focus:text-[#F6F0E0] border-l-4 border-l-transparent'
                       }
                     `}
                   >
-                    <span className="flex items-center gap-2">
-                      <span className="shrink-0">{getEventIcon(event.name)}</span>
-                      <span className="truncate font-serif text-[16px]">{event.name}</span>
+                    <span className="flex items-center gap-2 truncate">
+                      <span className={`font-mono text-[11px] shrink-0 ${isActive ? 'text-[#BF3511]' : 'text-[#5C574C] group-hover:text-[#BF3511]'}`}>
+                        {indexNum}.
+                      </span>
+                      <span className="shrink-0 scale-90">{getEventIcon(event.name)}</span>
+                      <span className="truncate font-serif text-[14.5px]">{event.name}</span>
                     </span>
-                    <span className={`text-[12px] font-mono shrink-0 ${isActive ? 'text-[#F6F0E0]/80' : 'text-[#5C574C] group-hover:text-[#F6F0E0]/80 group-focus:text-[#F6F0E0]/80'}`}>
-                      {event.totalWriteups}
+                    <span className={`text-[11px] font-mono shrink-0 ml-1 ${isActive ? 'text-[#F6F0E0]/80' : 'text-[#5C574C] group-hover:text-[#F6F0E0]/80 group-focus:text-[#F6F0E0]/80'}`}>
+                      [{event.totalWriteups}]
                     </span>
                   </button>
                 </div>
