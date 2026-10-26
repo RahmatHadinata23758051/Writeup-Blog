@@ -2755,12 +2755,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nattts.vercel.app/writeup/hitcon-crypto-fastcoll</loc>
-    <lastmod>2026-10-25</lastmod>
-    <changefreq>never</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://nattts.vercel.app/writeup/hitcon-crypto-oct</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>never</changefreq>
@@ -2792,12 +2786,6 @@
   </url>
   <url>
     <loc>https://nattts.vercel.app/writeup/hitcon-misc-research</loc>
-    <lastmod>2026-10-25</lastmod>
-    <changefreq>never</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://nattts.vercel.app/writeup/hitcon-osint-willbethere</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
