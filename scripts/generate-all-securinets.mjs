@@ -305,7 +305,7 @@ Frontend memiliki prototype pollution yang bisa mengarahkan permintaan autentika
   // 3. New Calculator
   {
     id: "securinets-crypto-newcalculator",
-    title: "New Calculator — Timing Side Channel on 8-bit Coefficient",
+    title: "New Calculator",
     category: "Crypto",
     difficulty: "Hard",
     points: 350,
@@ -313,7 +313,7 @@ Frontend memiliki prototype pollution yang bisa mengarahkan permintaan autentika
     author: "Nattt",
     ctfName: "Securinets CTF 2026",
     tags: ["Crypto", "Timing Side Channel", "Algebraic Reconstruction", "Group Testing"],
-    description: "Eksploitasi timing side-channel pada arbitrary-precision integer arithmetic untuk merekonstruksi koefisien kuadratik rahasia 8-bit sepanjang 16 ronde berturut-turut tanpa melanggar batasan submit server.",
+    description: "Eksploitasi timing side-channel pada arbitrary-precision integer arithmetic untuk merekonstruksi koefisien kuadratik rahasia 8-bit (16 ronde).",
     problemDescription: `## Overview
 New Calculator provides two arrays, \`x\` and \`y\`, related by a secret quadratic function:
 \\[ y_i = ax_i^2 \\]
@@ -343,7 +343,7 @@ Our objective is to recover \`a\` across 16 consecutive rounds without exhaustin
   // 4. Old Calculator
   {
     id: "securinets-crypto-oldcalculator",
-    title: "Old Calculator — Timing Side Channel on Affine Function",
+    title: "Old Calculator",
     category: "Crypto",
     difficulty: "Hard",
     points: 350,
@@ -351,7 +351,7 @@ Our objective is to recover \`a\` across 16 consecutive rounds without exhaustin
     author: "Nattt",
     ctfName: "Securinets CTF 2026",
     tags: ["Crypto", "Timing Side Channel", "Affine Function", "Group Testing"],
-    description: "Pemulihan parameter fungsi affine rahasia F(x) = ax + b melalui timing side-channel aritmatika presisi tinggi dan binary group testing sepanjang 16 ronde berturut-turut.",
+    description: "Pemulihan parameter fungsi affine rahasia F(x) = ax + b melalui timing side-channel aritmatika presisi tinggi dan binary group testing.",
     problemDescription: `## Overview
 The challenge provides a JSON-based calculator with two arrays, \`x\` and \`y\`, each containing 100 elements. It supports basic arithmetic operations, including addition, multiplication, and operations involving constants.
 
@@ -381,7 +381,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 5. DumPwn
   {
     id: "securinets-forensics-dumpwn",
-    title: "DumPwn — Windows Crash Dump Analysis",
+    title: "DumPwn",
     category: "Forensics",
     difficulty: "Medium",
     points: 250,
@@ -414,7 +414,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 6. Silent Tone
   {
     id: "securinets-forensics-silenttone",
-    title: "Silent Tone — SDR/QPSK Signal Analysis",
+    title: "Silent Tone",
     category: "Forensics",
     difficulty: "Hard",
     points: 400,
@@ -447,7 +447,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 7. A Whisper in the Air
   {
     id: "securinets-hardware-awhisperintheair",
-    title: "A Whisper in the Air (Dead-Keys) — BLE Keyboard Sniffing",
+    title: "A Whisper in the Air",
     category: "Hardware",
     difficulty: "Hard",
     points: 400,
@@ -485,7 +485,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 8. Gelatino
   {
     id: "securinets-hardware-gelatino",
-    title: "Gelatino — Disk Image, LUKS2, EFI Loader",
+    title: "Gelatino",
     category: "Hardware",
     difficulty: "Medium",
     points: 300,
@@ -518,7 +518,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 9. Backdrop
   {
     id: "securinets-mobile-backdrop",
-    title: "Backdrop — Flutter App, AES-GCM, Dart AOT, RLE, SplitMix64",
+    title: "Backdrop",
     category: "Mobile",
     difficulty: "Hard",
     points: 450,
@@ -551,7 +551,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 10. House of Ekko
   {
     id: "securinets-pwn-houseofekko",
-    title: "House of Ekko — Cross-Bin Heap Corruption to FSOP (glibc 2.43)",
+    title: "House of Ekko",
     category: "Pwn",
     difficulty: "Hard",
     points: 500,
@@ -584,7 +584,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 11. Over?flow
   {
     id: "securinets-pwn-overflow",
-    title: "Over?flow — Negative Length memcpy Wrapper",
+    title: "Over?flow",
     category: "Pwn",
     difficulty: "Medium",
     points: 300,
@@ -617,7 +617,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 12. Bitflip
   {
     id: "securinets-pwn-bitflip",
-    title: "Bitflip — Single Bit Flip via /proc/self/mem to SROP",
+    title: "Bitflip",
     category: "Pwn",
     difficulty: "Hard",
     points: 400,
@@ -650,7 +650,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 13. Crust
   {
     id: "securinets-pwn-crust",
-    title: "Crust — Use-After-Free in Shadow Registry, Vtable Confusion",
+    title: "Crust",
     category: "Pwn",
     difficulty: "Medium",
     points: 350,
@@ -683,7 +683,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 14. Encrypt
   {
     id: "securinets-reverse-encrypt",
-    title: "Encrypt — Multi-layer PE Encryption Pipeline Reversal",
+    title: "Encrypt",
     category: "Reverse",
     difficulty: "Hard",
     points: 500,
@@ -716,7 +716,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 15. letmethink
   {
     id: "securinets-reverse-letmethink",
-    title: "letmethink — Go Binary with Custom VM",
+    title: "letmethink",
     category: "Reverse",
     difficulty: "Hard",
     points: 450,
@@ -759,7 +759,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 16. Revenant
   {
     id: "securinets-reverse-revenant",
-    title: "Revenant — Two-Stage ELF, Vulkan Shader Decryption, Obfuscated Validator",
+    title: "Revenant",
     category: "Reverse",
     difficulty: "Hard",
     points: 500,
@@ -792,7 +792,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
   // 17. Nyoom
   {
     id: "securinets-web-nyoom",
-    title: "Nyoom — Breaking CSP with CSS and ESI",
+    title: "Nyoom",
     category: "Web",
     difficulty: "Hard",
     points: 450,
@@ -800,7 +800,7 @@ To obtain the flag, we must correctly answer **16 consecutive rounds**.`,
     author: "Nattt",
     ctfName: "Securinets CTF 2026",
     tags: ["Web", "CSP", "CSS Injection", "ESI", "Varnish", "Admin Bot", "Nonce Leak"],
-    description: "Bypass CSP berbasis nonce dan pembobolan session admin HttpOnly di balik Varnish reverse proxy. Rantai 4 eksploitasi: Stored HTML injection pada bio profil, ekstraksi 32-karakter CSP nonce via CSS attribute selectors, penundaan race condition via pending stylesheet gate, dan Edge Side Includes (ESI) injection untuk mengekstrak /fragments/session-info.",
+    description: "Bypass CSP berbasis nonce dan pembobolan session admin HttpOnly di balik Varnish. Rantai: Stored HTML injection, CSS nonce leak, race condition gate, ESI session disclosure.",
     problemDescription: nyoom_md.split('## Exploit chain')[0].trim(),
     tools: ["Python 3", "Varnish ESI", "CSS Injection", "CSP Nonce Leak", "HTTP Server Callback"],
     analysis: nyoom_md,

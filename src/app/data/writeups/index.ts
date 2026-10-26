@@ -16,7 +16,9 @@ import { flagyardWriteups } from "./events/flagyard";
 import { fortidWriteups } from "./events/fortid";
 import { gpnctf2026Writeups } from "./events/gpnctf_2026";
 import { h7texWriteups } from "./events/h7tex";
+import { hacklu2026Writeups } from "./events/hacklu2026";
 import { hacktheboxWriteups } from "./events/hackthebox";
+import { hitcon2026Writeups } from "./events/hitcon2026";
 import { incognitoWriteups } from "./events/incognito";
 import { intechfestWriteups } from "./events/intechfest";
 import { jerseyctfWriteups } from "./events/jerseyctf";
@@ -70,7 +72,9 @@ export const writeups: WriteUp[] = [
   ...fortidWriteups,
   ...gpnctf2026Writeups,
   ...h7texWriteups,
+  ...hacklu2026Writeups,
   ...hacktheboxWriteups,
+  ...hitcon2026Writeups,
   ...incognitoWriteups,
   ...intechfestWriteups,
   ...jerseyctfWriteups,

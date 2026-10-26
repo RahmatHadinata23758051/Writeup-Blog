@@ -2,13 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://nattts.vercel.app/</loc>
-    <lastmod>2026-10-19</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://nattts.vercel.app/blog</loc>
-    <lastmod>2026-10-19</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -157,8 +157,20 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://nattts.vercel.app/event/hacklu-ctf-2026</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://nattts.vercel.app/event/hackthebox</loc>
     <lastmod>2026-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/event/hitcon-ctf-2026</loc>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1046,7 +1058,7 @@
   </url>
   <url>
     <loc>https://nattts.vercel.app/writeup/boroctf-web-borogpt</loc>
-    <lastmod>2026-10-19</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
@@ -2575,8 +2587,248 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-ad-ma</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-ad-technicaldebt</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-crypto-lauschangriff</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-crypto-linkedinspirator</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-challengedeployment</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-challengedeployment2</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-doppelflip</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-john</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-kurl</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-remotedj</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-singlepane</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-unreel</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-misc-uushell</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-pwn-agilekv</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-pwn-chip</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-pwn-declassifier</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-pwn-nuclear</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-pwn-turbomalloc</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-pwn-v67</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-pwn-xtensableechoserver</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-rev-flagcheck</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-rev-il2flag</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-rev-licensevalidationsuite</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-rev-nonogram</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-rev-selene</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-rev-vaulty</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hacklu-rev-verymildhidden</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://nattts.vercel.app/writeup/hackthebox-misc-madmath</loc>
     <lastmod>2026-03-20</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-crypto-fastcoll</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-crypto-oct</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-crypto-voteme</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-misc-flagpng</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-misc-litter</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-misc-mathclipse</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-misc-research</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-osint-willbethere</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-pwn-bookofeclipse</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-pwn-myiot</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-pwn-v8ackup</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-rev-lazymaze</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nattts.vercel.app/writeup/hitcon-rev-spitpm</loc>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
