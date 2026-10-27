@@ -106,10 +106,15 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
           <h1 className="font-[Anton] text-[2.5rem] sm:text-[3.5rem] tracking-tighter text-[#141413] uppercase leading-tight">
             {writeup.title}
           </h1>
-          {(hasProblemDescription || hasDescription) && (
-            <p className="font-serif text-lg text-[#1B1A17]/80 leading-relaxed max-w-3xl">
-              {hasProblemDescription ? writeup.problemDescription : writeup.description}
-            </p>
+          {hasDescription && hasProblemDescription && writeup.description !== writeup.problemDescription ? (
+            <div className="space-y-3 text-lg font-serif text-[#1B1A17]/80 leading-relaxed max-w-3xl">
+              <RichText text={normalizeToString(writeup.description)} />
+              <RichText text={normalizeToString(writeup.problemDescription)} />
+            </div>
+          ) : (hasProblemDescription || hasDescription) && (
+            <div className="text-lg font-serif text-[#1B1A17]/80 leading-relaxed max-w-3xl">
+              <RichText text={hasProblemDescription ? normalizeToString(writeup.problemDescription) : normalizeToString(writeup.description)} />
+            </div>
           )}
         </div>
 

@@ -1149,11 +1149,7 @@ Ada dua gambar yang dipakai untuk analisis dan presentasi.
 
 ### 1. Semua glyph hasil ekstraksi
 
-File gambar:
-
-\`\`\`text
-finder_icon_glyphs.png
-\`\`\`
+![All extracted glyphs 7×7](/assets/writeups/hitcon2026/misc-research/finder_icon_glyphs.png)
 
 Gambar ini menampilkan semua 23 folder sebagai glyph 7×7. Setiap panel mewakili satu folder (\`000\`–\`022\`) dan satu karakter.
 
@@ -1165,11 +1161,7 @@ Gambar ini menampilkan semua 23 folder sebagai glyph 7×7. Setiap panel mewakili
 
 ### 2. Perbandingan raw vs transposed
 
-File gambar:
-
-\`\`\`text
-finder_raw_vs_transposed.png
-\`\`\`
+![Raw vs transposed comparison](/assets/writeups/hitcon2026/misc-research/finder_raw_vs_transposed.png)
 
 Gambar ini menunjukkan kenapa transformasi transpose dibutuhkan.
 
@@ -1380,6 +1372,8 @@ Wrong.
 \`\`\`
 
 \`flag.png\` adalah PNG valid, tetapi juga mempunyai bit executable dan bisa dieksekusi. Ini tidak normal pada kernel Linux standar. Gambar terlihat seperti noise acak; usaha LSB/XOR biasa tidak menghasilkan hasil berguna.
+
+![flag.png preview](/assets/writeups/hitcon2026/misc-flagpng/preview_95x95.png)
 
 Dari \`/proc/modules\`, ada modul eksternal:
 
@@ -1701,6 +1695,10 @@ The decrypted PNG:
 - Contains, in order: \`IHDR\`, \`sRGB\`, \`eXIf\`, \`iTXt\`, 99×\`IDAT\`, \`IEND\`.
 - Has SHA-256 \`32a0cdfbb2d6676f759e9624b8e3ca558faa7c49eaff764700415a0bbc277207\`.
 - Visually displays four pudding images and the handwritten flag at the bottom: \`hitcon{too_many_types_of_pudding}\`.
+
+![Recovered PNG with flag](/assets/writeups/hitcon2026/misc-litter/flag.recovered.png)
+
+![Flag text zoom](/assets/writeups/hitcon2026/misc-litter/flag_text_zoom.png)
 
 The recovered key is confirmed cryptographically by the **full GCM tag**, not just the statistical IDAT-leak model or a guessed text flag.
 

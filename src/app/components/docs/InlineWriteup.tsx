@@ -148,7 +148,22 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
                 <div className="flex-1 border-t border-[#141413]/20" />
               </div>
 
-              {(hasProblemDescription || hasDescription) && (
+              {hasDescription && hasProblemDescription && writeup.description !== writeup.problemDescription ? (
+                <div className="space-y-3 ml-8">
+                  <div className="space-y-1">
+                    <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">MISSION INTEL</p>
+                    <div className="text-sm font-serif text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20">
+                      <RichText text={normalizeToString(writeup.description)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">TARGET SPECIFICATION</p>
+                    <div className="text-sm font-serif text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20">
+                      <RichText text={normalizeToString(writeup.problemDescription)} />
+                    </div>
+                  </div>
+                </div>
+              ) : (hasProblemDescription || hasDescription) && (
                 <div className="space-y-2 ml-8">
                   <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">TARGET DESCRIPTION</p>
                   <div className="text-sm font-serif text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20 rounded-none">

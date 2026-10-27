@@ -13,6 +13,8 @@ interface DocsHomePageProps {
   ctftimeProfile?: CtftimeTeamProfile;
 }
 
+const EVENTS_PER_PAGE = 10;
+
 const EVENT_PLACES: Record<string, string> = {
   INTECHFEST: 'Participant',
   'VuwCTF 2025': 'Participant',
@@ -153,9 +155,11 @@ export function DocsHomePage({
   const trackRef = useRef<HTMLDivElement>(null);
   const marqueeAnimRef = useRef<Animation | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('ls');
+  const [eventsExpanded, setEventsExpanded] = useState(false);
 
   /* ---------- data ---------- */
   const sortedEvents = [...tree].sort((a, b) => (b.latestDate || '').localeCompare(a.latestDate || ''));
+  const displayEvents = eventsExpanded ? sortedEvents : sortedEvents.slice(0, EVENTS_PER_PAGE);
   const latestEvents = sortedEvents.slice(0, 3);
   const latestEventName = sortedEvents[0]?.name || 'HITCON CTF 2026';
   const eventCount = tree.length;
@@ -483,7 +487,7 @@ export function DocsHomePage({
           <Reveal className="hp-table-head">
             <h2 className="hp-display hp-h2">CTF Performance &amp; Writeups</h2>
             <span className="hp-count">
-              {tree.length} events · {totalWriteups} writeups
+              {eventsExpanded ? `All ${tree.length} events` : `Showing ${Math.min(EVENTS_PER_PAGE, tree.length)} of ${tree.length} events`} · {totalWriteups} writeups
             </span>
           </Reveal>
 
@@ -501,7 +505,7 @@ export function DocsHomePage({
                 </tr>
               </thead>
               <tbody>
-                {tree.map((event, rowIndex) => {
+                {displayEvents.map((event, rowIndex) => {
                   const ctftimeEvent = ctftimeProfile
                     ? findCtftimeEvent(event.name, ctftimeProfile)
                     : undefined;
@@ -565,6 +569,26 @@ export function DocsHomePage({
               </tbody>
             </table>
           </Reveal>
+
+          {tree.length > EVENTS_PER_PAGE && (
+            <div className="flex justify-center mt-6">
+              <button
+                type="button"
+                onClick={() => setEventsExpanded((prev) => !prev)}
+                className="group relative inline-flex items-center gap-3 px-6 py-3 bg-[#FFFDF5] text-[#141413] border-2 border-[#141413] font-mono text-xs uppercase tracking-widest font-bold shadow-[3px_3px_0_0_#141413] hover:shadow-[5px_5px_0_0_#141413] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_0_#141413] transition-all cursor-pointer"
+              >
+                <span className="w-2 h-2 bg-[#BF3511] transition-transform duration-200 group-hover:scale-125" />
+                <span>
+                  {eventsExpanded
+                    ? '[-] COLLAPSE ARCHIVE (SHOW 10 RECENT)'
+                    : `[+] EXTEND ARCHIVE — SHOW ALL ${tree.length} EVENTS`}
+                </span>
+                <span className="text-[10px] text-[#BF3511] transition-transform duration-200">
+                  {eventsExpanded ? '▲' : '▼'}
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
