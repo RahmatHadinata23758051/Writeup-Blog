@@ -217,9 +217,9 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
   let currentWriteup: WriteupItem | null = null;
 
   displayItems.forEach((item) => {
-    const isCategory = item.depth === 1 || item.id.startsWith('category-');
-    const isWriteup = item.depth === 2 || item.id.startsWith('writeup-');
-    const isSection = item.depth === 3;
+    const isCategory = item.depth === 1 || (!item.depth && item.id.startsWith('category-'));
+    const isWriteup = item.depth === 2 || (item.depth !== 3 && item.id.startsWith('writeup-'));
+    const isSection = item.depth === 3 || item.id.startsWith('section-');
 
     if (isCategory) {
       // Save previous category

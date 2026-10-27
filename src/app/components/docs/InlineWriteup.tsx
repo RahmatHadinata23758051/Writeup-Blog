@@ -68,13 +68,13 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
   // Section IDs for TOC tracking
   const writeupSlug = writeup.id.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const sectionIds = {
-    briefing: `writeup-${writeupSlug}-briefing`,
-    analysis: `writeup-${writeupSlug}-analysis`,
-    math: `writeup-${writeupSlug}-math`,
-    solution: `writeup-${writeupSlug}-solution`,
-    terminal: `writeup-${writeupSlug}-terminal`,
-    lessons: `writeup-${writeupSlug}-lessons`,
-    flag: `writeup-${writeupSlug}-flag`,
+    briefing: `section-${writeupSlug}-briefing`,
+    analysis: `section-${writeupSlug}-analysis`,
+    math: `section-${writeupSlug}-math`,
+    solution: `section-${writeupSlug}-solution`,
+    terminal: `section-${writeupSlug}-terminal`,
+    lessons: `section-${writeupSlug}-lessons`,
+    flag: `section-${writeupSlug}-flag`,
   };
 
   // Sub-sections available for this writeup

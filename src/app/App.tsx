@@ -77,14 +77,15 @@ function getWriteupTocItems(writeup: typeof writeups[0]) {
 // Must match section IDs in InlineWriteup.tsx
 function getInlineWriteupSections(writeup: typeof writeups[0]) {
   const writeupSlug = writeup.id.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  // Use 'section-' prefix to avoid collision with writeup IDs in DocsToc parsing
   const sectionIds = {
-    briefing: `writeup-${writeupSlug}-briefing`,
-    analysis: `writeup-${writeupSlug}-analysis`,
-    math: `writeup-${writeupSlug}-math`,
-    solution: `writeup-${writeupSlug}-solution`,
-    terminal: `writeup-${writeupSlug}-terminal`,
-    lessons: `writeup-${writeupSlug}-lessons`,
-    flag: `writeup-${writeupSlug}-flag`,
+    briefing: `section-${writeupSlug}-briefing`,
+    analysis: `section-${writeupSlug}-analysis`,
+    math: `section-${writeupSlug}-math`,
+    solution: `section-${writeupSlug}-solution`,
+    terminal: `section-${writeupSlug}-terminal`,
+    lessons: `section-${writeupSlug}-lessons`,
+    flag: `section-${writeupSlug}-flag`,
   };
 
   const sections: Array<{ id: string; label: string; depth?: number }> = [];
