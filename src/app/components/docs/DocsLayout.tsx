@@ -40,6 +40,8 @@ export function DocsLayout({
     }
   };
 
+  const hasToc = toc && toc.length > 0;
+
   return (
     <div className="flex h-screen flex-col bg-[var(--docs-bg)] text-[var(--docs-text)]">
       {/* Fixed Topbar */}
@@ -61,15 +63,17 @@ export function DocsLayout({
         )}
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content Area - pure flexbox with min-w-0 */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
+        {/* Left Sidebar - static on desktop, fixed overlay on mobile */}
         <aside
           className={`
-            hidden w-64 flex-shrink-0 border-r-2 border-[var(--hp-ink,#141413)] bg-[#EFE9D8]
+            w-64 flex-shrink-0 border-r-2 border-[var(--hp-ink,#141413)] bg-[#EFE9D8]
             overflow-y-auto relative z-20
-            lg:block
-            ${sidebarOpen ? 'fixed inset-y-16 left-0 z-40 w-72 block shadow-2xl' : ''}
+            ${sidebarOpen 
+              ? 'fixed inset-y-16 left-0 z-40 w-72 block shadow-2xl' 
+              : 'hidden lg:block'
+            }
           `}
         >
           <nav className="space-y-1 p-4" onClick={() => { if (window.innerWidth < 1024) setSidebarOpen(false); }}>
@@ -85,18 +89,18 @@ export function DocsLayout({
           />
         )}
 
-        {/* Main Content */}
+        {/* Main Content - min-w-0 prevents flex child from expanding beyond container */}
         <main
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto bg-[var(--docs-bg)]"
+          className="flex-1 overflow-y-auto bg-[var(--docs-bg)] min-w-0"
         >
           {fullWidth ? (
             <div className="w-full">
               {children}
             </div>
           ) : (
-            <div className={`mx-auto px-6 py-8 transition-all duration-300 ${
-              toc && toc.length > 0 
+            <div className={`mx-auto px-6 py-8 ${
+              hasToc 
                 ? 'max-w-4xl xl:max-w-5xl' 
                 : 'max-w-4xl'
             }`}>
@@ -106,7 +110,7 @@ export function DocsLayout({
         </main>
 
         {/* Right TOC Sidebar */}
-        {toc && toc.length > 0 && (
+        {hasToc && (
           <aside className="hidden w-72 xl:w-80 flex-shrink-0 border-l border-[var(--docs-border-soft)] bg-[var(--docs-bg)] lg:block overflow-y-auto">
             <div className="p-6">
               <DocsToc items={toc} variant={tocVariant} />
