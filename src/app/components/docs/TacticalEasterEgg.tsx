@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Coffee, Skull, Bot, Sparkles, Flag, Compass, Flame, TrendingDown } from 'lucide-react';
+import { Coffee, Skull, Bot, Flag, Compass, Flame, TrendingDown } from 'lucide-react';
 
 interface TacticalEasterEggProps {
   onNavigateToGame: () => void;
@@ -99,7 +99,7 @@ const ROAST_DIALOGUES: EggDialogue[] = [
     badgeBg: '#BF3511',
     isGameAction: true,
     reaction: 'Initiating Breach Protocol... ⚡',
-    icon: <Sparkles className="w-3.5 h-3.5" />,
+    icon: null,
   },
 ];
 
@@ -296,10 +296,9 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
                     </p>
 
                     {dialogueToShow.isGameAction ? (
-                      <div className="flex items-center gap-1.5 bg-[#BF3511] text-[#FFFDF5] px-2 py-0.5 rounded font-mono text-[10.5px] font-black uppercase tracking-wider shadow-inner group-hover:bg-[#d63d15] transition-colors">
-                        <Sparkles className="w-3.5 h-3.5" />
+                      <div className="flex items-center justify-between bg-[#BF3511] text-[#FFFDF5] px-2.5 py-1 rounded font-mono text-[10.5px] font-black uppercase tracking-wider shadow-inner group-hover:bg-[#d63d15] transition-colors">
                         <span>KLIK UNTUK MAIN GAME</span>
-                        <Sparkles className="w-3 h-3 ml-auto animate-pulse" />
+                        <span className="font-mono text-[10px] opacity-80">►</span>
                       </div>
                     ) : (
                       <div className="text-[9.5px] font-mono text-[#5C574C] flex items-center gap-1 group-hover:text-[#BF3511] transition-colors">

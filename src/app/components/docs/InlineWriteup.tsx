@@ -121,6 +121,37 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
             <h3 className="font-['Anton'] text-xl sm:text-2xl text-[#141413] uppercase tracking-wider leading-tight">
               {writeup.title}
             </h3>
+
+            {/* ===== DOSSIER INDEX - Section list in header ===== */}
+            {availableSections.length > 0 && (
+              <nav className="mt-3 pt-3 border-t border-[#141413]/10" aria-label="Dossier sections">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-[#BF3511] mb-2">// DOSSIER INDEX</p>
+                <ol className="flex flex-wrap items-center gap-1.5" role="list">
+                  {availableSections.map((section, idx) => (
+                    <li key={section.id} className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          document.getElementById(section.id)?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          });
+                        }}
+                        className="flex items-center gap-1 px-2.5 py-1 bg-[#EFE9D8] text-[#141413] font-mono text-[9px] uppercase tracking-wider border border-[#141413]/30 hover:bg-[#BF3511] hover:text-[#FFFDF5] hover:border-[#BF3511] transition-all duration-150 shadow-[1px_1px_0_0_#141413] whitespace-nowrap"
+                        title={section.label}
+                        aria-label={`Go to ${section.label}`}
+                      >
+                        <section.icon className="w-3 h-3" />
+                        <span>{idx + 1}. {section.label}</span>
+                      </button>
+                      {idx < availableSections.length - 1 && (
+                        <span className="text-[#5C574C] font-mono text-[10px]">/</span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )}
           </div>
 
           {/* Badges - Right side */}

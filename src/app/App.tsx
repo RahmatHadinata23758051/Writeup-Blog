@@ -37,7 +37,7 @@ if (import.meta.env.DEV) {
 // Build the static documentation tree once
 const docsTree = buildDocsTree(writeups);
 
-// ===== HELPER FUNCTION FOR WRITEUP TOC =====
+// ===== HELPER FUNCTION FOR WRITEUP TOC (standalone writeup page) =====
 function getWriteupTocItems(writeup: typeof writeups[0]) {
   const items: Array<{ id: string; label: string; depth?: number }> = [];
 
@@ -71,6 +71,57 @@ function getWriteupTocItems(writeup: typeof writeups[0]) {
   }
 
   return items;
+}
+
+// ===== HELPER FUNCTION FOR INLINE WRITEUP SECTIONS (event page) =====
+// Must match section IDs in InlineWriteup.tsx
+function getInlineWriteupSections(writeup: typeof writeups[0]) {
+  const writeupSlug = writeup.id.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const sectionIds = {
+    briefing: `writeup-${writeupSlug}-briefing`,
+    analysis: `writeup-${writeupSlug}-analysis`,
+    math: `writeup-${writeupSlug}-math`,
+    solution: `writeup-${writeupSlug}-solution`,
+    terminal: `writeup-${writeupSlug}-terminal`,
+    lessons: `writeup-${writeupSlug}-lessons`,
+    flag: `writeup-${writeupSlug}-flag`,
+  };
+
+  const sections: Array<{ id: string; label: string; depth?: number }> = [];
+
+  const hasProblemDescription = typeof writeup.problemDescription === 'string' && writeup.problemDescription.trim().length > 0;
+  const hasDescription = typeof writeup.description === 'string' && writeup.description.trim().length > 0;
+  const hasTools = Array.isArray(writeup.tools) && writeup.tools.length > 0;
+  const hasAnalysis = typeof writeup.analysis === 'string' && writeup.analysis.trim().length > 0;
+  const hasMathAnalysis = Array.isArray(writeup.mathAnalysis) && writeup.mathAnalysis.length > 0;
+  const hasSolution = Array.isArray(writeup.solution) && writeup.solution.length > 0;
+  const hasTerminalOutputs = Array.isArray(writeup.terminalOutputs) && writeup.terminalOutputs.length > 0;
+  const hasFlag = typeof writeup.flag === 'string' && writeup.flag.trim().length > 0;
+  const hasLessonsLearned = typeof writeup.lessonsLearned === 'string' && writeup.lessonsLearned.trim().length > 0;
+
+  if (hasProblemDescription || hasDescription || hasTools) {
+    sections.push({ id: sectionIds.briefing, label: 'BRIEFING', depth: 3 });
+  }
+  if (hasAnalysis) {
+    sections.push({ id: sectionIds.analysis, label: 'VULNERABILITY ANALYSIS', depth: 3 });
+  }
+  if (hasMathAnalysis) {
+    sections.push({ id: sectionIds.math, label: 'MATHEMATICAL MODEL', depth: 3 });
+  }
+  if (hasSolution) {
+    sections.push({ id: sectionIds.solution, label: 'EXPLOIT EXECUTION', depth: 3 });
+  }
+  if (hasTerminalOutputs) {
+    sections.push({ id: sectionIds.terminal, label: 'TERMINAL EVIDENCE', depth: 3 });
+  }
+  if (hasLessonsLearned) {
+    sections.push({ id: sectionIds.lessons, label: 'LESSONS LEARNED', depth: 3 });
+  }
+  if (hasFlag) {
+    sections.push({ id: sectionIds.flag, label: 'FLAG SECURED', depth: 3 });
+  }
+
+  return sections;
 }
 
 type DocsView =
