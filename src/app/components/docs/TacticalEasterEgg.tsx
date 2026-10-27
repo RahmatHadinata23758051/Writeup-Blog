@@ -1,125 +1,295 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Gamepad2, Sparkles } from 'lucide-react';
+import { Gamepad2, Sparkles, Skull, Coffee, Zap, MessageSquareQuote, Flame, Eye } from 'lucide-react';
 
 interface TacticalEasterEggProps {
   onNavigateToGame: () => void;
   isGamePage?: boolean;
 }
 
+type EggMood = 'greet' | 'tease' | 'troll' | 'game';
+
+interface EggDialogue {
+  id: string;
+  mood: EggMood;
+  greeting: string;
+  body: string;
+  badge: string;
+  badgeBg: string;
+  isGameAction?: boolean;
+  reaction: string;
+}
+
+const DIALOGUES: EggDialogue[] = [
+  // 1. Ngejek / Teasing
+  {
+    id: 'tease-skill-issue',
+    mood: 'tease',
+    greeting: 'Muka tegang amat bang...',
+    body: 'Pasti flag-nya gak submit-submit ya? Skill issue detected 💀',
+    badge: 'SKILL ISSUE',
+    badgeBg: '#141413',
+    reaction: 'Wkwkwk canda bang, gas terus pantang mundur! ✌️',
+  },
+  {
+    id: 'tease-copas',
+    mood: 'tease',
+    greeting: 'Lagi copas script ya?',
+    body: 'Ctrl+C, Ctrl+V... ngaku lu, jangan pura-pura paham kodenya! 😜',
+    badge: 'KETAHUAN',
+    badgeBg: '#BF3511',
+    reaction: 'Hahaha gapapa copas dulu, besok baru paham! 🤡',
+  },
+  {
+    id: 'tease-overthinking',
+    mood: 'tease',
+    greeting: 'Otak lu berasap tuh...',
+    body: 'Pwn gak dapet shell? Makanya offset diitung, bukan dikira-kira! 💥',
+    badge: 'SEGFAULT 139',
+    badgeBg: '#141413',
+    reaction: 'GDB and pwntools are your true besties bro! 🛠️',
+  },
+
+  // 2. Say Hai / Gaul
+  {
+    id: 'greet-ngab',
+    mood: 'greet',
+    greeting: 'Woi ngab! Santai dulu...',
+    body: 'Udah ngopi belum hari ini? Begadang CTF mulu ntar tipes lho! ☕',
+    badge: 'NGOPI DULU',
+    badgeBg: '#4A3425',
+    reaction: 'Mantap, seduh kopi dulu biar payload-nya tembus! ☕🔥',
+  },
+  {
+    id: 'greet-suhu',
+    mood: 'greet',
+    greeting: 'Sungkem suhu CTF! 👋',
+    body: 'Lagi cari inspirasi exploit atau mau evaluasi strategi nih bos?',
+    badge: 'SUNGKEM',
+    badgeBg: '#BF3511',
+    reaction: 'Respect! Semoga dapat First Blood di next event! 🏆',
+  },
+  {
+    id: 'greet-classified',
+    mood: 'greet',
+    greeting: 'Psst... agen rahasia!',
+    body: 'Arsip intelijen ini level CONFIDENTIAL. Baca pelan-pelan, jangan cepu!',
+    badge: 'CLASSIFIED',
+    badgeBg: '#141413',
+    reaction: 'Info aman di tangan kita berdua, agen. 🕵️‍♂️📁',
+  },
+
+  // 3. Trolling / Lucu
+  {
+    id: 'troll-life-advice',
+    mood: 'troll',
+    greeting: 'Tips heker pro:',
+    body: 'Kalo pusing gak solve-solve: tutup laptop, tidur. Besok intip writeup.',
+    badge: 'PRO HACKER TIPS',
+    badgeBg: '#141413',
+    reaction: 'Tidur adalah exploit paling efektif merefresh otak! 🛌💤',
+  },
+  {
+    id: 'troll-jodoh',
+    mood: 'troll',
+    greeting: 'Nyari flag apa nyari jodoh?',
+    body: 'Dua-duanya sama-sama susah didapet ya bang? Yang sabar ya... 💔',
+    badge: 'CURHAT HEKER',
+    badgeBg: '#BF3511',
+    reaction: 'Tenang, flag lebih setia daripada dia! 🚩❤️',
+  },
+
+  // 4. Ajak Game
+  {
+    id: 'game-invite-1',
+    mood: 'game',
+    greeting: 'Psst... hey you!',
+    body: 'Otak lu udah jenuh baca tulisan? Wanna play some cyber game?',
+    badge: 'PLAY GAME?',
+    badgeBg: '#BF3511',
+    isGameAction: true,
+    reaction: 'Meluncur ke Breach Protocol Simulator! 🚀🎮',
+  },
+  {
+    id: 'game-invite-2',
+    mood: 'game',
+    greeting: 'Bosen baca teks melulu?',
+    body: 'Tes kecepatan reflek heker lu di Breach Protocol Cyberpunk sekarang!',
+    badge: 'MINIGAME',
+    badgeBg: '#BF3511',
+    isGameAction: true,
+    reaction: 'Initiating Cyber Breach sequence... ⚡🕹️',
+  },
+];
+
 export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: TacticalEasterEggProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [hasBeenDismissed, setHasBeenDismissed] = useState(false);
-  const dismissedRef = useRef(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [reactedText, setReactedText] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
 
-  // Check if dismissed in this session
+  const currentDialogue = useMemo(() => DIALOGUES[currentIdx % DIALOGUES.length], [currentIdx]);
+
+  // Initial delay & periodic loop
   useEffect(() => {
-    try {
-      const dismissed = sessionStorage.getItem('tactical-easter-egg-dismissed');
-      if (dismissed === 'true') {
-        dismissedRef.current = true;
-        setHasBeenDismissed(true);
-      }
-    } catch {
-      // sessionStorage unavailable
-    }
-  }, []);
+    if (isGamePage || isMuted) return;
 
-  // Appear after 7 seconds of browsing, if not dismissed and not already in game
-  useEffect(() => {
-    if (isGamePage || hasBeenDismissed) return;
+    // Pick random starting index
+    setCurrentIdx(Math.floor(Math.random() * DIALOGUES.length));
 
-    timerRef.current = setTimeout(() => {
+    // First appearance after 8 seconds
+    const initialTimer = setTimeout(() => {
       setIsVisible(true);
-    }, 7000);
+    }, 8000);
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [isGamePage, hasBeenDismissed]);
+    return () => clearTimeout(initialTimer);
+  }, [isGamePage, isMuted]);
 
-  // Auto-hide after 14 seconds if user doesn't click
+  // Auto-hide after 12 seconds if not interacted
   useEffect(() => {
     if (!isVisible) return;
+
     const hideTimer = setTimeout(() => {
-      setIsVisible(false);
-    }, 14000);
+      handleHide();
+    }, 12000);
+
     return () => clearTimeout(hideTimer);
-  }, [isVisible]);
+  }, [isVisible, currentIdx]);
 
-  const handleDismiss = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+  const handleHide = () => {
     setIsVisible(false);
-    try {
-      sessionStorage.setItem('tactical-easter-egg-dismissed', 'true');
-    } catch {
-      // ignore
+    setReactedText(null);
+
+    // Schedule next appearance in 40-60 seconds with a DIFFERENT dialogue
+    if (!isMuted) {
+      const nextDelay = 40000 + Math.random() * 20000;
+      setTimeout(() => {
+        setCurrentIdx((prev) => (prev + 1 + Math.floor(Math.random() * (DIALOGUES.length - 1))) % DIALOGUES.length);
+        setIsVisible(true);
+      }, nextDelay);
     }
-    setHasBeenDismissed(true);
-    dismissedRef.current = true;
   };
 
-  const handleTriggerGame = () => {
-    handleDismiss();
-    onNavigateToGame();
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsVisible(false);
+    setReactedText(null);
+    // Snooze next appearance for 90 seconds
+    setTimeout(() => {
+      if (!isMuted) {
+        setCurrentIdx((prev) => (prev + 1) % DIALOGUES.length);
+        setIsVisible(true);
+      }
+    }, 90000);
   };
 
-  if (isGamePage || hasBeenDismissed) return null;
+  const handleClickInteraction = () => {
+    if (currentDialogue.isGameAction) {
+      setIsVisible(false);
+      onNavigateToGame();
+      return;
+    }
+
+    // If it's a teasing or greeting quote, show funny reaction for 2.5s then duck down
+    setReactedText(currentDialogue.reaction);
+    setTimeout(() => {
+      handleHide();
+    }, 2800);
+  };
+
+  if (isGamePage || isMuted) return null;
 
   return (
     <AnimatePresence>
       {isVisible && (
         <aside
-          aria-label="Secret Game Invitation"
+          aria-label="Tactical Mascot Companion"
           className="fixed bottom-0 right-0 z-50 pointer-events-none select-none"
         >
-          {/* Peeking container sliding in from bottom-right */}
           <motion.div
-            initial={{ x: 140, y: 80, opacity: 0 }}
+            initial={{ x: 150, y: 90, opacity: 0 }}
             animate={{ x: 0, y: 0, opacity: 1 }}
             exit={{ x: 160, y: 100, opacity: 0 }}
-            transition={{ type: 'spring', damping: 22, stiffness: 220 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 220 }}
             className="relative pointer-events-auto flex flex-col items-end pb-0 pr-0"
           >
             {/* Comic Speech Bubble */}
             <motion.div
-              initial={{ scale: 0.4, opacity: 0, y: 20 }}
+              initial={{ scale: 0.3, opacity: 0, y: 25 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.6, opacity: 0, y: 10 }}
-              transition={{ delay: 0.25, type: 'spring', damping: 18, stiffness: 300 }}
-              onClick={handleTriggerGame}
-              className="mr-14 mb-[-8px] cursor-pointer group"
-              title="Click to play Cyber Breach Protocol!"
+              exit={{ scale: 0.5, opacity: 0, y: 15 }}
+              transition={{ delay: 0.2, type: 'spring', damping: 18, stiffness: 280 }}
+              onClick={handleClickInteraction}
+              className="mr-14 mb-[-10px] cursor-pointer group"
+              title={currentDialogue.isGameAction ? 'Klik untuk main minigame!' : 'Klik untuk merespon!'}
             >
               <div
-                className="relative bg-[#FFFDF5] border-2 border-[#141413] px-3.5 py-2.5 rounded-2xl max-w-[210px] transition-transform group-hover:scale-105 active:scale-95"
+                className="relative bg-[#FFFDF5] border-2 border-[#141413] px-3.5 py-2.5 rounded-2xl max-w-[230px] sm:max-w-[260px] transition-all group-hover:scale-105 active:scale-95"
                 style={{
-                  boxShadow: '3px 3px 0 0 #141413',
+                  boxShadow: '3.5px 3.5px 0 0 #141413',
                 }}
               >
-                {/* Dismiss X button */}
+                {/* Close X Button */}
                 <button
                   type="button"
                   onClick={handleDismiss}
                   className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-[#141413] text-[#FFFDF5] text-[10px] font-mono font-bold flex items-center justify-center border border-[#141413] hover:bg-[#BF3511] transition-colors cursor-pointer"
-                  title="Close"
-                  aria-label="Close"
+                  title="Tutup (Snooze)"
+                  aria-label="Tutup"
                 >
                   ✕
                 </button>
 
-                <p className="font-sans text-[12px] font-bold text-[#141413] leading-tight m-0">
-                  Psst... hey you,
-                </p>
-                <p className="font-sans text-[11px] text-[#5C574C] font-semibold leading-tight mt-0.5 mb-1">
-                  wanna play some
-                </p>
-                <div className="flex items-center gap-1.5 bg-[#BF3511] text-[#FFFDF5] px-2 py-0.5 rounded font-mono text-[11px] font-black uppercase tracking-wider shadow-inner">
-                  <Gamepad2 className="w-3.5 h-3.5" />
-                  <span>GAME?</span>
-                  <Sparkles className="w-3 h-3 ml-auto animate-pulse" />
-                </div>
+                {reactedText ? (
+                  /* Reaction State */
+                  <div className="py-1">
+                    <p className="font-mono text-[11px] font-bold text-[#BF3511] leading-snug animate-pulse">
+                      {reactedText}
+                    </p>
+                  </div>
+                ) : (
+                  /* Standard Dialogue State */
+                  <>
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                      <span
+                        className="px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase tracking-wider text-white flex items-center gap-1 shadow-sm"
+                        style={{ backgroundColor: currentDialogue.badgeBg }}
+                      >
+                        {currentDialogue.mood === 'tease' && <Skull className="w-2.5 h-2.5 text-[#FFFDF5]" />}
+                        {currentDialogue.mood === 'troll' && <Flame className="w-2.5 h-2.5 text-[#FFFDF5]" />}
+                        {currentDialogue.mood === 'greet' && <Coffee className="w-2.5 h-2.5 text-[#FFFDF5]" />}
+                        {currentDialogue.mood === 'game' && <Gamepad2 className="w-2.5 h-2.5 text-[#FFFDF5]" />}
+                        <span>{currentDialogue.badge}</span>
+                      </span>
+
+                      {currentDialogue.isGameAction && (
+                        <span className="text-[9px] font-mono text-[#BF3511] font-bold animate-pulse">
+                          [CLICK]
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="font-sans text-[12px] font-bold text-[#141413] leading-tight m-0">
+                      {currentDialogue.greeting}
+                    </p>
+
+                    <p className="font-sans text-[11px] text-[#5C574C] font-semibold leading-relaxed mt-1 mb-1.5">
+                      {currentDialogue.body}
+                    </p>
+
+                    {currentDialogue.isGameAction ? (
+                      <div className="flex items-center gap-1.5 bg-[#BF3511] text-[#FFFDF5] px-2 py-0.5 rounded font-mono text-[10.5px] font-black uppercase tracking-wider shadow-inner group-hover:bg-[#d63d15] transition-colors">
+                        <Gamepad2 className="w-3.5 h-3.5" />
+                        <span>KLIK UNTUK MAIN GAME</span>
+                        <Sparkles className="w-3 h-3 ml-auto animate-pulse" />
+                      </div>
+                    ) : (
+                      <div className="text-[9.5px] font-mono text-[#5C574C] flex items-center gap-1 group-hover:text-[#BF3511] transition-colors">
+                        <span>💬 Klik untuk bales</span>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 {/* Speech Bubble Tail */}
                 <div
@@ -141,11 +311,11 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
               </div>
             </motion.div>
 
-            {/* Peeking Mascot Character */}
+            {/* Peeking Mascot Character with mood-responsive facial expression */}
             <motion.div
-              onClick={handleTriggerGame}
+              onClick={handleClickInteraction}
               className="relative cursor-pointer w-28 h-28 sm:w-32 sm:h-32 translate-x-2 translate-y-2 transition-transform hover:translate-x-0 hover:translate-y-0"
-              title="Click me to play!"
+              title="Klik saya!"
             >
               <svg
                 viewBox="0 0 128 128"
@@ -182,32 +352,99 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
                 {/* Dark Face Mask Shadow */}
                 <ellipse cx="106" cy="78" rx="18" ry="22" fill="#0D0D0C" />
 
-                {/* Glowing Hacker Visor / Eyes */}
-                {/* Left eye (visible) */}
-                <rect
-                  x="92"
-                  y="72"
-                  width="11"
-                  height="7"
-                  rx="2"
-                  fill="#BF3511"
-                  className="animate-pulse"
-                />
-                <circle cx="97.5" cy="75.5" r="1.5" fill="#FFFDF5" />
+                {/* Eyes / Visor Expression based on mood */}
+                {currentDialogue.mood === 'tease' || currentDialogue.mood === 'troll' ? (
+                  /* Smug / Winking / Mocking Eyes */
+                  <g>
+                    {/* Left Eye: Smug Wink `^` */}
+                    <path
+                      d="M93 76 Q97.5 70 102 76"
+                      stroke="#BF3511"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    {/* Right Eye: Open Glowing Dot */}
+                    <rect
+                      x="108"
+                      y="71"
+                      width="10"
+                      height="8"
+                      rx="2"
+                      fill="#BF3511"
+                      className="animate-pulse"
+                    />
+                    <circle cx="113" cy="75" r="1.5" fill="#FFFDF5" />
+                    {/* Smug Smirk line */}
+                    <path
+                      d="M102 88 Q108 92 114 87"
+                      stroke="#BF3511"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </g>
+                ) : currentDialogue.mood === 'greet' ? (
+                  /* Friendly Wide Curious Eyes */
+                  <g>
+                    <rect
+                      x="92"
+                      y="70"
+                      width="11"
+                      height="9"
+                      rx="2.5"
+                      fill="#22C55E"
+                      className="animate-pulse"
+                    />
+                    <circle cx="97.5" cy="74.5" r="2" fill="#FFFDF5" />
 
-                {/* Right eye */}
-                <rect
-                  x="108"
-                  y="72"
-                  width="11"
-                  height="7"
-                  rx="2"
-                  fill="#BF3511"
-                  className="animate-pulse"
-                />
-                <circle cx="113.5" cy="75.5" r="1.5" fill="#FFFDF5" />
+                    <rect
+                      x="108"
+                      y="70"
+                      width="11"
+                      height="9"
+                      rx="2.5"
+                      fill="#22C55E"
+                      className="animate-pulse"
+                    />
+                    <circle cx="113.5" cy="74.5" r="2" fill="#FFFDF5" />
+                    {/* Friendly Smile */}
+                    <path
+                      d="M100 87 Q106 91 112 87"
+                      stroke="#22C55E"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </g>
+                ) : (
+                  /* Cyber Visor Glowing (Game mode) */
+                  <g>
+                    <rect
+                      x="92"
+                      y="72"
+                      width="11"
+                      height="7"
+                      rx="2"
+                      fill="#BF3511"
+                      className="animate-pulse"
+                    />
+                    <circle cx="97.5" cy="75.5" r="1.5" fill="#FFFDF5" />
 
-                {/* Peeking Hand holding screen edge */}
+                    <rect
+                      x="108"
+                      y="72"
+                      width="11"
+                      height="7"
+                      rx="2"
+                      fill="#BF3511"
+                      className="animate-pulse"
+                    />
+                    <circle cx="113.5" cy="75.5" r="1.5" fill="#FFFDF5" />
+                  </g>
+                )}
+
+                {/* Peeking Hand on screen border */}
                 <rect
                   x="70"
                   y="88"
