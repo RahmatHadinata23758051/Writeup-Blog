@@ -330,6 +330,16 @@ export default function App() {
             label: writeup.title,
             depth: 2,
           });
+
+          // Add writeup sections as depth 3 items
+          const sections = getInlineWriteupSections(writeup);
+          for (const section of sections) {
+            items.push({
+              id: section.id,
+              label: section.label,
+              depth: 3,
+            });
+          }
         }
       }
       return items;

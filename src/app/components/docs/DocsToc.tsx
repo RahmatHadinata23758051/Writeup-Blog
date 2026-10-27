@@ -31,7 +31,7 @@ const formatCategoryLabel = (label: string) => {
 
 export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
   const [activeId, setActiveId] = useState<string>('');
-  const [currentWriteup, setCurrentWriteup] = useState<{ id: string; title: string; sections: SectionItem[] } | null>(null);
+  const [viewportWriteup, setViewportWriteup] = useState<{ id: string; title: string; sections: SectionItem[] } | null>(null);
   const [activeSection, setActiveSection] = useState<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sectionObserverRef = useRef<IntersectionObserver | null>(null);
@@ -82,9 +82,9 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
       });
 
       if (bestMatch) {
-        setCurrentWriteup(bestMatch);
+        setViewportWriteup(bestMatch);
       } else if (bestRatio < 0.1) {
-        setCurrentWriteup(null);
+        setViewportWriteup(null);
       }
     };
 
@@ -107,7 +107,7 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
 
   // Track active section within current writeup
   useEffect(() => {
-    if (!currentWriteup) {
+    if (!viewportWriteup) {
       sectionObserverRef.current?.disconnect();
       return;
     }
@@ -128,13 +128,13 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
     const observer = new IntersectionObserver(handleIntersect, observerOptions);
     sectionObserverRef.current = observer;
 
-    currentWriteup.sections.forEach((section) => {
+    viewportWriteup.sections.forEach((section) => {
       const el = document.getElementById(section.id);
       if (el) observer.observe(el);
     });
 
     return () => observer.disconnect();
-  }, [currentWriteup]);
+  }, [viewportWriteup]);
 
   // Original scroll tracking for main TOC items
   useEffect(() => {
@@ -195,33 +195,67 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
     };
   }, [serializedItems]);
 
-  // Group items by category
-  interface GroupedToc {
-    category?: TocItem;
-    challenges: TocItem[];
+  // Group items into 3-level hierarchy: Category -> Writeup -> Sections
+  interface SectionItemToc {
+    id: string;
+    label: string;
+    depth: number;
   }
 
-  const groups: GroupedToc[] = [];
-  let currentGroup: GroupedToc | null = null;
+  interface WriteupItem {
+    writeup: TocItem;
+    sections: SectionItemToc[];
+  }
+
+  interface CategoryGroup {
+    category?: TocItem;
+    writeups: WriteupItem[];
+  }
+
+  const categoryGroups: CategoryGroup[] = [];
+  let currentCategory: CategoryGroup | null = null;
+  let currentWriteup: WriteupItem | null = null;
 
   displayItems.forEach((item) => {
     const isCategory = item.depth === 1 || item.id.startsWith('category-');
-    const isChallenge = item.depth === 2 || item.id.startsWith('writeup-');
+    const isWriteup = item.depth === 2 || item.id.startsWith('writeup-');
+    const isSection = item.depth === 3;
 
     if (isCategory) {
-      if (currentGroup) groups.push(currentGroup);
-      currentGroup = { category: item, challenges: [] };
-    } else if (isChallenge && currentGroup) {
-      currentGroup.challenges.push(item);
+      // Save previous category
+      if (currentCategory) categoryGroups.push(currentCategory);
+      // Start new category
+      currentCategory = { category: item, writeups: [] };
+      currentWriteup = null;
+    } else if (isWriteup && currentCategory) {
+      // Save previous writeup
+      if (currentWriteup) currentCategory.writeups.push(currentWriteup);
+      // Start new writeup
+      currentWriteup = { writeup: item, sections: [] };
+    } else if (isSection && currentWriteup && currentCategory) {
+      // Add section to current writeup
+      currentWriteup.sections.push({ ...item, depth: 3 });
     } else {
-      if (currentGroup) {
-        groups.push(currentGroup);
-        currentGroup = null;
+      // Fallback: items without category
+      if (currentCategory) {
+        if (currentWriteup) currentCategory.writeups.push(currentWriteup);
+        categoryGroups.push(currentCategory);
+        currentCategory = null;
+        currentWriteup = null;
       }
-      groups.push({ challenges: [item] });
+      // Create standalone group
+      if (isWriteup) {
+        categoryGroups.push({
+          writeups: [{ writeup: item, sections: [] }],
+        });
+      } else if (isCategory) {
+        categoryGroups.push({ category: item, writeups: [] });
+      }
     }
   });
-  if (currentGroup) groups.push(currentGroup);
+  // Push last
+  if (currentWriteup && currentCategory) currentCategory.writeups.push(currentWriteup);
+  if (currentCategory) categoryGroups.push(currentCategory);
 
   return (
     <div className="w-full space-y-4">
@@ -232,7 +266,7 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
       </div>
 
       {/* ===== CURRENT TARGET PANEL ===== */}
-      {currentWriteup && (
+      {viewportWriteup && (
         <div className="relative bg-[#FFFDF5] border-2 border-[#141413] shadow-[3px_3px_0_0_#141413] overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 bg-[#141413] border-b-2 border-[#BF3511]">
@@ -241,14 +275,14 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
                 ACTIVE TARGET
               </span>
               <span className="font-['Anton'] text-[11px] text-[#FFFDF5] uppercase tracking-wider">
-                {currentWriteup.title}
+                {viewportWriteup.title}
               </span>
             </div>
           </div>
 
           {/* Sections list */}
           <nav className="p-3 space-y-1 max-h-[300px] overflow-y-auto">
-            {currentWriteup.sections.map((section) => {
+            {viewportWriteup.sections.map((section) => {
               const isActive = activeSection === section.id;
               return (
                 <button
@@ -270,7 +304,7 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
                   title={section.label}
                 >
                   <span className={`w-5 h-5 flex items-center justify-center font-mono text-[10px] font-bold border border-[#141413]/30 ${isActive ? 'bg-[#FFFDF5] text-[#BF3511]' : 'bg-[#EFE9D8] text-[#5C574C]'}`}>
-                    {currentWriteup.sections.indexOf(section) + 1}
+                    {viewportWriteup.sections.indexOf(section) + 1}
                   </span>
                   <span className="font-mono text-[11px] uppercase tracking-wider truncate">{section.label}</span>
                   {isActive && <span className="ml-auto font-mono text-[9px] text-[#FFFDF5]/80">►</span>}
@@ -285,9 +319,10 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
       )}
 
       {/* ===== MAIN NAVIGATION TREE ===== */}
-      <nav className="space-y-3">
-        {groups.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-2 mt-4 first:mt-0">
+      <nav className="space-y-4">
+        {categoryGroups.map((group, gIdx) => (
+          <div key={gIdx} className="space-y-2">
+            {/* Category Header */}
             {group.category && (
               <button
                 type="button"
@@ -298,69 +333,112 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
                   });
                 }}
                 className={`
-                  w-full text-left px-3 py-2 rounded transition-all duration-150
+                  w-full text-left px-3 py-2 rounded transition-all duration-150 flex items-center justify-between
                   ${variant === 'plain'
                     ? 'font-sans text-[12px] leading-snug font-semibold tracking-normal whitespace-normal break-words [overflow-wrap:anywhere]'
-                    : 'font-mono text-[13px] font-bold tracking-tight lowercase'
+                    : 'font-mono text-[12px] font-bold tracking-tight lowercase'
                   }
                   ${
-                    activeId === group.category?.id || group.challenges.some(c => activeId === c.id)
+                    activeId === group.category?.id || group.writeups.some(w => activeId === w.writeup.id || w.sections.some(s => activeId === s.id))
                       ? 'bg-[#BF3511] text-[#FFFDF5] shadow-[2px_2px_0_0_#BF3511]'
                       : 'bg-[#FFFDF5] text-[#5C574C] hover:bg-[#141413]/5 hover:text-[#BF3511] border border-[#141413]/20'
                   }
                 `}
                 title={group.category?.label}
               >
-                {variant === 'plain' ? group.category!.label : formatCategoryLabel(group.category!.label).toUpperCase()}
-                {group.challenges.length > 0 && (
-                  <span className="ml-auto px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#BF3511] bg-[#FFFDF5] border border-[#BF3511]/30">
-                    {group.challenges.length} TARGETS
+                <span>{variant === 'plain' ? group.category!.label : formatCategoryLabel(group.category!.label).toUpperCase()}</span>
+                {group.writeups.length > 0 && (
+                  <span className="px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#BF3511] bg-[#FFFDF5] border border-[#BF3511]/30">
+                    {group.writeups.length}
                   </span>
                 )}
               </button>
             )}
-            {group.challenges.length > 0 && (
-              <ul className="pl-3 border-l-2 border-[#141413]/20 space-y-1 ml-1 relative">
-                {group.challenges.map((challenge) => {
-                  const isActive = activeId === challenge.id;
-                  const isCurrentTarget = currentWriteup?.id === challenge.id;
+
+            {/* Writeups List */}
+            {group.writeups.length > 0 && (
+              <ul className="pl-2 border-l-2 border-[#141413]/20 space-y-2 ml-1">
+                {group.writeups.map(({ writeup, sections }) => {
+                  const isWriteupActive = activeId === writeup.id;
+                  const isSectionActive = sections.some(s => activeId === s.id);
+                  const isCurrentTarget = viewportWriteup?.id === writeup.id;
+
                   return (
-                    <li key={challenge.id} className="relative">
+                    <li key={writeup.id} className="space-y-1">
+                      {/* Writeup Title Button */}
                       <button
                         type="button"
                         onClick={() => {
-                          document.getElementById(challenge.id)?.scrollIntoView({
+                          document.getElementById(writeup.id)?.scrollIntoView({
                             behavior: 'smooth',
                             block: 'start',
                           });
                         }}
                         className={`
-                          w-full text-left px-3 py-2 rounded transition-all duration-150 font-sans
+                          w-full text-left px-2.5 py-1.5 rounded transition-all duration-150 font-sans flex items-center justify-between
                           ${variant === 'plain'
                             ? 'text-[12px] leading-snug whitespace-normal break-words [overflow-wrap:anywhere]'
-                            : 'text-[13px] truncate'
+                            : 'text-[12px] font-semibold'
                           }
                           ${
-                            isActive
+                            isWriteupActive || isSectionActive
                               ? 'bg-[#BF3511] text-[#FFFDF5] shadow-[2px_2px_0_0_#BF3511] font-bold'
                               : isCurrentTarget
                                 ? 'bg-[#BF3511]/10 text-[#BF3511] border border-[#BF3511]/30 font-medium'
-                                : 'text-[#5C574C] hover:bg-[#141413]/5 hover:text-[#141413]'
+                                : 'text-[#141413] hover:bg-[#141413]/5 hover:text-[#BF3511]'
                           }
                         `}
-                        title={challenge.label}
+                        title={writeup.label}
                       >
-                        <span className="flex items-center gap-2">
-                          {isActive && <span className="text-[#FFFDF5]">►</span>}
-                          {!isActive && <span className="w-4 text-transparent">►</span>}
-                          <span>{challenge.label}</span>
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span className={`text-[10px] ${isWriteupActive || isSectionActive ? 'text-[#FFFDF5]' : 'text-[#BF3511]'}`}>
+                            ▼
+                          </span>
+                          <span className="truncate">{writeup.label}</span>
                         </span>
                         {isCurrentTarget && (
-                          <span className="ml-auto px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-[#FFFDF5] bg-[#BF3511] border border-[#BF3511] rounded">
+                          <span className="shrink-0 px-1.5 py-0.2 font-mono text-[8px] uppercase tracking-wider text-[#FFFDF5] bg-[#BF3511] border border-[#BF3511] rounded">
                             LIVE
                           </span>
                         )}
                       </button>
+
+                      {/* Nested Sub-Sections — Selalu tampil kayak daftar isi buku */}
+                      {sections.length > 0 && (
+                        <ul className="pl-3 border-l-2 border-[#141413]/15 space-y-0.5 ml-2 pt-0.5 pb-1">
+                          {sections.map((section, sIdx) => {
+                            const isCurrentSection = activeId === section.id || activeSection === section.id;
+                            return (
+                              <li key={section.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    document.getElementById(section.id)?.scrollIntoView({
+                                      behavior: 'smooth',
+                                      block: 'start',
+                                    });
+                                  }}
+                                  className={`
+                                    w-full text-left px-2 py-1 rounded transition-all duration-150 font-mono text-[10px] uppercase tracking-wider flex items-center gap-1.5
+                                    ${
+                                      isCurrentSection
+                                        ? 'bg-[#BF3511] text-[#FFFDF5] shadow-[1px_1px_0_0_#BF3511] font-bold'
+                                        : 'text-[#5C574C] hover:bg-[#141413]/5 hover:text-[#141413]'
+                                    }
+                                  `}
+                                  title={section.label}
+                                >
+                                  <span className={`w-3.5 h-3.5 flex items-center justify-center text-[8px] font-bold border ${isCurrentSection ? 'border-[#FFFDF5] text-[#FFFDF5]' : 'border-[#141413]/30 text-[#5C574C]'}`}>
+                                    {sIdx + 1}
+                                  </span>
+                                  <span className="truncate">{section.label}</span>
+                                  {isCurrentSection && <span className="ml-auto text-[9px] text-[#FFFDF5]">►</span>}
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
                     </li>
                   );
                 })}
