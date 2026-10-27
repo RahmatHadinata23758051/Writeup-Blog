@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Gamepad2, Sparkles, Skull, Coffee, Zap, MessageSquareQuote, Flame, Eye } from 'lucide-react';
+import { Coffee, Skull, Bot, Sparkles, Flag, Compass, Flame, TrendingDown } from 'lucide-react';
 
 interface TacticalEasterEggProps {
   onNavigateToGame: () => void;
   isGamePage?: boolean;
 }
 
-type EggMood = 'greet' | 'tease' | 'troll' | 'game';
+type EggMood = 'opening' | 'roast' | 'hygiene' | 'game';
 
 interface EggDialogue {
   id: string;
@@ -18,132 +18,144 @@ interface EggDialogue {
   badgeBg: string;
   isGameAction?: boolean;
   reaction: string;
+  icon?: React.ReactNode;
 }
 
-const DIALOGUES: EggDialogue[] = [
-  // 1. Ngejek / Teasing
-  {
-    id: 'tease-skill-issue',
-    mood: 'tease',
-    greeting: 'Muka tegang amat bang...',
-    body: 'Pasti flag-nya gak submit-submit ya? Skill issue detected 💀',
-    badge: 'SKILL ISSUE',
-    badgeBg: '#141413',
-    reaction: 'Wkwkwk canda bang, gas terus pantang mundur! ✌️',
-  },
-  {
-    id: 'tease-copas',
-    mood: 'tease',
-    greeting: 'Lagi copas script ya?',
-    body: 'Ctrl+C, Ctrl+V... ngaku lu, jangan pura-pura paham kodenya! 😜',
-    badge: 'KETAHUAN',
-    badgeBg: '#BF3511',
-    reaction: 'Hahaha gapapa copas dulu, besok baru paham! 🤡',
-  },
-  {
-    id: 'tease-overthinking',
-    mood: 'tease',
-    greeting: 'Otak lu berasap tuh...',
-    body: 'Pwn gak dapet shell? Makanya offset diitung, bukan dikira-kira! 💥',
-    badge: 'SEGFAULT 139',
-    badgeBg: '#141413',
-    reaction: 'GDB and pwntools are your true besties bro! 🛠️',
-  },
+const OPENING_DIALOGUE: EggDialogue = {
+  id: 'opening-coffee',
+  mood: 'opening',
+  greeting: 'Hey, good to see you.',
+  body: 'Grab some coffee and take what you need.',
+  badge: 'COFFEE BREAK',
+  badgeBg: '#BF3511',
+  isGameAction: false,
+  reaction: '',
+  icon: <Coffee className="w-3.5 h-3.5" />,
+};
 
-  // 2. Say Hai / Gaul
+const ROAST_DIALOGUES: EggDialogue[] = [
+  // 2. Reality check
   {
-    id: 'greet-ngab',
-    mood: 'greet',
-    greeting: 'Woi ngab! Santai dulu...',
-    body: 'Udah ngopi belum hari ini? Begadang CTF mulu ntar tipes lho! ☕',
-    badge: 'NGOPI DULU',
-    badgeBg: '#4A3425',
-    reaction: 'Mantap, seduh kopi dulu biar payload-nya tembus! ☕🔥',
-  },
-  {
-    id: 'greet-suhu',
-    mood: 'greet',
-    greeting: 'Sungkem suhu CTF! 👋',
-    body: 'Lagi cari inspirasi exploit atau mau evaluasi strategi nih bos?',
-    badge: 'SUNGKEM',
-    badgeBg: '#BF3511',
-    reaction: 'Respect! Semoga dapat First Blood di next event! 🏆',
-  },
-  {
-    id: 'greet-classified',
-    mood: 'greet',
-    greeting: 'Psst... agen rahasia!',
-    body: 'Arsip intelijen ini level CONFIDENTIAL. Baca pelan-pelan, jangan cepu!',
-    badge: 'CLASSIFIED',
+    id: 'roast-touch-grass',
+    mood: 'roast',
+    greeting: 'Touch grass.',
+    body: 'The flag isn\'t worth this.',
+    badge: 'GO OUTSIDE',
     badgeBg: '#141413',
-    reaction: 'Info aman di tangan kita berdua, agen. 🕵️‍♂️📁',
+    reaction: 'Fresh air compiles faster than caffeine.',
+    icon: <Compass className="w-3.5 h-3.5" />,
   },
-
-  // 3. Trolling / Lucu
+  // 3. AI roast
   {
-    id: 'troll-life-advice',
-    mood: 'troll',
-    greeting: 'Tips heker pro:',
-    body: 'Kalo pusing gak solve-solve: tutup laptop, tidur. Besok intip writeup.',
-    badge: 'PRO HACKER TIPS',
-    badgeBg: '#141413',
-    reaction: 'Tidur adalah exploit paling efektif merefresh otak! 🛌💤',
-  },
-  {
-    id: 'troll-jodoh',
-    mood: 'troll',
-    greeting: 'Nyari flag apa nyari jodoh?',
-    body: 'Dua-duanya sama-sama susah didapet ya bang? Yang sabar ya... 💔',
-    badge: 'CURHAT HEKER',
+    id: 'roast-chatgpt',
+    mood: 'roast',
+    greeting: 'Did ChatGPT write that exploit for you?',
+    body: 'Be honest.',
+    badge: 'PROMPT ENGINEER',
     badgeBg: '#BF3511',
-    reaction: 'Tenang, flag lebih setia daripada dia! 🚩❤️',
+    reaction: 'No shame. Even the best LLMs hallucinate offsets.',
+    icon: <Bot className="w-3.5 h-3.5" />,
   },
-
-  // 4. Ajak Game
+  // 4. Hygiene - 48h CTF
   {
-    id: 'game-invite-1',
+    id: 'hygiene-48h',
+    mood: 'hygiene',
+    greeting: '48 hours of CTF.',
+    body: '0 showers. 0 solves. Wash up, bro.',
+    badge: 'SWEATLORD',
+    badgeBg: '#141413',
+    reaction: 'Your keyboard will thank you.',
+    icon: <Flame className="w-3.5 h-3.5" />,
+  },
+  // 8. Flag shower
+  {
+    id: 'hygiene-flag',
+    mood: 'hygiene',
+    greeting: 'The flag is `CTF{shower_first}`.',
+    body: 'You missed the easiest solve of the weekend.',
+    badge: 'FREE FLAG',
+    badgeBg: '#BF3511',
+    reaction: 'Zero exploitation required. Just water and soap.',
+    icon: <Flag className="w-3.5 h-3.5" />,
+  },
+  // 12. Rank delusion
+  {
+    id: 'roast-rank',
+    mood: 'roast',
+    greeting: 'Rank 842.',
+    body: '\'We almost had it.\' Sure.',
+    badge: 'DELUSIONAL',
+    badgeBg: '#141413',
+    reaction: 'Participation trophy energy. Touch grass.',
+    icon: <TrendingDown className="w-3.5 h-3.5" />,
+  },
+  // 13. Game taunt
+  {
+    id: 'game-segfault',
     mood: 'game',
-    greeting: 'Psst... hey you!',
-    body: 'Otak lu udah jenuh baca tulisan? Wanna play some cyber game?',
-    badge: 'PLAY GAME?',
+    greeting: 'Your exploit segfaults.',
+    body: 'The minigame doesn\'t. Go play.',
+    badge: 'WORKING CODE',
     badgeBg: '#BF3511',
     isGameAction: true,
-    reaction: 'Meluncur ke Breach Protocol Simulator! 🚀🎮',
-  },
-  {
-    id: 'game-invite-2',
-    mood: 'game',
-    greeting: 'Bosen baca teks melulu?',
-    body: 'Tes kecepatan reflek heker lu di Breach Protocol Cyberpunk sekarang!',
-    badge: 'MINIGAME',
-    badgeBg: '#BF3511',
-    isGameAction: true,
-    reaction: 'Initiating Cyber Breach sequence... ⚡🕹️',
+    reaction: 'Initiating Breach Protocol... ⚡',
+    icon: <Sparkles className="w-3.5 h-3.5" />,
   },
 ];
+
+// All dialogues combined for rotation (opening is handled separately)
+const ALL_DIALOGUES = [...ROAST_DIALOGUES];
 
 export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: TacticalEasterEggProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [reactedText, setReactedText] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const currentDialogue = useMemo(() => DIALOGUES[currentIdx % DIALOGUES.length], [currentIdx]);
+  const currentDialogue = useMemo(() => ALL_DIALOGUES[currentIdx % ALL_DIALOGUES.length], [currentIdx]);
+
+  // Check if first visit this session
+  useEffect(() => {
+    try {
+      const dismissed = sessionStorage.getItem('tactical-easter-egg-dismissed');
+      const hasVisited = sessionStorage.getItem('tactical-easter-egg-visited');
+      if (dismissed === 'true') {
+        setIsFirstVisit(false);
+      }
+      if (hasVisited === 'true') {
+        setIsFirstVisit(false);
+      } else {
+        sessionStorage.setItem('tactical-easter-egg-visited', 'true');
+        setIsFirstVisit(true);
+      }
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, []);
 
   // Initial delay & periodic loop
   useEffect(() => {
-    if (isGamePage || isMuted) return;
+    if (isGamePage) return;
 
-    // Pick random starting index
-    setCurrentIdx(Math.floor(Math.random() * DIALOGUES.length));
+    if (isFirstVisit) {
+      // First visit: show opening after 8s
+      timerRef.current = setTimeout(() => {
+        setIsVisible(true);
+      }, 8000);
+    } else {
+      // Subsequent: random roast after 40-60s
+      const nextDelay = 40000 + Math.random() * 20000;
+      timerRef.current = setTimeout(() => {
+        setCurrentIdx(Math.floor(Math.random() * ALL_DIALOGUES.length));
+        setIsVisible(true);
+      }, nextDelay);
+    }
 
-    // First appearance after 8 seconds
-    const initialTimer = setTimeout(() => {
-      setIsVisible(true);
-    }, 8000);
-
-    return () => clearTimeout(initialTimer);
-  }, [isGamePage, isMuted]);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [isGamePage, isFirstVisit]);
 
   // Auto-hide after 12 seconds if not interacted
   useEffect(() => {
@@ -159,12 +171,13 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
   const handleHide = () => {
     setIsVisible(false);
     setReactedText(null);
+    setIsFirstVisit(false);
 
     // Schedule next appearance in 40-60 seconds with a DIFFERENT dialogue
-    if (!isMuted) {
+    if (!isGamePage) {
       const nextDelay = 40000 + Math.random() * 20000;
       setTimeout(() => {
-        setCurrentIdx((prev) => (prev + 1 + Math.floor(Math.random() * (DIALOGUES.length - 1))) % DIALOGUES.length);
+        setCurrentIdx((prev) => (prev + 1 + Math.floor(Math.random() * (ALL_DIALOGUES.length - 1))) % ALL_DIALOGUES.length);
         setIsVisible(true);
       }, nextDelay);
     }
@@ -176,8 +189,8 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
     setReactedText(null);
     // Snooze next appearance for 90 seconds
     setTimeout(() => {
-      if (!isMuted) {
-        setCurrentIdx((prev) => (prev + 1) % DIALOGUES.length);
+      if (!isGamePage) {
+        setCurrentIdx((prev) => (prev + 1) % ALL_DIALOGUES.length);
         setIsVisible(true);
       }
     }, 90000);
@@ -190,14 +203,22 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
       return;
     }
 
-    // If it's a teasing or greeting quote, show funny reaction for 2.5s then duck down
-    setReactedText(currentDialogue.reaction);
-    setTimeout(() => {
+    // Show reaction for 2.5s then hide
+    if (currentDialogue.reaction) {
+      setReactedText(currentDialogue.reaction);
+      setTimeout(() => {
+        handleHide();
+      }, 2800);
+    } else {
       handleHide();
-    }, 2800);
+    }
   };
 
-  if (isGamePage || isMuted) return null;
+  // Determine which dialogue to render
+  const dialogueToShow = isFirstVisit ? OPENING_DIALOGUE : currentDialogue;
+  const isOpening = isFirstVisit;
+
+  if (isGamePage) return null;
 
   return (
     <AnimatePresence>
@@ -221,7 +242,7 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
               transition={{ delay: 0.2, type: 'spring', damping: 18, stiffness: 280 }}
               onClick={handleClickInteraction}
               className="mr-14 mb-[-10px] cursor-pointer group"
-              title={currentDialogue.isGameAction ? 'Klik untuk main minigame!' : 'Klik untuk merespon!'}
+              title={dialogueToShow.isGameAction ? 'Klik untuk main minigame!' : 'Klik untuk merespon!'}
             >
               <div
                 className="relative bg-[#FFFDF5] border-2 border-[#141413] px-3.5 py-2.5 rounded-2xl max-w-[230px] sm:max-w-[260px] transition-all group-hover:scale-105 active:scale-95"
@@ -253,16 +274,13 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
                     <div className="flex items-center justify-between gap-1.5 mb-1">
                       <span
                         className="px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase tracking-wider text-white flex items-center gap-1 shadow-sm"
-                        style={{ backgroundColor: currentDialogue.badgeBg }}
+                        style={{ backgroundColor: dialogueToShow.badgeBg }}
                       >
-                        {currentDialogue.mood === 'tease' && <Skull className="w-2.5 h-2.5 text-[#FFFDF5]" />}
-                        {currentDialogue.mood === 'troll' && <Flame className="w-2.5 h-2.5 text-[#FFFDF5]" />}
-                        {currentDialogue.mood === 'greet' && <Coffee className="w-2.5 h-2.5 text-[#FFFDF5]" />}
-                        {currentDialogue.mood === 'game' && <Gamepad2 className="w-2.5 h-2.5 text-[#FFFDF5]" />}
-                        <span>{currentDialogue.badge}</span>
+                        {dialogueToShow.icon && <span>{dialogueToShow.icon}</span>}
+                        <span>{dialogueToShow.badge}</span>
                       </span>
 
-                      {currentDialogue.isGameAction && (
+                      {dialogueToShow.isGameAction && (
                         <span className="text-[9px] font-mono text-[#BF3511] font-bold animate-pulse">
                           [CLICK]
                         </span>
@@ -270,16 +288,16 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
                     </div>
 
                     <p className="font-sans text-[12px] font-bold text-[#141413] leading-tight m-0">
-                      {currentDialogue.greeting}
+                      {dialogueToShow.greeting}
                     </p>
 
                     <p className="font-sans text-[11px] text-[#5C574C] font-semibold leading-relaxed mt-1 mb-1.5">
-                      {currentDialogue.body}
+                      {dialogueToShow.body}
                     </p>
 
-                    {currentDialogue.isGameAction ? (
+                    {dialogueToShow.isGameAction ? (
                       <div className="flex items-center gap-1.5 bg-[#BF3511] text-[#FFFDF5] px-2 py-0.5 rounded font-mono text-[10.5px] font-black uppercase tracking-wider shadow-inner group-hover:bg-[#d63d15] transition-colors">
-                        <Gamepad2 className="w-3.5 h-3.5" />
+                        <Sparkles className="w-3.5 h-3.5" />
                         <span>KLIK UNTUK MAIN GAME</span>
                         <Sparkles className="w-3 h-3 ml-auto animate-pulse" />
                       </div>
@@ -353,8 +371,41 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
                 <ellipse cx="106" cy="78" rx="18" ry="22" fill="#0D0D0C" />
 
                 {/* Eyes / Visor Expression based on mood */}
-                {currentDialogue.mood === 'tease' || currentDialogue.mood === 'troll' ? (
-                  /* Smug / Winking / Mocking Eyes */
+                {isOpening ? (
+                  /* Friendly Wide Curious Eyes */
+                  <g>
+                    <rect
+                      x="92"
+                      y="70"
+                      width="11"
+                      height="9"
+                      rx="2.5"
+                      fill="#22C55E"
+                      className="animate-pulse"
+                    />
+                    <circle cx="97.5" cy="74.5" r="2" fill="#FFFDF5" />
+
+                    <rect
+                      x="108"
+                      y="70"
+                      width="11"
+                      height="9"
+                      rx="2.5"
+                      fill="#22C55E"
+                      className="animate-pulse"
+                    />
+                    <circle cx="113.5" cy="74.5" r="2" fill="#FFFDF5" />
+                    {/* Friendly Smile */}
+                    <path
+                      d="M100 87 Q106 91 112 87"
+                      stroke="#22C55E"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </g>
+                ) : dialogueToShow.mood === 'roast' ? (
+                  /* Smug / Mocking Eyes */
                   <g>
                     {/* Left Eye: Smug Wink `^` */}
                     <path
@@ -384,34 +435,29 @@ export function TacticalEasterEgg({ onNavigateToGame, isGamePage = false }: Tact
                       fill="none"
                     />
                   </g>
-                ) : currentDialogue.mood === 'greet' ? (
-                  /* Friendly Wide Curious Eyes */
+                ) : dialogueToShow.mood === 'hygiene' ? (
+                  /* Disappointed / Tired Eyes - half closed */
                   <g>
                     <rect
                       x="92"
-                      y="70"
+                      y="73"
                       width="11"
-                      height="9"
-                      rx="2.5"
-                      fill="#22C55E"
-                      className="animate-pulse"
+                      height="5"
+                      rx="2"
+                      fill="#BF3511"
                     />
-                    <circle cx="97.5" cy="74.5" r="2" fill="#FFFDF5" />
-
                     <rect
                       x="108"
-                      y="70"
+                      y="73"
                       width="11"
-                      height="9"
-                      rx="2.5"
-                      fill="#22C55E"
-                      className="animate-pulse"
+                      height="5"
+                      rx="2"
+                      fill="#BF3511"
                     />
-                    <circle cx="113.5" cy="74.5" r="2" fill="#FFFDF5" />
-                    {/* Friendly Smile */}
+                    {/* Frown line */}
                     <path
-                      d="M100 87 Q106 91 112 87"
-                      stroke="#22C55E"
+                      d="M100 87 Q106 84 112 87"
+                      stroke="#BF3511"
                       strokeWidth="1.8"
                       strokeLinecap="round"
                       fill="none"
