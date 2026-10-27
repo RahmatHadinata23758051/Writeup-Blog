@@ -333,7 +333,9 @@ export default function App() {
           });
 
           // Add writeup sections as depth 3 items
-          const sections = getInlineWriteupSections(writeup);
+          // Important: writeup is WriteUpNode, so original data is in writeup.original!
+          const rawWriteup = (writeup as any).original || writeup;
+          const sections = getInlineWriteupSections(rawWriteup);
           for (const section of sections) {
             items.push({
               id: section.id,

@@ -33,6 +33,7 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
   const [activeId, setActiveId] = useState<string>('');
   const [viewportWriteup, setViewportWriteup] = useState<{ id: string; title: string; sections: SectionItem[] } | null>(null);
   const [activeSection, setActiveSection] = useState<string>('');
+  const [manuallyExpandedWriteupId, setManuallyExpandedWriteupId] = useState<string | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sectionObserverRef = useRef<IntersectionObserver | null>(null);
 
@@ -180,6 +181,15 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
       }
       if (currentActiveId) {
         setActiveId(currentActiveId);
+        // If user scrolled away to a different writeup, clear manual override
+        setManuallyExpandedWriteupId((prev) => {
+          if (!prev) return null;
+          const writeupSlug = prev.replace(/^writeup-/, '');
+          if (currentActiveId === prev || (writeupSlug && currentActiveId.includes(writeupSlug))) {
+            return prev;
+          }
+          return null;
+        });
       }
     };
 
@@ -222,7 +232,11 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
     const isSection = item.depth === 3 || item.id.startsWith('section-');
 
     if (isCategory) {
-      // Save previous category
+      // Save previous category - FIRST flush its last writeup!
+      if (currentCategory && currentWriteup) {
+        currentCategory.writeups.push(currentWriteup);
+        currentWriteup = null;
+      }
       if (currentCategory) categoryGroups.push(currentCategory);
       // Start new category
       currentCategory = { category: item, writeups: [] };
@@ -256,6 +270,43 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
   // Push last
   if (currentWriteup && currentCategory) currentCategory.writeups.push(currentWriteup);
   if (currentCategory) categoryGroups.push(currentCategory);
+
+  // Determine which writeup should have its sections expanded
+  // Priority: manual click > activeId match > viewportWriteup > first writeup
+  let currentActiveWriteupId = manuallyExpandedWriteupId;
+
+  if (!currentActiveWriteupId && activeId) {
+    // Try to find writeup matching activeId (either writeup ID or section ID)
+    for (const group of categoryGroups) {
+      for (const { writeup, sections } of group.writeups) {
+        if (writeup.id === activeId || sections.some(s => s.id === activeId)) {
+          currentActiveWriteupId = writeup.id;
+          break;
+        }
+      }
+      if (currentActiveWriteupId) break;
+    }
+  }
+
+  // Fallback: if activeId is a category, expand first writeup in that category
+  if (!currentActiveWriteupId && activeId) {
+    for (const group of categoryGroups) {
+      if (group.category?.id === activeId && group.writeups.length > 0) {
+        currentActiveWriteupId = group.writeups[0].writeup.id;
+        break;
+      }
+    }
+  }
+
+  // Final fallback: first writeup on initial load
+  if (!currentActiveWriteupId && categoryGroups.length > 0) {
+    for (const group of categoryGroups) {
+      if (group.writeups.length > 0) {
+        currentActiveWriteupId = group.writeups[0].writeup.id;
+        break;
+      }
+    }
+  }
 
   return (
     <div className="w-full space-y-4">
@@ -359,9 +410,10 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
             {group.writeups.length > 0 && (
               <ul className="pl-2 border-l-2 border-[#141413]/20 space-y-2 ml-1">
                 {group.writeups.map(({ writeup, sections }) => {
+                  const isExpanded = currentActiveWriteupId === writeup.id;
                   const isWriteupActive = activeId === writeup.id;
                   const isSectionActive = sections.some(s => activeId === s.id);
-                  const isCurrentTarget = viewportWriteup?.id === writeup.id;
+                  const isCurrentTarget = isExpanded || viewportWriteup?.id === writeup.id;
 
                   return (
                     <li key={writeup.id} className="space-y-1">
@@ -369,6 +421,8 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
                       <button
                         type="button"
                         onClick={() => {
+                          // Manual expansion: toggle or set this writeup as expanded, then scroll
+                          setManuallyExpandedWriteupId(writeup.id);
                           document.getElementById(writeup.id)?.scrollIntoView({
                             behavior: 'smooth',
                             block: 'start',
@@ -391,8 +445,8 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
                         title={writeup.label}
                       >
                         <span className="flex items-center gap-1.5 truncate">
-                          <span className={`text-[10px] ${isWriteupActive || isSectionActive ? 'text-[#FFFDF5]' : 'text-[#BF3511]'}`}>
-                            ▼
+                          <span className={`text-[10px] transition-transform duration-150 ${isWriteupActive || isSectionActive ? 'text-[#FFFDF5]' : 'text-[#BF3511]'}`}>
+                            {isExpanded ? '▼' : '▶'}
                           </span>
                           <span className="truncate">{writeup.label}</span>
                         </span>
@@ -403,9 +457,9 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
                         )}
                       </button>
 
-                      {/* Nested Sub-Sections — Selalu tampil kayak daftar isi buku */}
-                      {sections.length > 0 && (
-                        <ul className="pl-3 border-l-2 border-[#141413]/15 space-y-0.5 ml-2 pt-0.5 pb-1">
+                      {/* Nested Sub-Sections — HANYA tampil untuk writeup yang sedang dibaca */}
+                      {sections.length > 0 && isExpanded && (
+                        <ul className="pl-3 border-l-2 border-[#141413]/15 space-y-0.5 ml-2 pt-0.5 pb-1 animate-slide-down">
                           {sections.map((section, sIdx) => {
                             const isCurrentSection = activeId === section.id || activeSection === section.id;
                             return (
