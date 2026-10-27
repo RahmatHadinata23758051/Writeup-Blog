@@ -75,18 +75,6 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
   const hasFlag = isNonEmptyString(writeup.flag);
   const hasLessonsLearned = isNonEmptyString(writeup.lessonsLearned);
 
-  // Classification label based on difficulty
-  const getClassification = () => {
-    switch (writeup.difficulty) {
-      case 'Easy': return { label: 'UNCLASSIFIED', color: '#4FE3A0' };
-      case 'Medium': return { label: 'CONFIDENTIAL', color: '#BF3511' };
-      case 'Hard': return { label: 'TOP SECRET', color: '#BF3511' };
-      default: return { label: 'RESTRICTED', color: '#5C574C' };
-    }
-  };
-
-  const classification = getClassification();
-
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* CASE FILE HEADER */}
@@ -94,7 +82,7 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
         {/* Classification watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-10">
           <span className="font-[Anton] text-[8rem] tracking-widest text-[#141413] transform rotate-[-15deg] whitespace-nowrap">
-            {classification.label}
+            DECLASSIFIED
           </span>
         </div>
 
@@ -107,14 +95,9 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413] ${classification.color === '#4FE3A0' ? 'bg-[#4FE3A0] text-[#141413]' : 'bg-[#BF3511] text-[#F6F0E0]'}`}>
-              {classification.label}
+            <span className="px-2 py-0.5 bg-[#BF3511] text-[#F6F0E0] font-mono text-[10px] uppercase tracking-widest border-2 border-[#141413]">
+              SOLVED
             </span>
-            {writeup.difficulty && (
-              <span className="px-2 py-0.5 bg-[#F6F0E0] text-[#141413] font-mono text-[10px] uppercase tracking-wider border-2 border-[#141413]">
-                {writeup.difficulty.toUpperCase()}
-              </span>
-            )}
           </div>
         </div>
 
@@ -137,12 +120,6 @@ export function DocsWriteupPage({ writeup }: DocsWriteupPageProps) {
               <div className="flex items-center gap-1">
                 <span className="font-mono text-[10px] text-[#BF3511]">CAT:</span>
                 <span className="font-mono uppercase tracking-wider text-[#141413]">{writeup.category}</span>
-              </div>
-            )}
-            {writeup.points !== undefined && writeup.points !== null && (
-              <div className="flex items-center gap-1">
-                <span className="font-mono text-[10px] text-[#BF3511]">PTS:</span>
-                <span className="font-[Anton] text-xl text-[#BF3511]">{writeup.points}</span>
               </div>
             )}
             {writeup.date && (
