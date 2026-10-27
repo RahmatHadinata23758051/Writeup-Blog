@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface TocItem {
   id: string;
   label: string;
   depth?: number;
+}
+
+interface SectionItem {
+  id: string;
+  label: string;
 }
 
 interface DocsTocProps {
@@ -26,6 +31,10 @@ const formatCategoryLabel = (label: string) => {
 
 export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
   const [activeId, setActiveId] = useState<string>('');
+  const [currentWriteup, setCurrentWriteup] = useState<{ id: string; title: string; sections: SectionItem[] } | null>(null);
+  const [activeSection, setActiveSection] = useState<string>('');
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sectionObserverRef = useRef<IntersectionObserver | null>(null);
 
   const defaultItems = [
     { id: 'overview', label: 'Overview', depth: 0 },
@@ -37,12 +46,103 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
 
   const serializedItems = items ? items.map(i => `${i.id}-${i.label}-${i.depth}`).join('|') : '';
 
+  // Detect writeup sections from DOM
+  useEffect(() => {
+    if (!items || items.length === 0) return;
+
+    const updateCurrentWriteup = () => {
+      const mainEl = document.querySelector('main');
+      if (!mainEl) return;
+
+      const writeupElements = mainEl.querySelectorAll('[data-writeup-id]');
+      let bestMatch: { id: string; title: string; sections: SectionItem[] } | null = null;
+      let bestRatio = 0;
+
+      writeupElements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const visibleTop = Math.max(0, rect.top);
+        const visibleBottom = Math.min(viewportHeight, rect.bottom);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+        const ratio = visibleHeight / rect.height;
+
+        if (ratio > bestRatio && ratio > 0.3) { // At least 30% visible
+          bestRatio = ratio;
+          try {
+            const sections = JSON.parse(el.getAttribute('data-sections') || '[]');
+            bestMatch = {
+              id: el.getAttribute('data-writeup-id') || '',
+              title: el.getAttribute('data-writeup-title') || '',
+              sections,
+            };
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      });
+
+      if (bestMatch) {
+        setCurrentWriteup(bestMatch);
+      } else if (bestRatio < 0.1) {
+        setCurrentWriteup(null);
+      }
+    };
+
+    const handleScroll = () => {
+      updateCurrentWriteup();
+    };
+
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.addEventListener('scroll', handleScroll, { passive: true });
+      handleScroll();
+    }
+
+    return () => {
+      if (mainEl) {
+        mainEl.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [items]);
+
+  // Track active section within current writeup
+  useEffect(() => {
+    if (!currentWriteup) {
+      sectionObserverRef.current?.disconnect();
+      return;
+    }
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '-100px 0px -70% 0px',
+      threshold: 0,
+    };
+
+    const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+      const visible = entries.find(entry => entry.isIntersecting);
+      if (visible) {
+        setActiveSection(visible.target.id);
+      }
+    };
+
+    const observer = new IntersectionObserver(handleIntersect, observerOptions);
+    sectionObserverRef.current = observer;
+
+    currentWriteup.sections.forEach((section) => {
+      const el = document.getElementById(section.id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [currentWriteup]);
+
+  // Original scroll tracking for main TOC items
   useEffect(() => {
     if (!items || items.length === 0) return;
 
     const observerOptions = {
       root: null,
-      rootMargin: '-80px 0px -60% 0px', // Focus window near the top of the viewport
+      rootMargin: '-80px 0px -60% 0px',
       threshold: 0,
     };
 
@@ -54,18 +154,17 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
     };
 
     const observer = new IntersectionObserver(handleIntersect, observerOptions);
+    observerRef.current = observer;
 
     items.forEach((item) => {
       const el = document.getElementById(item.id);
-      if (el) {
-        observer.observe(el);
-      }
+      if (el) observer.observe(el);
     });
 
     const handleScroll = () => {
       const mainEl = document.querySelector('main');
       if (!mainEl) return;
-      const scrollPos = mainEl.scrollTop + 140; // Offset threshold
+      const scrollPos = mainEl.scrollTop + 140;
       
       let currentActiveId = '';
       for (const item of items) {
@@ -92,11 +191,8 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
 
     return () => {
       observer.disconnect();
-      if (mainEl) {
-        mainEl.removeEventListener('scroll', handleScroll);
-      }
+      if (mainEl) mainEl.removeEventListener('scroll', handleScroll);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serializedItems]);
 
   // Group items by category
@@ -113,9 +209,7 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
     const isChallenge = item.depth === 2 || item.id.startsWith('writeup-');
 
     if (isCategory) {
-      if (currentGroup) {
-        groups.push(currentGroup);
-      }
+      if (currentGroup) groups.push(currentGroup);
       currentGroup = { category: item, challenges: [] };
     } else if (isChallenge && currentGroup) {
       currentGroup.challenges.push(item);
@@ -127,19 +221,71 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
       groups.push({ challenges: [item] });
     }
   });
-  if (currentGroup) {
-    groups.push(currentGroup);
-  }
+  if (currentGroup) groups.push(currentGroup);
 
   return (
-    <div className="rounded-lg border border-[var(--docs-border-soft)] bg-[var(--docs-bg-soft)]/20 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4 w-full">
-      {/* Header */}
-      <div className="text-[12px] font-bold tracking-widest text-[var(--docs-text-soft)] uppercase flex items-center gap-2 border-b border-[var(--docs-border-soft)] pb-3 font-sans">
-        <span className="w-1.5 h-3.5 bg-[var(--docs-accent)] rounded-sm shrink-0"></span>
-        <span>ON THIS PAGE</span>
+    <div className="w-full space-y-4">
+      {/* ===== HEADER ===== */}
+      <div className="flex items-center gap-2 border-b-2 border-[#141413] pb-2">
+        <span className="w-1.5 h-5 bg-[#BF3511] rounded-sm shrink-0 animate-pulse" />
+        <span className="font-mono text-[10px] uppercase tracking-widest text-[#BF3511]">// TARGET DIRECTORY</span>
       </div>
 
-      <nav className="space-y-4">
+      {/* ===== CURRENT TARGET PANEL ===== */}
+      {currentWriteup && (
+        <div className="relative bg-[#FFFDF5] border-2 border-[#141413] shadow-[3px_3px_0_0_#141413] overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 bg-[#141413] border-b-2 border-[#BF3511]">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-[#BF3511] text-[#FFFDF5] font-mono text-[9px] font-bold uppercase tracking-wider border-2 border-[#BF3511] shadow-[1px_1px_0_0_#BF3511]">
+                ACTIVE TARGET
+              </span>
+              <span className="font-['Anton'] text-[11px] text-[#FFFDF5] uppercase tracking-wider">
+                {currentWriteup.title}
+              </span>
+            </div>
+          </div>
+
+          {/* Sections list */}
+          <nav className="p-3 space-y-1 max-h-[300px] overflow-y-auto">
+            {currentWriteup.sections.map((section) => {
+              const isActive = activeSection === section.id;
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  onClick={() => {
+                    document.getElementById(section.id)?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    });
+                  }}
+                  className={`
+                    w-full flex items-center gap-2 px-3 py-2 text-left rounded transition-all duration-150
+                    ${isActive
+                      ? 'bg-[#BF3511] text-[#FFFDF5] shadow-[2px_2px_0_0_#BF3511]'
+                      : 'text-[#141413] hover:bg-[#141413]/5 hover:text-[#BF3511]'
+                    }
+                  `}
+                  title={section.label}
+                >
+                  <span className={`w-5 h-5 flex items-center justify-center font-mono text-[10px] font-bold border border-[#141413]/30 ${isActive ? 'bg-[#FFFDF5] text-[#BF3511]' : 'bg-[#EFE9D8] text-[#5C574C]'}`}>
+                    {currentWriteup.sections.indexOf(section) + 1}
+                  </span>
+                  <span className="font-mono text-[11px] uppercase tracking-wider truncate">{section.label}</span>
+                  {isActive && <span className="ml-auto font-mono text-[9px] text-[#FFFDF5]/80">►</span>}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Divider */}
+          <div className="border-t-2 border-[#141413] mx-3" />
+        </div>
+      )}
+
+      {/* ===== MAIN NAVIGATION TREE ===== */}
+      <nav className="space-y-3">
         {groups.map((group, gIdx) => (
           <div key={gIdx} className="space-y-2 mt-4 first:mt-0">
             {group.category && (
@@ -148,54 +294,72 @@ export function DocsToc({ items, variant = 'default' }: DocsTocProps) {
                 onClick={() => {
                   document.getElementById(group.category!.id)?.scrollIntoView({
                     behavior: 'smooth',
-                    block: 'start'
+                    block: 'start',
                   });
                 }}
-                className={`block w-full text-left transition-colors duration-150 hover:text-[var(--docs-text)] ${
-                  variant === 'plain'
-                    ? 'font-sans text-[13px] leading-snug font-semibold tracking-normal whitespace-normal break-words [overflow-wrap:anywhere]'
-                    : 'font-mono text-[14px] font-bold tracking-tight lowercase'
-                } ${
-                  activeId === group.category.id || group.challenges.some(c => activeId === c.id)
-                    ? 'text-[var(--docs-text)]'
-                    : 'text-[var(--docs-text-soft)]'
-                }`}
-                title={group.category.label}
+                className={`
+                  w-full text-left px-3 py-2 rounded transition-all duration-150
+                  ${variant === 'plain'
+                    ? 'font-sans text-[12px] leading-snug font-semibold tracking-normal whitespace-normal break-words [overflow-wrap:anywhere]'
+                    : 'font-mono text-[13px] font-bold tracking-tight lowercase'
+                  }
+                  ${
+                    activeId === group.category?.id || group.challenges.some(c => activeId === c.id)
+                      ? 'bg-[#BF3511] text-[#FFFDF5] shadow-[2px_2px_0_0_#BF3511]'
+                      : 'bg-[#FFFDF5] text-[#5C574C] hover:bg-[#141413]/5 hover:text-[#BF3511] border border-[#141413]/20'
+                  }
+                `}
+                title={group.category?.label}
               >
-                {variant === 'plain' ? group.category.label : formatCategoryLabel(group.category.label)}
+                {variant === 'plain' ? group.category!.label : formatCategoryLabel(group.category!.label).toUpperCase()}
+                {group.challenges.length > 0 && (
+                  <span className="ml-auto px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#BF3511] bg-[#FFFDF5] border border-[#BF3511]/30">
+                    {group.challenges.length} TARGETS
+                  </span>
+                )}
               </button>
             )}
             {group.challenges.length > 0 && (
-              <ul className="pl-3.5 border-l-2 border-[var(--docs-border-soft)] space-y-2 ml-1 relative">
+              <ul className="pl-3 border-l-2 border-[#141413]/20 space-y-1 ml-1 relative">
                 {group.challenges.map((challenge) => {
                   const isActive = activeId === challenge.id;
+                  const isCurrentTarget = currentWriteup?.id === challenge.id;
                   return (
                     <li key={challenge.id} className="relative">
-                      {isActive && (
-                        <span className="absolute -left-[17px] top-1/2 -translate-y-1/2 w-1.5 h-4 bg-[var(--docs-accent)] rounded-sm z-10" />
-                      )}
                       <button
                         type="button"
                         onClick={() => {
                           document.getElementById(challenge.id)?.scrollIntoView({
                             behavior: 'smooth',
-                            block: 'start'
+                            block: 'start',
                           });
                         }}
                         className={`
-                          block w-full text-left py-1 px-2.5 rounded transition-all duration-150 font-sans
+                          w-full text-left px-3 py-2 rounded transition-all duration-150 font-sans
                           ${variant === 'plain'
-                            ? 'text-[13px] leading-snug whitespace-normal break-words [overflow-wrap:anywhere]'
-                            : 'text-[14px] truncate'}
+                            ? 'text-[12px] leading-snug whitespace-normal break-words [overflow-wrap:anywhere]'
+                            : 'text-[13px] truncate'
+                          }
                           ${
                             isActive
-                              ? 'text-[var(--docs-accent)] bg-[var(--docs-accent-soft)]/50 font-semibold'
-                              : 'text-[var(--docs-text-muted)] hover:text-[var(--docs-text)] hover:bg-[var(--docs-bg-soft)]/20'
+                              ? 'bg-[#BF3511] text-[#FFFDF5] shadow-[2px_2px_0_0_#BF3511] font-bold'
+                              : isCurrentTarget
+                                ? 'bg-[#BF3511]/10 text-[#BF3511] border border-[#BF3511]/30 font-medium'
+                                : 'text-[#5C574C] hover:bg-[#141413]/5 hover:text-[#141413]'
                           }
                         `}
                         title={challenge.label}
                       >
-                        {challenge.label}
+                        <span className="flex items-center gap-2">
+                          {isActive && <span className="text-[#FFFDF5]">►</span>}
+                          {!isActive && <span className="w-4 text-transparent">►</span>}
+                          <span>{challenge.label}</span>
+                        </span>
+                        {isCurrentTarget && (
+                          <span className="ml-auto px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-[#FFFDF5] bg-[#BF3511] border border-[#BF3511] rounded">
+                            LIVE
+                          </span>
+                        )}
                       </button>
                     </li>
                   );

@@ -111,8 +111,8 @@ export function DocsLayout({
 
         {/* Right TOC Sidebar */}
         {hasToc && (
-          <aside className="hidden w-72 xl:w-80 flex-shrink-0 border-l border-[var(--docs-border-soft)] bg-[var(--docs-bg)] lg:block overflow-y-auto">
-            <div className="p-6">
+          <aside className="hidden w-72 xl:w-80 flex-shrink-0 border-l-2 border-[#141413] bg-[#EFE9D8] lg:block overflow-y-auto">
+            <div className="p-5">
               <DocsToc items={toc} variant={tocVariant} />
             </div>
           </aside>

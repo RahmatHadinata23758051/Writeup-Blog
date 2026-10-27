@@ -65,6 +65,29 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
   const hasLessonsLearned = isNonEmptyString(writeup.lessonsLearned);
   const hasMathAnalysis = isNonEmptyArray(writeup.mathAnalysis);
 
+  // Section IDs for TOC tracking
+  const writeupSlug = writeup.id.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const sectionIds = {
+    briefing: `writeup-${writeupSlug}-briefing`,
+    analysis: `writeup-${writeupSlug}-analysis`,
+    math: `writeup-${writeupSlug}-math`,
+    solution: `writeup-${writeupSlug}-solution`,
+    terminal: `writeup-${writeupSlug}-terminal`,
+    lessons: `writeup-${writeupSlug}-lessons`,
+    flag: `writeup-${writeupSlug}-flag`,
+  };
+
+  // Sub-sections available for this writeup
+  const availableSections = [
+    { id: sectionIds.briefing, label: 'BRIEFING', icon: BookOpen, condition: hasProblemDescription || hasDescription || hasTools },
+    { id: sectionIds.analysis, label: 'VULNERABILITY ANALYSIS', icon: FileCode, condition: hasAnalysis },
+    { id: sectionIds.math, label: 'MATHEMATICAL MODEL', icon: FileCode, condition: hasMathAnalysis },
+    { id: sectionIds.solution, label: 'EXPLOIT EXECUTION', icon: Terminal, condition: hasSolution },
+    { id: sectionIds.terminal, label: 'TERMINAL EVIDENCE', icon: Terminal, condition: hasTerminalOutputs },
+    { id: sectionIds.lessons, label: 'LESSONS LEARNED', icon: BookOpen, condition: hasLessonsLearned },
+    { id: sectionIds.flag, label: 'FLAG SECURED', icon: FlagIcon, condition: hasFlag },
+  ].filter(s => s.condition);
+
   return (
     <article
       id={`writeup-${writeup.id}`}
@@ -117,7 +140,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
           
           {/* ---- PHASE 1: BRIEFING ---- */}
           {(hasProblemDescription || hasDescription || hasTools) && (
-            <section className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
+            <section id={sectionIds.briefing} className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 flex items-center justify-center bg-[#BF3511] text-[#FFFDF5] font-mono text-[10px] font-bold border-2 border-[#141413] shadow-[1px_1px_0_0_#141413]">01</span>
                 <span className="font-['Anton'] text-[12px] uppercase tracking-wider text-[#141413]">BRIEFING</span>
@@ -151,7 +174,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
 
           {/* ---- PHASE 2: VULNERABILITY ANALYSIS ---- */}
           {(hasAnalysis || hasMathAnalysis) && (
-            <section className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
+            <section id={sectionIds.analysis} className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 flex items-center justify-center bg-[#BF3511] text-[#FFFDF5] font-mono text-[10px] font-bold border-2 border-[#141413] shadow-[1px_1px_0_0_#141413]">02</span>
                 <span className="font-['Anton'] text-[12px] uppercase tracking-wider text-[#141413]">VULNERABILITY ANALYSIS</span>
@@ -169,7 +192,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
               )}
 
               {hasMathAnalysis && (
-                <div className="space-y-3 ml-8 pt-3 border-t border-[#141413]/10">
+                <section id={sectionIds.math} className="space-y-3 ml-8 pt-3 border-t border-[#141413]/10">
                   <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">MATHEMATICAL MODEL</p>
                   <div className="space-y-3">
                     {(writeup.mathAnalysis as any[]).map((formula, idx) => (
@@ -182,14 +205,14 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
                       />
                     ))}
                   </div>
-                </div>
+                </section>
               )}
             </section>
           )}
 
           {/* ---- PHASE 3: EXPLOIT EXECUTION ---- */}
           {hasSolution && (
-            <section className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
+            <section id={sectionIds.solution} className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 flex items-center justify-center bg-[#BF3511] text-[#FFFDF5] font-mono text-[10px] font-bold border-2 border-[#141413] shadow-[1px_1px_0_0_#141413]">03</span>
                 <span className="font-['Anton'] text-[12px] uppercase tracking-wider text-[#141413]">EXPLOIT EXECUTION</span>
@@ -233,7 +256,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
 
           {/* ---- PHASE 4: TERMINAL EVIDENCE ---- */}
           {hasTerminalOutputs && (
-            <section className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
+            <section id={sectionIds.terminal} className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 flex items-center justify-center bg-[#BF3511] text-[#FFFDF5] font-mono text-[10px] font-bold border-2 border-[#141413] shadow-[1px_1px_0_0_#141413]">04</span>
                 <span className="font-['Anton'] text-[12px] uppercase tracking-wider text-[#141413]">TERMINAL EVIDENCE</span>
@@ -260,7 +283,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
 
           {/* ---- PHASE 5: LESSONS LEARNED ---- */}
           {hasLessonsLearned && (
-            <section className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
+            <section id={sectionIds.lessons} className="space-y-4 pt-2 border-t-2 border-[#BF3511]">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 flex items-center justify-center bg-[#BF3511] text-[#FFFDF5] font-mono text-[10px] font-bold border-2 border-[#141413] shadow-[1px_1px_0_0_#141413]">05</span>
                 <span className="font-['Anton'] text-[12px] uppercase tracking-wider text-[#141413]">LESSONS LEARNED</span>
@@ -279,7 +302,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
 
           {/* ===== FLAG SECTION - Always at bottom ===== */}
           {hasFlag && (
-            <section className="relative pt-4 border-t-2 border-[#BF3511]">
+            <section id={sectionIds.flag} className="relative pt-4 border-t-2 border-[#BF3511]">
               <div className="absolute -top-6 left-5">
                 <span className="px-3 py-1 bg-[#EFE9D8] font-['Anton'] text-[11px] text-[#BF3511] uppercase tracking-wider border-2 border-[#BF3511] shadow-[2px_2px_0_0_#BF3511]">
                   FLAG SECURED
@@ -301,6 +324,14 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
               </div>
             </section>
           )}
+
+          {/* Data attributes for TOC tracking */}
+          <div
+            hidden
+            data-writeup-id={writeup.id}
+            data-writeup-title={writeup.title}
+            data-sections={JSON.stringify(availableSections.map(s => ({ id: s.id, label: s.label })))}
+          />
         </div>
       </div>
     </article>

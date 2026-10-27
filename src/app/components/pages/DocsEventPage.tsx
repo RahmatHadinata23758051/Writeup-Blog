@@ -62,8 +62,8 @@ export function DocsEventPage({ event }: DocsEventPageProps) {
         {event.categories.map((category, catIdx) => (
           <section
             key={category.slug}
-            id={`sector-${category.slug}`}
-            className="space-y-6"
+            id={`category-${category.slug}`}
+            className="space-y-6 scroll-mt-20"
           >
             {/* Sector Divider */}
             <div className="relative">
