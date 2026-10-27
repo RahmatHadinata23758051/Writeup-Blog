@@ -11,6 +11,7 @@ import {
 import { DocsLayout } from './components/docs/DocsLayout';
 import { DocsSidebar } from './components/docs/DocsSidebar';
 import { DocsSearch } from './components/docs/DocsSearch';
+import { TacticalEasterEgg } from './components/docs/TacticalEasterEgg';
 import { DocsHomePage } from './components/pages/DocsHomePage';
 import { DocsEventPage } from './components/pages/DocsEventPage';
 import { DocsWriteupPage } from './components/pages/DocsWriteupPage';
@@ -356,6 +357,10 @@ export default function App() {
           handleNavigate({ type: 'writeup', writeupId });
           setIsSearchOpen(false);
         }}
+      />
+      <TacticalEasterEgg
+        onNavigateToGame={() => handleNavigate({ type: 'hacking-game' })}
+        isGamePage={docsView.type === 'hacking-game'}
       />
       <DocsLayout
         title="Nattt"

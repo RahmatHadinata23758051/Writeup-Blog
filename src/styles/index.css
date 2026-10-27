@@ -2,6 +2,66 @@
 @import './tailwind.css';
 @import './theme.css';
 
+/* ===== Custom Cursor (Minimal Suit of Clubs Card) ===== */
+*,
+*::before,
+*::after {
+  cursor: url('/cursors/cursor-32.png') 0 0, auto !important;
+}
+
+a,
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+summary,
+label[for],
+.cursor-pointer,
+.cursor-pointer * {
+  cursor: url('/cursors/pointer-32.png') 0 0, pointer !important;
+}
+
+/* Text selection keeps default I-beam */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+textarea,
+[contenteditable="true"] {
+  cursor: url('/cursors/cursor-32.png') 0 0, text !important;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    cursor: auto !important;
+  }
+  a,
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  summary,
+  label[for],
+  .cursor-pointer,
+  .cursor-pointer * {
+    cursor: pointer !important;
+  }
+}
+
 @keyframes blob {
   0%, 100% {
     transform: translate(0, 0) scale(1);
