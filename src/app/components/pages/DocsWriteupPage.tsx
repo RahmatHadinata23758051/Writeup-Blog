@@ -59,7 +59,7 @@ function renderTextBlock(value: unknown) {
 
   const text = normalizeToString(value);
   return (
-    <RichText text={text} className="text-[#1B1A17]/90 text-base leading-relaxed font-serif" />
+    <RichText text={text} className="text-[#1B1A17]/90 text-base leading-relaxed" />
   );
 }
 

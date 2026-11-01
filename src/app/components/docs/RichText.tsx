@@ -216,22 +216,20 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
       const rows = currentLines.map(parseRow);
 
       elements.push(
-        <div key={key} className="overflow-x-auto my-4 rounded border border-[var(--docs-border-soft)] shadow-sm bg-[var(--docs-bg-soft)]/10">
-          <table className="w-full text-left border-collapse text-xs">
+        <div key={key} className="docs-prose-internal-table my-4 overflow-x-auto">
+          <table className="docs-prose-table">
             <thead>
-              <tr className="bg-[var(--docs-bg-soft)] border-b border-[var(--docs-border-soft)] text-[var(--docs-text-muted)] uppercase tracking-widest text-[9px] font-bold font-sans">
+              <tr>
                 {headerRow.map((cell, idx) => (
                   <th key={idx} className="p-3">{renderInline(cell)}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--docs-border-soft)]">
+            <tbody>
               {rows.map((row, rowIdx) => (
-                <tr key={rowIdx} className="hover:bg-[var(--docs-bg-soft)]/20 transition">
+                <tr key={rowIdx}>
                   {row.map((cell, cellIdx) => (
-                    <td key={cellIdx} className="p-3 text-[var(--docs-text)] font-serif text-sm">
-                      {renderInline(cell)}
-                    </td>
+                    <td key={cellIdx} className="p-3">{renderInline(cell)}</td>
                   ))}
                 </tr>
               ))}
@@ -321,7 +319,22 @@ export const RichText: React.FC<RichTextProps> = ({ text, className = '' }) => {
       continue;
     }
 
-    // 00000. Check for blockquote line (e.g. > Quote)
+    // 00000. Check for 4-space indented code block (markdown standard)
+    // Must come before blockquote and list checks so indented code in lists works
+    const indentedCodeMatch = line.match(/^( {4}|\t)(.*)$/);
+    if (indentedCodeMatch && currentType !== 'ul' && currentType !== 'ol') {
+      if (currentType !== 'code') {
+        flush(i);
+        currentType = 'code';
+        currentLanguage = ''; // No language tag for indented blocks
+      }
+      // Remove exactly 4 spaces or 1 tab
+      currentLines.push(indentedCodeMatch[1] === '\t' ? line.slice(1) : line.slice(4));
+      i++;
+      continue;
+    }
+
+    // 000000. Check for blockquote line (e.g. > Quote)
     const blockquoteMatch = line.match(/^>\s?(.*)$/);
     if (blockquoteMatch) {
       if (currentType !== 'blockquote') {

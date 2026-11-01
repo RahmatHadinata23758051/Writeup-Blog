@@ -152,13 +152,13 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
                 <div className="space-y-3 ml-8">
                   <div className="space-y-1">
                     <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">MISSION INTEL</p>
-                    <div className="text-sm font-serif text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20">
+                    <div className="text-sm text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20">
                       <RichText text={normalizeToString(writeup.description)} />
                     </div>
                   </div>
                   <div className="space-y-1">
                     <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">TARGET SPECIFICATION</p>
-                    <div className="text-sm font-serif text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20">
+                    <div className="text-sm text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20">
                       <RichText text={normalizeToString(writeup.problemDescription)} />
                     </div>
                   </div>
@@ -166,7 +166,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
               ) : (hasProblemDescription || hasDescription) && (
                 <div className="space-y-2 ml-8">
                   <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">TARGET DESCRIPTION</p>
-                  <div className="text-sm font-serif text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20 rounded-none">
+                  <div className="text-sm text-[#141413] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20 rounded-none">
                     <RichText text={hasProblemDescription ? normalizeToString(writeup.problemDescription) : normalizeToString(writeup.description)} />
                   </div>
                 </div>
@@ -200,7 +200,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
               {hasAnalysis && (
                 <div className="space-y-2 ml-8">
                   <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">TECHNICAL ANALYSIS</p>
-                  <div className="text-sm font-serif text-[#141413] leading-relaxed">
+                  <div className="text-sm text-[#141413] leading-relaxed">
                     <RichText text={normalizeToString(writeup.analysis)} />
                   </div>
                 </div>
@@ -245,11 +245,11 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
                           STEP {idx + 1}
                         </span>
                         {step.title && (
-                          <h5 className="font-bold font-serif text-sm text-[#141413]">{step.title}</h5>
+                          <h5 className="font-bold text-sm text-[#141413]">{step.title}</h5>
                         )}
                       </div>
                       {isNonEmptyString(step.content) && (
-                        <div className="text-sm font-serif text-[#5C574C] leading-relaxed">
+                        <div className="text-sm text-[#5C574C] leading-relaxed">
                           <RichText text={step.content} />
                         </div>
                       )}
@@ -308,7 +308,7 @@ export function InlineWriteup({ writeup, index = 0 }: InlineWriteupProps) {
 
               <div className="space-y-2 ml-8">
                 <p className="font-sans text-[10px] uppercase tracking-wider text-[#5C574C]">DEBRIEFING NOTES</p>
-                <div className="text-sm font-serif text-[#5C574C] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20 rounded-none">
+                <div className="text-sm text-[#5C574C] leading-relaxed bg-[#FFFDF5] p-4 border border-[#141413]/20 rounded-none">
                   <RichText text={normalizeToString(writeup.lessonsLearned)} />
                 </div>
               </div>
