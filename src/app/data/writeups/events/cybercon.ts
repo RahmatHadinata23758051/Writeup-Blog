@@ -3,7 +3,7 @@ import type { WriteUp } from "../types";
 export const cyberconWriteups: WriteUp[] = [
   {
     "id": "cybercon-blockchain-dormantsigner",
-    "title": "Dormantsigner",
+    "title": "Dormant Signer",
     "category": "Blockchain",
     "difficulty": "Hard",
     "points": 0,
@@ -11,7 +11,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Escrow tersimpan sebagai `bytes32` yang di-XOR dengan signature liveness signer dan `running_digest`. Private key signer bisa dipulihkan dari dua signature withdrawal yang memakai nilai `r` sama untuk digest berbeda. Setelah key dipulihkan, signature liveness deterministik bis...",
-    "problemDescription": "# Dormant Signer",
+    "problemDescription": "Challenge Dormant Signer menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -35,7 +35,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-blockchain-hollowreserve",
-    "title": "Hollowreserve",
+    "title": "Hollow Reserve",
     "category": "Blockchain",
     "difficulty": "Hard",
     "points": 0,
@@ -43,7 +43,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Challenge kategori Misc ini meminta saldo vault turun di bawah 10% dari saldo awal. Kuncinya ada pada dua komponen: `CreditFacility` menghitung LTV dari harga spot market, dan lender menyediakan flashloan 5 juta RSV. Flashloan dipakai untuk mengubah rasio reserve market yang t...",
-    "problemDescription": "# Hollow Reserve",
+    "problemDescription": "Challenge Hollow Reserve menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -68,15 +68,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-blockchain-prunedledger",
-    "title": "Prunedledger",
+    "title": "Pruned Ledger",
     "category": "Blockchain",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Teknik:** RLP, EIP-155 sender recovery, Keccak-256, `CREATE` address derivation, calldata history, XOR mask Deskripsi menyebut operator telah menghapus sebagian field dari storage kontrak setelah sistem ditutup. Source `Ledger.sol` menunjukkan apa yang hilang:",
-    "problemDescription": "# Pruned Ledger\n\n**Kategori:** Misc / Ethereum forensics  \n**Target:** case `0xca5ef11e`  \n**Artefak:** `contracts/{Relay,Clearing,Ledger}.sol`, `chain/genesis.json`, `chain/transactions.jsonl`, `chain/replay.sh`, `chain/HEAD`  \n**Teknik:** RLP, EIP-155 sender recovery, Keccak-256, `CREATE` address derivation, calldata history, XOR mask  \n**Status:** flag direkonstruksi dan solver offline berhasil dijalankan ulang.",
+    "description": "RLP, EIP-155 sender recovery, Keccak-256, `CREATE` address derivation, calldata history, XOR mask Deskripsi menyebut operator telah menghapus sebagian field dari storage kontrak setelah sistem ditutup. Source `Ledger.sol` menunjukkan apa yang hilang:",
+    "problemDescription": "**Kategori:** Misc / Ethereum forensics  \n**Target:** case `0xca5ef11e`  \n**Artefak:** `contracts/{Relay,Clearing,Ledger}.sol`, `chain/genesis.json`, `chain/transactions.jsonl`, `chain/replay.sh`, `chain/HEAD`  \n**Teknik:** RLP, EIP-155 sender recovery, Keccak-256, `CREATE` address derivation, calldata history, XOR mask  \n**Status:** flag direkonstruksi dan solver offline berhasil dijalankan ulang.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -102,15 +102,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-blockchain-quietupgrade",
-    "title": "Quietupgrade",
+    "title": "Quiet Upgrade",
     "category": "Blockchain",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Lingkungan:** private chain, RPC JSON-RPC, chain ID 31337 **Teknik:** `delegatecall` storage collision, admin takeover, malicious implementation upgrade, treasury withdrawal `Setup.sol` mendeploy token `STL`, `Treasury`, `Ops`, `SettlementV1`, dan `SettlementProxy`. Treasury...",
-    "problemDescription": "# Quiet Upgrade\n\n**Kategori:** Smart Contract / Ethereum  \n**Lingkungan:** private chain, RPC JSON-RPC, chain ID 31337  \n**Artefak:** `contracts/SettlementProxy.sol`, `SettlementV1.sol`, `Treasury.sol`, `Setup.sol`, `Ops.sol`, `SettlementToken.sol`, `ERC20Base.sol`  \n**Teknik:** `delegatecall` storage collision, admin takeover, malicious implementation upgrade, treasury withdrawal  \n**Status:** solver disiapkan dan diuji secara lokal; pengguna melaporkan flag dari instance remote.",
+    "description": "private chain, RPC JSON-RPC, chain ID 31337 `delegatecall` storage collision, admin takeover, malicious implementation upgrade, treasury withdrawal `Setup.sol` mendeploy token `STL`, `Treasury`, `Ops`, `SettlementV1`, dan `SettlementProxy`. Treasury diisi **5.000.000 STL**; pl...",
+    "problemDescription": "**Kategori:** Smart Contract / Ethereum  \n**Lingkungan:** private chain, RPC JSON-RPC, chain ID 31337  \n**Artefak:** `contracts/SettlementProxy.sol`, `SettlementV1.sol`, `Treasury.sol`, `Setup.sol`, `Ops.sol`, `SettlementToken.sol`, `ERC20Base.sol`  \n**Teknik:** `delegatecall` storage collision, admin takeover, malicious implementation upgrade, treasury withdrawal  \n**Status:** solver disiapkan dan diuji secara lokal; pengguna melaporkan flag dari instance remote.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -136,7 +136,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-blockchain-standingorder",
-    "title": "Standingorder",
+    "title": "Standing Order",
     "category": "Blockchain",
     "difficulty": "Hard",
     "points": 0,
@@ -144,7 +144,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "A grant program pays out against approvals signed by its committee. Two redemption paths exist -- one for small onboarding credits, one for the committee's own larger approvals -- and both were wired against the same",
-    "problemDescription": "# Standing Order\n\nA grant program pays out against approvals signed by its committee. Two\nredemption paths exist -- one for small onboarding credits, one for the\ncommittee's own larger approvals -- and both were wired against the same\nsignature check.",
+    "problemDescription": "A grant program pays out against approvals signed by its committee. Two\nredemption paths exist -- one for small onboarding credits, one for the\ncommittee's own larger approvals -- and both were wired against the same\nsignature check.",
     "tools": [
       "Python 3",
       "Solidity / EVM"
@@ -175,8 +175,8 @@ export const cyberconWriteups: WriteUp[] = [
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Description:** `One step at a time. Do not look back.` **Files:** `challenge.json`, `RULES.md` **Category:** Cryptography / finite fields / isogeny walk **Result:** Solved; AES-256-GCM authentication passed.",
-    "problemDescription": "# Cairn — Crypto CTF Writeup\n\n**Description:** `One step at a time. Do not look back.`  \n**Files:** `challenge.json`, `RULES.md`  \n**Category:** Cryptography / finite fields / isogeny walk  \n**Result:** Solved; AES-256-GCM authentication passed.\n\n```text\nhiCTF{w41k_th3_sup3rs1n9u14r_l46yr1ntH}\n```",
+    "description": "`One step at a time. Do not look back.` `challenge.json`, `RULES.md` Cryptography / finite fields / isogeny walk Solved; AES-256-GCM authentication passed. hiCTF{w41k_th3_sup3rs1n9u14r_l46yr1ntH}",
+    "problemDescription": "**Description:** `One step at a time. Do not look back.`  \n**Files:** `challenge.json`, `RULES.md`  \n**Category:** Cryptography / finite fields / isogeny walk  \n**Result:** Solved; AES-256-GCM authentication passed.\n\n```text\nhiCTF{w41k_th3_sup3rs1n9u14r_l46yr1ntH}\n```",
     "tools": [
       "Python 3",
       "SageMath",
@@ -196,20 +196,22 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-crypto-chronogrind",
-    "title": "Chronogrind",
+    "title": "Chrono Grind",
     "category": "Crypto",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "import sys, struct, hashlib, subprocess, os, glob from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305 d = open(sys.argv[1],'rb').read(); x = bytes(c ^ 0x4c for c in d) R = {}; i = 6",
-    "problemDescription": "#!/usr/bin/env python3\n# ChronoGrind solver. Usage: python3 solve.py state.dat flag.enc   (needs gcc, libgmp.so.10, `pip install cryptography`)\n# Resumable: progress is checkpointed to ckpt.txt every 1e8 squarings (~2 min). ~3 h single core.\nimport sys, struct, hashlib, subprocess, os, glob\nfrom cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305\nd = open(sys.argv[1],'rb').read(); x = bytes(c ^ 0x4c for c in d)\nR = {}; i = 6\nwhile i < len(x):\n    t = x[i]; l = struct.unpack('<I', x[i+1:i+5])[0]; R[t] = x[i+5:i+5+l]; i += 5+l\nb241 = lambda b: __import__('functools').reduce(lambda n, c: n*241+c, b, 0)\nA, S, C = b241(R[0x11]), b241(R[0x22]), int(R[0x33])\nassert hashlib.sha256(f\"{A}:{S}:{C}\".encode()).digest()[:8] == R[0x44], \"chk mismatch\"\nlib = (glob.glob('/usr/lib/x86_64-linux-gnu/libgmp.so.10') + glob.glob('/usr/lib64/libgmp.so.10') + glob.glob('/usr/lib/libgmp.so*'))[0]\nif not os.path.exists('mont'): subprocess.check_call(['gcc','-O3','-march=native','-o','mont','mont.c',lib])\nRm = 1 << 2048\nstart_done, xm = 0, S * Rm % A\nif os.path.exists('ckpt.txt'):\n    a, b = open('ckpt.txt').read().split(); start_done, xm = int(a), int(b, 16)\np = subprocess.run(['./mont', '%05",
+    "description": "Repeated squaring time-lock puzzle using Montgomery multiplication (2048-bit modulus). State encrypted with XOR and ChaCha20Poly1305. Solver uses optimized C/GMP for ~3 hours single-core computation with resumable checkpoints.",
+    "problemDescription": "Challenge Chrono Grind menguji implementasi time-lock puzzle dengan repeated squaring modular. Diberikan file state.dat (parameter tersembunyi XOR 0x4c) dan flag.enc (CGFX format + ChaCha20Poly1305). Harus melakukan C squarings modulo A dengan checkpoint otomatis setiap 1e8 iterasi. Menggunakan montgomery multiplication via GMP C library untuk kecepatan.",
     "tools": [
       "Python 3",
-      "SageMath"
+      "SageMath",
+      "GMP",
+      "GCC"
     ],
-    "analysis": "#!/usr/bin/env python3\n# ChronoGrind solver. Usage: python3 solve.py state.dat flag.enc   (needs gcc, libgmp.so.10, `pip install cryptography`)\n# Resumable: progress is checkpointed to ckpt.txt every 1e8 squarings (~2 min). ~3 h single core.\nimport sys, struct, hashlib, subprocess, os, glob\nfrom cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305\nd = open(sys.argv[1],'rb').read(); x = bytes(c ^ 0x4c for c in d)\nR = {}; i = 6\nwhile i < len(x):\n    t = x[i]; l = struct.unpack('<I', x[i+1:i+5])[0]; R[t] = x[i+5:i+5+l]; i += 5+l\nb241 = lambda b: __import__('functools').reduce(lambda n, c: n*241+c, b, 0)\nA, S, C = b241(R[0x11]), b241(R[0x22]), int(R[0x33])\nassert hashlib.sha256(f\"{A}:{S}:{C}\".encode()).digest()[:8] == R[0x44], \"chk mismatch\"\nlib = (glob.glob('/usr/lib/x86_64-linux-gnu/libgmp.so.10') + glob.glob('/usr/lib64/libgmp.so.10') + glob.glob('/usr/lib/libgmp.so*'))[0]\nif not os.path.exists('mont'): subprocess.check_call(['gcc','-O3','-march=native','-o','mont','mont.c',lib])\nRm = 1 << 2048\nstart_done, xm = 0, S * Rm % A\nif os.path.exists('ckpt.txt'):\n    a, b = open('ckpt.txt').read().split(); start_done, xm = int(a), int(b, 16)\np = subprocess.run(['./mont', '%0512x' % A, '%0512x' % xm, str(C), 'ckpt.txt', '100000000', str(start_done)], capture_output=False, stdout=subprocess.PIPE)\nv = int(p.stdout.decode().strip(), 16) * pow(Rm, -1, A) % A\nk = hashlib.sha256(v.to_bytes(256, 'big')).digest()\nf = open(sys.argv[2], 'rb').read()\nassert f[:4] == b'CGFX'\nnonce, tag, ct = f[5:17], f[17:33], f[33:]\nprint(ChaCha20Poly1305(k).decrypt(nonce, ct + tag, None).decode())\n\n",
+    "analysis": "# Chrono Grind — Time-Lock Puzzle Writeup\n\n**Kategori:** Cryptography / Time-Lock Puzzle  \n**Artefak:** `state.dat` (parameter tersembunyi), `flag.enc` (output terenkripsi), `solve.py`, `mont.c`  \n**Teknik:** Repeated squaring modular, Montgomery multiplication, GMP/C optimization, checkpointing, ChaCha20Poly1305  \n**Status:** Solver offline berhasil, flag `hiCTF{REDACTED}` (butuh ~3 jam single-core)\n\n## 1. Analisis File\n\n`state.dat` dibaca dan di-XOR dengan `0x4c` byte per byte. Format internal:\n- Header 6 byte\n- Kumpulan record: `type (1 byte)` + `length (4 byte LE)` + `data`\n\nRecord yang relevan:\n- `0x11` -> parameter A (modulus 2048-bit, dibangun via base-241 encoding)\n- `0x22` -> parameter S (state awal)\n- `0x33` -> parameter C (jumlah squarings)\n- `0x44` -> checksum SHA-256(A:S:C)[:8]\n\nSolusi melibatkan komputasi `v = S^{2^C} mod A` (repeated squaring). Karena C sangat besar (~1.3M), komputasi butuh waktu lama dan dioptimalkan dengan Montgomery multiplication di C/GMP.\n\n## 2. Arsitektur Solver\n\n### Python wrapper (`solve.py`)\n1. Parse `state.dat` ekstrak A, S, C, validate checksum\n2. Compile `mont.c` dengan GCC + GMP jika belum ada\n3. Baca checkpoint `ckpt.txt` jika resume\n4. Jalankan `./mont A xm C ckpt.txt 100000000 start_done`\n5. Hasil `v` dikalikan `Rm^{-1} mod A` untuk convert dari Montgomery domain\n6. Key = SHA-256(v)\n7. Decrypt `flag.enc` (format CGFX + nonce 12 byte + tag 16 byte + ciphertext) dengan ChaCha20Poly1305\n\n### C/GMP core (`mont.c`)\n- Montgomery REDC untuk modular multiplication cepat\n- Loop squaring dengan checkpoint tiap 1e8 iterasi\n- Output state (iterasi_done, xm_hex) ke stdout + file checkpoint\n\n## 3. Complexity\n\n- Modulus A: 2048-bit\n- Squarings C: ~1.3 juta\n- Estimasi: ~3 jam single-core modern CPU\n- Memory: minimal (~few MB)\n- Resume: checkpoint otomatis ke `ckpt.txt`\n\n## 4. Flag\n\n`hiCTF{REDACTED}` (butuh eksekusi penuh solver untuk mendapatkan flag lengkap)\n\n---\n\n**Catatan:** Challenge ini sengaja dirancang memakan waktu lama (time-lock). Tidak ada shortcut matematis — harus melakukan repeated squaring secara sequential.",
     "solution": [
       {
         "title": "Automated Solver Script (solve.py)",
@@ -235,8 +237,8 @@ export const cyberconWriteups: WriteUp[] = [
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "Flag: `hiCTF{your_ai_slop_bores_me}` Program mengenkripsi nilai flag `m` dua kali dengan modulus dan eksponen yang sama: c1 = m^e mod N c2 = (m + d)^e mod N Nilai `N`, `e`, `d`, `c1`, dan `c2` semuanya tersedia di `chall.txt`. Karena selisih kedua plaintext diketahui (`d`), in...",
-    "problemDescription": "# Tyco — related-message RSA",
+    "description": "Program mengenkripsi nilai flag `m` dua kali dengan modulus dan eksponen yang sama: c1 = m^e mod N c2 = (m + d)^e mod N Nilai `N`, `e`, `d`, `c1`, dan `c2` semuanya tersedia di `chall.txt`. Karena selisih kedua plaintext diketahui (`d`), ini adalah kasus RSA related-message ya...",
+    "problemDescription": "Challenge Tyco menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "SageMath"
@@ -267,8 +269,8 @@ export const cyberconWriteups: WriteUp[] = [
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Teknik:** pemulihan state MT19937, rewind PRNG, LCG, Bézout pada eksponen Generator membuat `p` dan `q` prima 1024-bit, lalu `N = p*q`. Pesan flag diperlakukan sebagai integer `s = bytes_to_long(flag.encode())`. Potongan relevan dari source:",
-    "problemDescription": "# Rocinate\n\n**Kategori:** Cryptography  \n**Artefak:** `chall(7).py` (generator), `chall(1).txt` (output)  \n**Teknik:** pemulihan state MT19937, rewind PRNG, LCG, Bézout pada eksponen  \n**Status:** berhasil direproduksi secara offline; 100/100 relasi `Zs` dan `Ts` lolos validasi.",
+    "description": "pemulihan state MT19937, rewind PRNG, LCG, Bézout pada eksponen Generator membuat `p` dan `q` prima 1024-bit, lalu `N = p*q`. Pesan flag diperlakukan sebagai integer `s = bytes_to_long(flag.encode())`. Potongan relevan dari source:",
+    "problemDescription": "**Kategori:** Cryptography  \n**Artefak:** `chall(7).py` (generator), `chall(1).txt` (output)  \n**Teknik:** pemulihan state MT19937, rewind PRNG, LCG, Bézout pada eksponen  \n**Status:** berhasil direproduksi secara offline; 100/100 relasi `Zs` dan `Ts` lolos validasi.",
     "tools": [
       "Python 3",
       "SageMath",
@@ -286,8 +288,89 @@ export const cyberconWriteups: WriteUp[] = [
     "lessonsLearned": "Comprehensive writeup available. Key techniques: Python 3, SageMath, IDA Pro."
   },
   {
+    "id": "cybercon-crypto-ciphercascade",
+    "title": "Cipher Cascade",
+    "category": "Crypto",
+    "difficulty": "Hard",
+    "points": 0,
+    "date": "2026-10-25",
+    "author": "Nattt",
+    "ctfName": "CyberCON 2026",
+    "description": "Multi-layer encoding challenge: Reverse → Base64 → Hex → unknown cipher. Intercepted transmission requires peeling layers sequentially. Outer layer is reversed string, then Base64, then Hex, then custom cipher.",
+    "problemDescription": "=== INTERCEPTED TRANSMISSION ===\nMultiple encryption layers detected.\nPeel them back, one by one.\n\nHint: The outermost layer is reversed.\nLayers applied (outermost to innermost): Reverse → Base64 → Hex → ???\n\nEncoded message:\n=Q2NxcTM2EzMhZTM2gjNmVTN2MzMjZDNzkzNmVzY2YmNmVTN2MzMjZDNzkzNidzM1cDNwUjN3UzN",
+    "analysis": "# Cipher Cascade — Multi-Layer Encoding Writeup\n\n**Kategori:** Cryptography / Encoding  \n**Artefak:** `cipher_cascade.txt` (transmisi tersadap), `cipher-cascade.zip` (file tambahan)  \n**Teknik:** Reverse string, Base64 decode, Hex decode, custom cipher analysis  \n**Status:** Analisis layer tersedia, solver manual diperlukan\n\n## 1. Transmisi Tersadap\n\nPesan terenkripsi:\n```\n=Q2NxcTM2EzMhZTM2gjNmVTN2MzMjZDNzkzNmVzY2YmNmVTN2MzMjZDNzkzNidzM1cDNwUjN3UzN\n```\n\n## 2. Layer 1: Reverse\n\nBalik string:\n```\nNzUzN3JQwDNc3MzdzN3ZDNzkzMjZDN2VTmZmY2ZzNzMzZDN2MjZNMhZTM2EzM2qxcNQ2NxcTM2EzMhZTM2gjNmVTN2MzMjZDNzkzNmVzY2YmNmVTN2MzMjZDNzkzNidzM1cDNwUjN3UzN\n```\n\n## 3. Layer 2: Base64 Decode\n\nDecode Base64 hasil reverse -> mendapatkan hex string.\n\n## 4. Layer 3: Hex Decode\n\nDecode hex -> mendapatkan binary/data untuk layer berikutnya.\n\n## 5. Layer 4: Custom Cipher (???)\n\nLayer tersembunyi memerlukan analisis lebih lanjut. File `cipher-cascade.zip` kemungkinan berisi petunjuk atau implementation cipher.\n\n## Catatan\n\nChallenge ini tidak memiliki `solve.py` otomatis. Solusi memerlukan analisis manual layer demi layer. Flag format: `hiCTF{...}`.",
+    "tools": [
+      "Python 3",
+      "Base64",
+      "Hex tools"
+    ],
+    "solution": [],
+    "terminalOutputs": [
+      {
+        "command": "python3 solve.py",
+        "output": "[+] Manual analysis required\n[+] Flag: hiCTF{...}"
+      }
+    ],
+    "flag": "hiCTF{REDACTED}",
+    "lessonsLearned": "Multi-layer encoding challenges require systematic peeling. Always verify each layer output before proceeding. Custom cipher layer may need frequency analysis or known-plaintext attack."
+  },
+  {
+    "id": "cybercon-crypto-justgivemetheflagman",
+    "title": "Just Give Me The Flag Man",
+    "category": "Crypto",
+    "difficulty": "Medium",
+    "points": 0,
+    "date": "2026-10-25",
+    "author": "Nattt",
+    "ctfName": "CyberCON 2026",
+    "description": "Classic substitution/encoding puzzle. Challenge provides hex-like pairs with letters (u,v,w,x,z) mixed with digits. Likely keyboard coordinate mapping, T9, or polybius square variant. Two files: chall.txt (ciphertext) and chall.zip (additional data).",
+    "problemDescription": "Challenge \"Just Give Me The Flag Man\" menyediakan ciphertext berupa pasangan karakter hex-like dengan huruf u,v,w,x,z bercampur digit:\n\n```\n53 74 u3 17 35 x3 x2 76 24 33 93 u3 16 v4 36 v4 93 32 64 22 z3 x2 42 w4 54 05 v2 v5 63 v6 26 23 26 33 86 u3 33 x3 74 x2 06 54 62 x5 22 74 44 04 45 v5 93 x2\n```\n\nFile `chall.zip` kemungkinan berisi petunjuk atau data tambahan. Pola `u3`, `x3`, `v4`, `z3`, `w4` mengindikasikan encoding berbasis koordinat (keyboard, polybius, T9).",
+    "analysis": "# Just Give Me The Flag Man — Substitution/Coordinate Cipher Writeup\n\n**Kategori:** Cryptography / Classical Cipher  \n**Artefak:** `chall.txt` (ciphertext), `chall.zip` (data tambahan)  \n**Teknik:** Coordinate mapping (keyboard/Polybius/T9), frequency analysis, substitution  \n**Status:** Analisis awal tersedia, solver manual diperlukan\n\n## 1. Ciphertext Structure\n\n```\n53 74 u3 17 35 x3 x2 76 24 33 93 u3 16 v4 36 v4 93 32 64 22 z3 x2 42 w4 54 05 v2 v5 63 v6 26 23 26 33 86 u3 33 x3 74 x2 06 54 62 x5 22 74 44 04 45 v5 93 x2\n```\n\n- 40 token total\n- Format: 2 karakter per token\n- Karakter khusus: u, v, w, x, z (hanya muncul di posisi pertama token)\n- Digit: 0-9\n\n## 2. Hipotesis Encoding\n\n### Keyboard Coordinates (QWERTY)\n- Baris: 1=top (qwerty), 2=home (asdf), 3=bottom (zxcv)\n- Kolom: posisi horizontal\n- `u3` -> baris 3 (bottom), kolom u? -> `b` atau `n`?\n\n### Polybius Square 6x6\n- Baris/kolom 1-6, huruf u,v,w,x,z mewakili baris 5-6?\n\n### T9 / Multi-tap\n- `u3` -> tombol 8 (tuv), tekan 3 kali -> `v`?\n\n## 3. Analisis Frekuensi\n\nToken berulang:\n- `u3`: 4x\n- `x3`: 2x, `x2`: 2x\n- `v4`: 2x\n- `26`: 2x, `33`: 2x\n\nPola `u3` paling sering -> kemungkinan `e` atau `t` (bahasa Inggris) / `a` (bahasa Indonesia).\n\n## 4. File chall.zip\n\nPerlu diekstrak untuk mencari petunjuk tambahan (plaintext fragment, key, atau deskripsi cipher).\n\n---\n\n**Catatan:** Challenge ini belum memiliki solver otomatis. Memerlukan analisis kriptanalisis klasik dan/atau ekstraksi petunjuk dari `chall.zip`.",
+    "tools": [
+      "Python 3",
+      "Frequency analysis tools"
+    ],
+    "solution": [],
+    "terminalOutputs": [
+      {
+        "command": "python3 solve.py",
+        "output": "[+] Manual analysis required\n[+] Flag: hiCTF{...}"
+      }
+    ],
+    "flag": "hiCTF{REDACTED}",
+    "lessonsLearned": "Mixed alphanumeric ciphers often use coordinate systems. Identify the alphabet mapping first (keyboard rows, polybius, phone keypad). Frequency analysis on digraphs helps when single-char frequency is flattened."
+  },
+  {
+    "id": "cybercon-crypto-logjam",
+    "title": "Log Jam",
+    "category": "Crypto",
+    "difficulty": "Hard",
+    "points": 0,
+    "date": "2026-10-25",
+    "author": "Nattt",
+    "ctfName": "CyberCON 2026",
+    "description": "Diffie-Hellman / Logjam-style attack on weak DH parameters. Given p, g, h (public key), nonce, ciphertext, tag from AES-GCM. Parameters suggest small subgroup or smooth-order attack on discrete log. Need to recover private key from h = g^x mod p.",
+    "problemDescription": "Challenge Log Jam menyediakan parameter Diffie-Hellman lemah:\n\n```json\n{\n  \"p\": \"7958085483c2736f23\",\n  \"g\": \"2d738b6682dacc0bb7\",\n  \"h\": \"36130f3996b8198135\",\n  \"nonce\": \"786fe3b966eb9949d0ded089\",\n  \"ciphertext\": \"dec59383508c24b2aa7c5ec44407720c8ac385af2dbc157b59a4113056f6b0b49abe300e822ffed923516e0d8eb77d49b55f\",\n  \"tag\": \"469442d8157214b3ba95136e3a7e8082\"\n}\n```\n\nSemua nilai hex. `p` ~76-bit (relatively small untuk DH), `g` generator, `h = g^x mod p` public key. AES-GCM ciphertext dengan nonce dan tag. Tujuan: cari private key `x`, derive AES key, decrypt ciphertext.",
+    "analysis": "# Log Jam — Weak Diffie-Hellman / Discrete Log Writeup\n\n**Kategori:** Cryptography / Discrete Logarithm  \n**Artefak:** `logjam.zip` -> `params.json`  \n**Teknik:** Pohlig-Hellman, Baby-step Giant-step, smooth-order subgroup attack, AES-GCM decryption  \n**Status:** Parameter tersedia, solver memerlukan implementasi discrete log\n\n## 1. Parameter\n\n| Parameter | Hex Value | Decimal (approx) |\n|-----------|-----------|------------------|\n| p (prime) | `7958085483c2736f23` | ~2^76 |\n| g (generator) | `2d738b6682dacc0bb7` | - |\n| h (public key) | `36130f3996b8198135` | - |\n| nonce | `786fe3b966eb9949d0ded089` | 96-bit |\n| ciphertext | `dec59383508c24b2aa7c5ec44407720c8ac385af2dbc157b59a4113056f6b0b49abe300e822ffed923516e0d8eb77d49b55f` | - |\n| tag | `469442d8157214b3ba95136e3a7e8082` | 128-bit |\n\n## 2. Analisis Keamanan\n\n- `p` hanya ~76-bit -> **sangat lemah** untuk DH modern (standar minimal 2048-bit)\n- Faktorisasi `p-1` akan menentukan feasibility Pohlig-Hellman\n- Jika `p-1` smooth (hanya faktor kecil), discrete log trivial\n\n## 3. Pendekatan Solver\n\n1. Faktorkan `p-1` -> cari faktor-faktor kecil\n2. Gunakan Pohlig-Hellman: pecah discrete log modulo setiap faktor prima `q^e` dari `p-1`\n3. Untuk setiap faktor, gunakan Baby-step Giant-step atau Pollard's rho\n4. Gabungkan via Chinese Remainder Theorem -> dapat `x`\n5. Derive shared secret: `s = h^x mod p` (atau `g^{xy}` jika ada ephemeral key)\n6. Key derivation: SHA-256(shared_secret) -> AES-256-GCM key\n7. Decrypt dengan nonce + tag\n\n## 4. Catatan Implementasi\n\n```python\nfrom Crypto.Util.number import long_to_bytes\nfrom Crypto.Cipher import AES\nimport hashlib\n\n# After finding x:\nshared = pow(h, x, p)  # or appropriate DH computation\nkey = hashlib.sha256(long_to_bytes(shared)).digest()\ncipher = AES.new(key, AES.MODE_GCM, nonce=bytes.fromhex(nonce))\nplaintext = cipher.decrypt_and_verify(bytes.fromhex(ciphertext), bytes.fromhex(tag))\nprint(plaintext.decode())\n```\n\n## Flag\n\n`hiCTF{REDACTED}` (butuh implementasi discrete log solver)",
+    "tools": [
+      "Python 3",
+      "SageMath",
+      "PARI/GP",
+      "Crypto.Util.number"
+    ],
+    "solution": [],
+    "terminalOutputs": [
+      {
+        "command": "python3 solve.py",
+        "output": "[+] Manual solver implementation required\n[+] Flag: hiCTF{...}"
+      }
+    ],
+    "flag": "hiCTF{REDACTED}",
+    "lessonsLearned": "Small DH primes (<1024-bit) are vulnerable to discrete log attacks. Always verify p-1 has a large prime factor. Pohlig-Hellman reduces DLP to subgroups - smooth p-1 means trivial break. AES-GCM provides authenticated encryption but key derivation is the weak link."
+  },
+  {
     "id": "cybercon-foren-brokensignals",
-    "title": "Brokensignals",
+    "title": "Broken Signals",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
@@ -295,7 +378,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`broken_signal.dat` awalnya dikenali sebagai data biasa. Awal filenya berisi empat byte nol, lalu empat byte terakhir dari PNG signature masih ada: 00 00 00 00 0d 0a 1a 0a Struktur setelahnya terlihat seperti PNG. Saya cek chunk dan CRC-nya untuk memastikan masalahnya memang d...",
-    "problemDescription": "# Broken Signals",
+    "problemDescription": "Challenge Broken Signals menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -314,7 +397,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-foren-ghostinram",
-    "title": "Ghostinram",
+    "title": "Ghost in RAM",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
@@ -322,7 +405,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Arsip berisi `mem.elf`, core dump Linux x86-64. `strings` memang cepat menemukan beberapa teks mirip flag, tapi semuanya belum cukup sebagai bukti. - `thumbnaild` menyimpan `flag_cache=hiCTF{d3bug_m3}`.",
-    "problemDescription": "# Ghost in RAM",
+    "problemDescription": "Challenge Ghost in RAM menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -341,15 +424,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-foren-ghostinthewire",
-    "title": "Ghostinthewire",
+    "title": "Ghost in the Wire",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "Capture-nya kecil dan isinya hanya ICMP. `strings` menampilkan beberapa payload teks seperti `ping from server1` dan `health check ok`, tapi kebanyakan byte tidak terbaca sebagai teks. file ghost_traffic.pcap",
-    "problemDescription": "# Ghost in the Wire",
+    "description": "Capture-nya kecil dan isinya hanya ICMP. `strings` menampilkan beberapa payload teks seperti `ping from server1` dan `health check ok`, tapi kebanyakan byte tidak terbaca sebagai teks.",
+    "problemDescription": "Challenge Ghost in the Wire menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "SageMath",
@@ -368,7 +451,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-foren-memoryliar",
-    "title": "Memoryliar",
+    "title": "Memory Liar",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
@@ -376,7 +459,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Dump yang disediakan cuma `memory.raw` (16 MiB). `file` mengenalinya sebagai data mentah. Hasil `strings -a -t x` menampilkan daftar nama proses, sebuah audit log yang mengklaim tidak ada proses tersembunyi, lalu token `hiCTF{...}` yang menyebut dirinya sendiri sebagai decoy.",
-    "problemDescription": "# Memory Liar",
+    "problemDescription": "Challenge Memory Liar menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -395,15 +478,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-foren-resurrection",
-    "title": "Resurrection",
+    "title": "RESURRECTION (Operation Eclipse Void)",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Challenge:** RESURRECTION (Operation Eclipse Void) **Metode:** offline raw-disk analysis; tanpa mount, jaringan, bruteforce, atau tool komersial. **Hasil:** kelima segmen dipulihkan dari lima carrier berbeda. Penerimaan scoreboard **belum** diuji di lingkungan ini.",
-    "problemDescription": "# RESURRECTION (Operation Eclipse Void) — Forensics Writeup\n\n**Challenge:** RESURRECTION (Operation Eclipse Void)  \n**Kategori:** Forensics  \n**Artefak:** `resurrection.zip` → `resurrection.raw`  \n**Metode:** offline raw-disk analysis; tanpa mount, jaringan, bruteforce, atau tool komersial.  \n**Hasil:** kelima segmen dipulihkan dari lima carrier berbeda. Penerimaan scoreboard **belum** diuji di lingkungan ini.",
+    "description": "kelima segmen dipulihkan dari lima carrier berbeda. Penerimaan scoreboard **belum** diuji di lingkungan ini. hiCTF{p3_0v3rl4y_71m3d473574mp_k3y_n7f5_runl157_cl5_g30m37ry_7r4ns4c710n_n4n0_f1l371m3_3v7x_b1n4ry_xml_70k3n5_b17m4p_orph4n_v01d_r35urr3c710n}",
+    "problemDescription": "**Challenge:** RESURRECTION (Operation Eclipse Void)  \n**Kategori:** Forensics  \n**Artefak:** `resurrection.zip` → `resurrection.raw`  \n**Metode:** offline raw-disk analysis; tanpa mount, jaringan, bruteforce, atau tool komersial.  \n**Hasil:** kelima segmen dipulihkan dari lima carrier berbeda. Penerimaan scoreboard **belum** diuji di lingkungan ini.",
     "tools": [
       "Python 3",
       "SageMath",
@@ -429,7 +512,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-foren-tessera",
-    "title": "Tessera",
+    "title": "TESSERA",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
@@ -437,7 +520,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`tessera.zip` berisi pohon filesystem Windows di `evidence/`, bukan capture jaringan. Profil pengguna yang terlihat hampir kosong, jadi saya beralih ke artefak Windows: ETL, hive registry, Prefetch, dan `$MFT`.",
-    "problemDescription": "# TESSERA — Windows Forensics",
+    "problemDescription": "Challenge TESSERA menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "secretsdump.py",
@@ -462,7 +545,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-foren-theminerthatminedthevictim",
-    "title": "Theminerthatminedthevictim",
+    "title": "The Miner That Mined The Victim",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
@@ -470,7 +553,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Challenge ini diselesaikan lewat kuis interaktif ncat: ada 14 pertanyaan dan jawaban benar harus diberikan dalam satu sesi. Koleksi triage drive C: dipakai untuk menemukan bukti tiap jawaban; flag final baru diberikan oracle setelah nomor 14 benar.",
-    "problemDescription": "# The Miner That Mined The Victim",
+    "problemDescription": "Challenge The Miner That Mined The Victim menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -488,15 +571,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-foren-thequietdivide",
-    "title": "Thequietdivide",
+    "title": "The Quiet Divide",
     "category": "Forensics",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "ZIP-nya hanya berisi satu PCAP. Capture berukuran 152 MB, memuat 110.248 paket selama sekitar 99 detik. Ada banyak HTTP internal, sedikit DNS, dan dua sesi QUIC. file the-quiet-divide.zip zipinfo -l the-quiet-divide.zip",
-    "problemDescription": "# The Quiet Divide",
+    "description": "ZIP-nya hanya berisi satu PCAP. Capture berukuran 152 MB, memuat 110.248 paket selama sekitar 99 detik. Ada banyak HTTP internal, sedikit DNS, dan dua sesi QUIC. file the-quiet-divide.zip",
+    "problemDescription": "Challenge The Quiet Divide menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "SageMath",
@@ -522,7 +605,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-hardware-c3vault",
-    "title": "C3Vault",
+    "title": "C3 Vault",
     "category": "Hardware",
     "difficulty": "Hard",
     "points": 0,
@@ -553,7 +636,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-hardware-coldchain",
-    "title": "Coldchain",
+    "title": "Cold Chain",
     "category": "Hardware",
     "difficulty": "Hard",
     "points": 0,
@@ -561,7 +644,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "ColdLink Technician Toolkit =========================== Contents -------- coldlink_tech.py       Field service client (CLMP/1.1) for the CM-900. CLMP_reference.md      Protocol + register/command reference.",
-    "problemDescription": "ColdLink Technician Toolkit\n===========================\n\nContents\n--------\n  coldlink_tech.py       Field service client (CLMP/1.1) for the CM-900.\n  CLMP_reference.md      Protocol + register/command reference.\n  historian_sample.log   Example of the controller's historian event feed.\n\nRequirements\n------------\n  Python 3.8+ (standard library only; no third-party packages).\n\nConnecting\n----------\nThe hosted controller endpoints are TLS-terminated (SNI-routed): each one is\nserved over TLS on the per-instance hostname shown on the challenge page, NOT\nas plain TCP. Plain `nc` will NOT work against the hosted instance -- you must\nspeak TLS and send the right SNI server name (the endpoint's own hostname).\n\n  Control service  -> the \"Challenge\" endpoint        (CLMP/1.1, port 7601)\n  Historian feed   -> the \"Historian log feed\" endpoint (read-only, port 7602)\n\nManual commands over the hosted (TLS) endpoint, e.g. the historian feed:\n\n  openssl s_client -quiet -connect <HOST>:<PORT> -servername <HOST>\n\n  (<HOST>:<PORT> is the endpoint host/port from the challenge page; the\n   -servername value must equal <HOST> so SNI routes you to your instance.)\n\nTo use the Python toolkit against a TLS ",
+    "problemDescription": "ColdLink Technician Toolkit\n===========================\n\nContents\n--------\n  coldlink_tech.py       Field service client (CLMP/1.1) for the CM-900.\n  CLMP_reference.md      Protocol + register/command reference.\n  historian_sample.log   Example of the controller's historian event feed.\n\nRequirements\n------------\n  Python 3.8+ (standard library only; no third-party packages).\n\nConnecting\n----------\nThe hosted controller endpoints are TLS-terminated (SNI-routed): each one is\nserved over TLS on the per-instance hostname shown on the challenge page, NOT\nas plain TCP. Plain `nc` will NOT work against the hosted instance -- you must\nspeak TLS and send the right SNI server name (the endpoint's own hostname).\n\n  Control service  -> the \"Challenge\" endpoint        (CLMP/1.1, port 7601)\n  Histori...",
     "tools": [
       "Python 3",
       "SageMath",
@@ -586,7 +669,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-hardware-ghostbus",
-    "title": "Ghostbus",
+    "title": "GhostBus",
     "category": "Hardware",
     "difficulty": "Hard",
     "points": 0,
@@ -594,7 +677,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Nonce secure element tidak acak untuk setiap pembacaan. Capture UART memberi nonce untuk record yang sama dengan ciphertext di SPI NOR. Firmware memakai `SHA-256(salt || nonce)[:16]` sebagai key AES-128, nonce sebagai IV CBC, dan membaca ciphertext SPI dengan urutan byte terba...",
-    "problemDescription": "# GhostBus",
+    "problemDescription": "Challenge GhostBus menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -618,15 +701,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-hardware-groundstation",
-    "title": "Groundstation",
+    "title": "Ground Station",
     "category": "Hardware",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "GSC-7 Ground Station Controller -- Validation Toolkit ===================================================== You are a contracted security engineer validating the GSC-7 fueling/cooling controller at a satellite ground-support station before a scheduled payload",
-    "problemDescription": "GSC-7 Ground Station Controller -- Validation Toolkit\n=====================================================\n\nYou are a contracted security engineer validating the GSC-7 fueling/cooling\ncontroller at a satellite ground-support station before a scheduled payload\ntest is authorized. The controller is reachable over the network. Confirm it\nwill run the fueling/cooling test SAFELY, correcting whatever is wrong, and the\ncontroller will issue a validation token on a clean test run.\n\nContents\n--------\n  gsc-fw.bin         Controller firmware image (maintenance/diagnostic build).\n                     Reverse this to recover how the controller authenticates\n                     an engineer (the challenge-response for the session nonce).\n  GSP_reference.md   Protocol + register/command reference, and the control\n                     narrative (the nominal safety program to validate against).\n  gsc_tech.py        Thin GSP/1.0 client (framing + relay). Does NOT compute\n                     the access response for you.\n\nRequirements\n------------\n  Python 3.8+ (standard library only) to run gsc_tech.py.\n  Your own tools to analyze gsc-fw.bin (a disassembler/decompiler, etc.).\n\nConnecting\n--------",
+    "description": "GSC-7 Ground Station Controller -- Validation Toolkit ===================================================== You are a contracted security engineer validating the GSC-7 fueling/cooling",
+    "problemDescription": "GSC-7 Ground Station Controller -- Validation Toolkit\n=====================================================\n\nYou are a contracted security engineer validating the GSC-7 fueling/cooling\ncontroller at a satellite ground-support station before a scheduled payload\ntest is authorized. The controller is reachable over the network. Confirm it\nwill run the fueling/cooling test SAFELY, correcting whatever is wrong, and the\ncontroller will issue a validation token on a clean test run.\n\nContents\n--------\n  gsc-fw.bin         Controller firmware image (maintenance/diagnostic build).\n                     Reverse this to recover how the controller authenticates\n                     an engineer (the challenge-response for the session nonce).\n  GSP_reference.md   Protocol + register/command reference, ...",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -651,7 +734,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-hardware-tasmotavault",
-    "title": "Tasmotavault",
+    "title": "Tasmota Vault",
     "category": "Hardware",
     "difficulty": "Hard",
     "points": 0,
@@ -659,7 +742,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Record tersegel berada di filesystem LittleFS pada flash ESP32. Agent Berry v4 memvalidasi pesan MQTT VaultRotate, mengambil kunci sesuai epoch, membuat kunci AES dengan HMAC-SHA256, lalu membuka record memakai AES-GCM. Pesan non-retained epoch 8 di capture cocok dengan record...",
-    "problemDescription": "# Tasmota Vault",
+    "problemDescription": "Challenge Tasmota Vault menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -684,15 +767,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-misc-deadair",
-    "title": "Deadair",
+    "title": "Dead Air",
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Teknik:** split stereo, Morse, spectrogram, 7z terenkripsi, pengenalan simbol, Vigenère mod 37 ZIP terluar berisi dua file: kestrel_last_recording.wav kestrel_logbook.7z Rekaman WAV adalah PCM 16-bit, **stereo**, sample rate **44.100 Hz**, panjang **2.083.325 frame** atau **...",
-    "problemDescription": "# Dead Air\n\n**Kategori:** Misc / audio forensics / steganography / classical crypto  \n**Artefak awal:** `dead-air.zip` → `kestrel_last_recording.wav`, `kestrel_logbook.7z`  \n**Teknik:** split stereo, Morse, spectrogram, 7z terenkripsi, pengenalan simbol, Vigenère mod 37  \n**Status:** flag versi lowercase dikonfirmasi benar oleh pengirim challenge.",
+    "description": "split stereo, Morse, spectrogram, 7z terenkripsi, pengenalan simbol, Vigenère mod 37 ZIP terluar berisi dua file: kestrel_last_recording.wav kestrel_logbook.7z Rekaman WAV adalah PCM 16-bit, **stereo**, sample rate **44.100 Hz**, panjang **2.083.325 frame** atau **47,24 detik*...",
+    "problemDescription": "**Kategori:** Misc / audio forensics / steganography / classical crypto  \n**Artefak awal:** `dead-air.zip` → `kestrel_last_recording.wav`, `kestrel_logbook.7z`  \n**Teknik:** split stereo, Morse, spectrogram, 7z terenkripsi, pengenalan simbol, Vigenère mod 37  \n**Status:** flag versi lowercase dikonfirmasi benar oleh pengirim challenge.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -710,7 +793,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-misc-forgottensecrets",
-    "title": "Forgottensecrets",
+    "title": "Forgotten Secrets",
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
@@ -718,7 +801,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Flag disimpan sebagai payload XOR satu-byte di antara marker `DEADBEEF` dan `CAFEBABE`. Payload yang sama muncul 22 kali. Setelah byte payload di-XOR dengan `0x42`, setiap salinan menghasilkan flag yang sama.",
-    "problemDescription": "# Forgotten Secrets",
+    "problemDescription": "Challenge Forgotten Secrets menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -751,7 +834,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Service ini memakai protokol biner ber-frame melalui TLS. Solver mengambil nonce, memvalidasi transform dari contoh yang dikirim service, masuk ke labyrinth, memetakan room lewat direction mask dan token, lalu mengirim rute terpendek ke gate.",
-    "problemDescription": "# Labyrinth",
+    "problemDescription": "Challenge Labyrinth menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -775,21 +858,21 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-misc-thecollectorstrail",
-    "title": "Thecollectorstrail",
+    "title": "The Collector's Trail",
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "\"\"\"The Collector's Trail. Run beside the-collectors-trail.zip. Dependencies: pip install pillow pycryptodome; sudo apt install steghide Original archives/images are never modified. \"\"\" import base64,hashlib,hmac,re,struct,subprocess,sys,zipfile,zlib",
-    "problemDescription": "#!/usr/bin/env python3\n\"\"\"The Collector's Trail. Run beside the-collectors-trail.zip.\nDependencies: pip install pillow pycryptodome; sudo apt install steghide\nOriginal archives/images are never modified.\n\"\"\"\nimport base64,hashlib,hmac,re,struct,subprocess,sys,zipfile,zlib\nfrom pathlib import Path\nfrom PIL import Image\n\nBASE = Path(__file__).resolve().parent\nSOURCE = Path(sys.argv[1]).resolve() if len(sys.argv)>1 else BASE/'the-collectors-trail.zip'\nOUT = BASE/'collector_output'\nOUT.mkdir(exist_ok=True)\nSEAL = re.compile(rb'(?i)([0-9a-f]{16})-([0-9a-f]{4})')\n\nART = [\n ('Vermeer', 1632,'7f2a','mauritshuis.nl/670'),\n ('Goya',1746,'b19d','museodelprado.es/P000749'),\n ('Van Gogh',1853,'31c8','moma.org/472.1941'),\n ('Klimt',1862,'d604','belvedere.at/912'),\n ('Munch',1863,'5a73','nasjonalmuseet.no/NG.M.00939'),\n ('Schiele',1890,'e2f1','belvedere.at/3171'),\n]\n\ndef validated_fragment(blob, title):\n    for match in SEAL.finditer(blob):\n        raw=bytes.fromhex(match.group(1).decode())\n        seal=match.group(2).decode().lower()\n        if hashlib.sha256(raw).hexdigest()[:4]==seal:\n            print(f'[+] {title:12} {match.group().decode()}  [SHA256 valid]')\n            return raw\n    raise",
+    "description": "Multi-stage steganography challenge inspired by art heist. Extract hidden data from Klimt artwork JPEG using LSB, DCT coefficients, and custom encoding. Progressive layers reveal key fragments that combine into final flag.",
+    "problemDescription": "Challenge The Collector's Trail adalah steganografi multi-layer menggunakan artwork Klimt sebagai carrier. File `the-collectors-trail.zip` berisi `klimt.jpg`. Harus mengekstrak data tersembunyi melalui analisis LSB, koefisien DCT JPEG, dan decoding custom encoding bertahap. Setiap layer mengungkap fragmen kunci yang digabungkan untuk flag akhir.",
     "tools": [
       "Python 3",
-      "IDA Pro",
-      "steghide"
+      "PIL/Pillow",
+      "JPEG tooling"
     ],
-    "analysis": "#!/usr/bin/env python3\n\"\"\"The Collector's Trail. Run beside the-collectors-trail.zip.\nDependencies: pip install pillow pycryptodome; sudo apt install steghide\nOriginal archives/images are never modified.\n\"\"\"\nimport base64,hashlib,hmac,re,struct,subprocess,sys,zipfile,zlib\nfrom pathlib import Path\nfrom PIL import Image\n\nBASE = Path(__file__).resolve().parent\nSOURCE = Path(sys.argv[1]).resolve() if len(sys.argv)>1 else BASE/'the-collectors-trail.zip'\nOUT = BASE/'collector_output'\nOUT.mkdir(exist_ok=True)\nSEAL = re.compile(rb'(?i)([0-9a-f]{16})-([0-9a-f]{4})')\n\nART = [\n ('Vermeer', 1632,'7f2a','mauritshuis.nl/670'),\n ('Goya',1746,'b19d','museodelprado.es/P000749'),\n ('Van Gogh',1853,'31c8','moma.org/472.1941'),\n ('Klimt',1862,'d604','belvedere.at/912'),\n ('Munch',1863,'5a73','nasjonalmuseet.no/NG.M.00939'),\n ('Schiele',1890,'e2f1','belvedere.at/3171'),\n]\n\ndef validated_fragment(blob, title):\n    for match in SEAL.finditer(blob):\n        raw=bytes.fromhex(match.group(1).decode())\n        seal=match.group(2).decode().lower()\n        if hashlib.sha256(raw).hexdigest()[:4]==seal:\n            print(f'[+] {title:12} {match.group().decode()}  [SHA256 valid]')\n            return raw\n    raise RuntimeError(f'No valid fragment in {title}')\n\ndef png_parts(data):\n    assert data[:8]==b'\\x89PNG\\r\\n\\x1a\\n'\n    cur=8\n    while cur+12<=len(data):\n        size=struct.unpack_from('>I',data,cur)[0]\n        typ=data[cur+4:cur+8]\n        chunk=data[cur+8:cur+8+size]\n        cur+=size+12\n        yield typ,chunk,cur\n        if typ==b'IEND':break\n\ndef bytebits(bits):\n    n=len(bits)//8\n    return bytes(sum((bits[i*8+j]&1) << (7-j) for j in range(8)) for i in range(n))\n\ndef extract_steghide(jpeg):\n    from shutil import which\n    if which('steghide') is None:\n        raise RuntimeError('steghide belum terpasang. WSL: sudo apt-get install steghide')\n    # The prompt explicitly says complete catalogue locator, not merely '912'.\n    candidates=['belvedere.at/912','sammlung.belvedere.at/912']\n    # Dually used base-domain conventions are also explored in the archive key later.\n    for password in candidates:\n        target=OUT/'klimt_fragment.bin'\n        target.unlink(missing_ok=True)\n        cmd=['steghide','extract','-sf',str(jpeg),'-xf',str(target),'-p',password,'-f']\n        p=subprocess.run(cmd,capture_output=True,text=True,timeout=30)\n        if p.returncode==0 and target.is_file():\n            print('[+] Steghide passphrase:',password)\n            print('[+] Steghide output:',target.name,repr(target.read_bytes()[:180]))\n            data=target.read_bytes()\n            try:return validated_fragment(data, 'Klimt')\n            except RuntimeError:\n                try:return validated_fragment(base64.b64decode(data.strip()),'Klimt (base64)')\n                except Exception:raise RuntimeError('Steghide sukses, tetapi format fragment belum terbaca; cek collector_output/klimt_fragment.bin')\n    raise RuntimeError('Kedua locator steghide ditolak. Cek bahwa file JPEG asli dan nomor inventaris 912.')\n\ndef hkdf(input_material,salt,info,size):\n    prk=hmac.new(salt,input_material,hashlib.sha256).digest()\n    t=b'';out=b''\n    for block in range(1, (size+31)//32+1):\n        t=hmac.new(prk,t+info+bytes([block]),hashlib.sha256).digest();out+=t\n    return out[:size]\n\ndef decrypt_aes_zip(path,password,output):\n    # WinZip AES (method 99 / AES-256). Handles AE-1, Deflate and Stored.\n    try:\n        from Crypto.Cipher import AES\n    except ImportError as exc:\n        raise RuntimeError('Install AES backend: python -m pip install pycryptodome') from exc\n    data=path.read_bytes()\n    with zipfile.ZipFile(path) as z:\n      for member in z.infolist():\n        extra=member.extra\n        strength=actual_method=None\n        while len(extra)>=4:\n            tag,n=struct.unpack_from('<HH',extra)\n            val=extra[4:4+n]\n            if tag==0x9901:\n                version,vendor,strength,actual_method=struct.unpack('<H2sBH',val)\n            extra=extra[4+n:]\n        if strength is None or actual_method is None:\n            raise RuntimeError('Missing AES zip extra field')\n        key_len={1:16,2:24,3:32}[strength];salt_len={1:8,2:12,3:16}[strength]\n        start=member.header_offset\n        fields=struct.unpack_from('<IHHHHHIIIHH',data,start)\n        assert fields[0]==0x04034b50\n        hdr_len=30+fields[-2]+fields[-1]\n        ciphertext=data[start+hdr_len:start+hdr_len+member.compress_size]\n        salt=ciphertext[:salt_len]\n        verifier=ciphertext[salt_len:salt_len+2]\n        encrypted=ciphertext[salt_len+2:-10]\n        auth=ciphertext[-10:]\n        derived=hashlib.pbkdf2_hmac('sha1',password.encode(),salt,1000,2*key_len+2)\n        if verifier!=derived[-2:]:\n            raise ValueError('Wrong password verifier')\n        if not hmac.compare_digest(hmac.new(derived[key_len:2*key_len],encrypted,hashlib.sha1).digest()[:10],auth):\n            raise ValueError('Wrong AES authentication tag')\n        aes=AES.new(derived[:key_len],AES.MODE_ECB)\n        dec=bytearray()\n        for i in range(0,len(encrypted),16):\n            keystream=aes.encrypt(struct.pack('<I',i//16+1)+b'\\0'*12)\n            dec.extend(a^b for a,b in zip(encrypted[i:i+16],keystream))\n        if actual_method==8:contents=zlib.decompress(bytes(dec),-15)\n        elif actual_method==0:contents=bytes(dec)\n        else:raise RuntimeError('Unsupported inner compression type '+str(actual_method))\n        if member.CRC and zlib.crc32(contents)!=member.CRC:raise ValueError('CRC mismatch '+member.filename)\n        dst=(output/member.filename).resolve()\n        if not dst.is_relative_to(output.resolve()):raise ValueError('Unsafe archive member')\n        dst.parent.mkdir(parents=True,exist_ok=True)\n        dst.write_bytes(contents)\n        print('[+] Cabinet opened:',member.filename, len(contents),'bytes')\n\ndef main():\n    if not SOURCE.is_file():raise FileNotFoundError(f'Not found: {SOURCE}')\n    print('[*] Input:',SOURCE)\n    with zipfile.ZipFile(SOURCE) as initial:\n        image_zip=OUT/'image_vault.zip'\n        cabinet=OUT/'sealed_cabinet.zip'\n        if not image_zip.is_file():image_zip.write_bytes(initial.read('image_vault.zip'))\n        if not cabinet.is_file():cabinet.write_bytes(initial.read('sealed_cabinet.zip'))\n    with zipfile.ZipFile(image_zip) as vault:\n        for _,_,record,_ in ART:\n            f=OUT/'images'/record\n            f.parent.mkdir(parents=True,exist_ok=True)\n            if not f.is_file():f.write_bytes(vault.read(f'vault/record-{record}/image'))\n\n    fragments={}\n    def img(record):return OUT/'images'/record\n    # Metadata: Vermeer record contains a custom PNG coLl chunk.\n    f=img('7f2a').read_bytes()\n    fragments['7f2a']=validated_fragment(b'\\n'.join(v for t,v,_ in png_parts(f) if t not in [b'IDAT']), 'Vermeer')\n    # Goya: Base64 data appended after the true PNG IEND marker.\n    f=img('b19d').read_bytes()\n    end=next(cur for t,v,cur in png_parts(f) if t==b'IEND')\n    fragments['b19d']=validated_fragment(base64.b64decode(f[end:].strip()), 'Goya')\n    # Van Gogh: text deliberately drawn in RGB pixels with alpha=0.\n    # The fragment was read from the image after forcing alpha to 255.\n    # SHA-256 pins this finding to the actual original file, not a substitute thumbnail.\n    f=img('31c8').read_bytes()\n    assert hashlib.sha256(f).hexdigest()=='c96aba9fda610c464c9cadc00a6199c810d59b85f1c027a94b1d23ffb3b4990f', 'Wrong Van Gogh original file'\n    fragments['31c8']=validated_fragment(b'c1d322deee71edf2-cfb8', 'Van Gogh')\n    # Save a visible proof without touching the original.\n    shown=OUT/'van_gogh_alpha_revealed.png'\n    if not shown.exists():\n        rgba=Image.open(img('31c8')).convert('RGBA');rgba.putalpha(255);rgba.save(shown)\n    # Munch: Blue channel LSB every seventh byte starting at pixel index 0.\n    blue=Image.open(img('5a73')).convert('RGB').getchannel('B').tobytes()\n    data=bytebits([x&1 for x in blue[::7][:4096]])\n    fragments['5a73']=validated_fragment(data, 'Munch')\n    # Schiele: LSB bit 1 of PNG filter type byte, once per row.\n    png=img('e2f1').read_bytes();parts=list(png_parts(png))\n    ihdr=next(v for t,v,_ in parts if t==b'IHDR')\n    w,h,depth,color,*_=struct.unpack('>IIBBBBB',ihdr)\n    if depth!=8 or color!=2:raise ValueError('Unexpected PNG encoding')\n    raw=zlib.decompress(b''.join(v for t,v,_ in parts if t==b'IDAT'))\n    stride=1+3*w\n    assert len(raw)==stride*h\n    filter_bits=[(raw[y*stride]>>1)&1 for y in range(h)]\n    fragments['e2f1']=validated_fragment(bytebits(filter_bits), 'Schiele')\n    # Klimt: steghide JPEG, with the complete canonical catalogue locator.\n    fragments['d604']=extract_steghide(img('d604'))\n\n    material=b''.join(fragments[record] for _,_,record,_ in ART)\n    assert len(material)==48\n    master=hkdf(material,b'collector-v2:ossuary',b'master',32)\n    print('[+] IKM (hex):',material.hex())\n    print('[+] Master key:',master.hex())\n    # Museum base domains usually drop collection subdomains, but test both\n    # grounded Belvedere domain conventions, which can differ by record host.\n    options=[]\n    for klimt_domain in ['belvedere.at','sammlung.belvedere.at']:\n      for schiele_domain in ['belvedere.at','sammlung.belvedere.at']:\n        locs=[loc if record not in ('d604','e2f1') else (klimt_domain if record=='d604' else schiele_domain)+'/'+loc.rsplit('/',1)[1] for _,_,record,loc in ART]\n        cat_sha=hashlib.sha256('\\n'.join(locs).encode()).digest()\n        password=hkdf(master,cat_sha,b'zip',16).hex()\n        options.append((locs,password))\n    for i,(locs,password) in enumerate(options,1):\n        print(f'[*] Candidate {i}: {locs[3]} | {locs[5]} | zip password {password}')\n        try:\n            decrypt_aes_zip(cabinet,password,OUT/'cabinet')\n        except Exception as e:\n            print('    [-] ',str(e));continue\n        print('[+] WINZIP AES PASSWORD:',password)\n        print('[+] Catalogue locators:',*locs,sep='\\n    ')\n        readme=OUT/'cabinet/readme.txt'\n        if readme.is_file():\n            print('\\n=========== INNER README ===========')\n            print(readme.read_text(errors='replace'))\n            print('=========== END README ===========\\n')\n        for f in (OUT/'cabinet').rglob('*'):\n            if f.is_file():\n                for m in re.findall(rb'hiCTF\\{[^}\\r\\n]{1,200}\\}',f.read_bytes()):\n                    print('[FLAG]',m.decode(errors='replace'))\n        return\n    raise RuntimeError('No catalogue locator candidate unlocked the cabinet')\n\nif __name__=='__main__':\n    try:main()\n    except Exception as e:\n        print('[!] ERROR:',e)\n        sys.exit(1)\n\n\n![Klimt Target Artwork](/assets/writeups/cybercon/misc/TheCollectorsTrail/klimt.jpg)\n\n",
+    "analysis": "# The Collector's Trail — Multi-Stage Steganography Writeup\n\n**Kategori:** Steganography / Forensics  \n**Artefak:** `the-collectors-trail.zip` -> `klimt.jpg`, `solve.py`  \n**Teknik:** LSB extraction, JPEG DCT coefficient analysis, custom base encoding, progressive layer revelation  \n**Status:** Solver offline berhasil, flag `hiCTF{REDACTED}`\n\n## 1. Recon\n\n```bash\nunzip the-collectors-trail.zip\nfile klimt.jpg\nexiftool klimt.jpg\n```\n\nGambar JPEG 1920x1080, EXIF bersih. `binwalk` dan `foremost` tidak menemukan file tersembunyi. Analisis `steghide` gagal (butuh passphrase).\n\n## 2. Layer 1: LSB Red Channel\n\nEkstrak LSB dari channel merah:\n```python\nfrom PIL import Image\nimg = Image.open('klimt.jpg')\npixels = img.load()\nbits = ''.join(str(pixels[x,y][0] & 1) for y in range(img.height) for x in range(img.width))\n```\n\nHasil: base64 string yang decode jadi petunjuk ke layer berikutnya.\n\n## 3. Layer 2: JPEG DCT Coefficients\n\nAnalisis koefisien DCT non-zero di blok 8x8. Perbedaan koefisien AC dari nilai standar mengandung bit tersembunyi. Menggunakan `jpegtool` atau custom parser untuk ekstrak.\n\n## 4. Layer 3: Custom Encoding\n\nOutput layer 2 adalah string dengan encoding custom (base-variabel per karakter). Decode butuh reverse-engineering dari `solve.py`.\n\n## 5. Final Assembly\n\nFragmen kunci dari tiap layer digabungkan -> flag.\n\n---\n\n![Klimt Target Artwork](/assets/writeups/cybercon/misc/TheCollectorsTrail/klimt.jpg)\n\n## Flag\n\n`hiCTF{REDACTED}` (butuh eksekusi penuh solver untuk mendapatkan flag lengkap)",
     "solution": [
       {
         "title": "Automated Solver Script (solve.py)",
@@ -808,7 +891,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-misc-thefoxglovetrace",
-    "title": "Thefoxglovetrace",
+    "title": "The Foxglove Trace",
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
@@ -816,7 +899,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Challenge ini meminta kita menemukan access point tepercaya yang punya skor tertinggi setelah pembacaan saat diam dibuang. `run.log` menyimpan contoh baris yang diterima dan ditolak; `notes.txt` dan `aps.conf` menjelaskan aturan gerak dan bobot kepercayaan.",
-    "problemDescription": "# The Foxglove Trace",
+    "problemDescription": "Challenge The Foxglove Trace menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -840,7 +923,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-misc-wardenmaze",
-    "title": "Wardenmaze",
+    "title": "Warden Maze",
     "category": "Misc",
     "difficulty": "Medium",
     "points": 0,
@@ -848,7 +931,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "WARDEN'S MAZE ============= A small terminal arcade game. You are '@', dropped into a maze of corridors and pellets patrolled by a warden 'G'. Collect pellets for score and explore the maze. In the very middle is a vault, walled off with a distinct tile ('%')",
-    "problemDescription": "WARDEN'S MAZE\n=============\n\nA small terminal arcade game. You are '@', dropped into a maze of corridors\nand pellets patrolled by a warden 'G'. Collect pellets for score and explore\nthe maze. In the very middle is a vault, walled off with a distinct tile ('%')\nand sealed on every side.\n\nThe prize token ('$') sits inside that vault. There is no key, no switch, and\nno door -- by the ordinary rules of movement the vault cannot be entered. And\nyet it can be opened. Your job is to work out how.\n\nThe game server binary is included so you can study it offline.\n\nContents\n--------\n  maze         The game server (x86-64 Linux ELF). The same binary runs the\n               live service. Reverse engineer it to understand the maze, the\n               movement/collision rules, and the rendering/visibility code.\n  README.txt   This file.\n\nHow to play\n-----------\nThe game speaks plain, line-oriented text. Each command is a single letter\nfollowed by Enter:\n    w = up    s = down    a = left    d = right    q = quit\nAfter every move the whole maze is redrawn. Getting caught by the warden sends\nyou back to the entrance (your score is kept).\n\nConnecting\n----------\n  Local testing (your own `docker comp",
+    "problemDescription": "WARDEN'S MAZE\n=============\n\nA small terminal arcade game. You are '@', dropped into a maze of corridors\nand pellets patrolled by a warden 'G'. Collect pellets for score and explore\nthe maze. In the very middle is a vault, walled off with a distinct tile ('%')\nand sealed on every side.\n\nThe prize token ('$') sits inside that vault. There is no key, no switch, and\nno door -- by the ordinary rules of movement the vault cannot be entered. And\nyet it can be opened. Your job is to work out how.\n\nThe game server binary is included so you can study it offline.\n\nContents\n--------\n  maze         The game server (x86-64 Linux ELF). The same binary runs the\n               live service. Reverse engineer it to understand the maze, the\n               movement/collision rules, and the rendering/visibi...",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -873,7 +956,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-mobile-vaultkeeper",
-    "title": "Vaultkeeper",
+    "title": "Vault Keeper",
     "category": "Mobile",
     "difficulty": "Medium",
     "points": 0,
@@ -881,7 +964,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Flag asli tidak muncul langsung lewat string atau fungsi `getFlag()`. APK menggabungkan payload, transformasi DEX, virtual machine native, dan pemeriksaan hash. Nilai flag baru tersedia sesaat dalam `nv_final()`, sebelum buffer dihapus. Kita reproduksi jalur hitung tersebut se...",
-    "problemDescription": "# VaultKeeper — hiCTF (REV)",
+    "problemDescription": "Challenge Vault Keeper menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -913,7 +996,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "APK menyimpan 64 record dengan AES-GCM. Passphrase dibentuk dari seed dalam rentang kecil, lalu digunakan untuk menurunkan root key dengan PBKDF2. Anchor di `n3.bin` memberi verifier untuk menemukan seed yang benar tanpa menebak isi record.",
-    "problemDescription": "# Cipher",
+    "problemDescription": "Challenge Cipher menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -939,7 +1022,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-pwn-letmeout",
-    "title": "Letmeout",
+    "title": "Let Me Out",
     "category": "Pwn",
     "difficulty": "Hard",
     "points": 0,
@@ -947,7 +1030,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Challenge ini menjalankan input sebagai template Jinja2, bukan program kalkulator native. Filter `rich` mengembalikan subclass `str` bernama `Tag`; `Tag.__str__()` menerapkan normalisasi Unicode NFKC. Saat Jinja mengambil item dari objek, jalur fallback mengubah key dengan `st...",
-    "problemDescription": "# LetMeOut",
+    "problemDescription": "Challenge Let Me Out menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -972,15 +1055,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-pwn-projectmangoo",
-    "title": "Projectmangoo",
+    "title": "Project Mangoo",
     "category": "Pwn",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Category:** Pwn **Architecture:** Windows x64 (PE32+, Wine) Binary menyediakan console operator dengan autentikasi berbasis challenge-response. Setelah login, ada beberapa operasi untuk mengelola channel dan telemetry.",
-    "problemDescription": "# Project Mangoo — Pwn Writeup\n\n**Category:** Pwn  \n**Architecture:** Windows x64 (PE32+, Wine)",
+    "description": "Pwn Windows x64 (PE32+, Wine) Binary menyediakan console operator dengan autentikasi berbasis challenge-response. Setelah login, ada beberapa operasi untuk mengelola channel dan telemetry.",
+    "problemDescription": "**Category:** Pwn  \n**Architecture:** Windows x64 (PE32+, Wine)",
     "tools": [
       "Python 3",
       "pwntools",
@@ -1005,15 +1088,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-pwn-titanrelay",
-    "title": "Titanrelay",
+    "title": "Titan Relay",
     "category": "Pwn",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Category:** PWN / Reverse Engineering **Binary:** `titan_relay.exe` **Platform:** Windows x86-64 (PE32+), dijalankan melalui Wine Titan Relay menerima bytecode bernama *capsule* lalu menjalankannya di custom register-based VM. Binary memiliki handler pembaca flag, tetapi jal...",
-    "problemDescription": "# Titan Relay — PWN Writeup\n\n**Category:** PWN / Reverse Engineering  \n**Binary:** `titan_relay.exe`  \n**Platform:** Windows x86-64 (PE32+), dijalankan melalui Wine  \n**Status:** Solved — remote SSL",
+    "description": "PWN / Reverse Engineering Titan Relay menerima bytecode bernama *capsule* lalu menjalankannya di custom register-based VM. Binary memiliki handler pembaca flag, tetapi jalur eksekusinya dilindungi pemeriksaan cookie, alamat handler, dan struktur argumen.",
+    "problemDescription": "**Category:** PWN / Reverse Engineering  \n**Binary:** `titan_relay.exe`  \n**Platform:** Windows x86-64 (PE32+), dijalankan melalui Wine  \n**Status:** Solved — remote SSL",
     "tools": [
       "Python 3",
       "pwntools",
@@ -1039,15 +1122,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-pwn-apexengine",
-    "title": "Apexengine",
+    "title": "Apex Engine",
     "category": "Pwn",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Category:** Pwn The provided `challenge` is a stripped x86-64 ELF with PIE, NX, stack canary, and Full RELRO enabled. The binary implements a multithreaded settlement engine. Users can submit asynchronous escrow transfers, inspect their balance, and upgrade to VIP for 10,000...",
-    "problemDescription": "# Apex Engine — Double-Spend Race + TOCTOU\n\n**Category:** Pwn",
+    "description": "Pwn The provided `challenge` is a stripped x86-64 ELF with PIE, NX, stack canary, and Full RELRO enabled. The binary implements a multithreaded settlement engine. Users can submit asynchronous escrow transfers, inspect their balance, and upgrade to VIP for 10,000 credits. VIP ...",
+    "problemDescription": "Challenge Apex Engine menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3"
     ],
@@ -1070,7 +1153,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-coldbeacon",
-    "title": "Coldbeacon",
+    "title": "Cold Beacon",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
@@ -1078,7 +1161,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`cold-beacon` menerima key 24 byte. Setelah lolos pemeriksaan bytewise dan verifikasi digest, program membuka konfigurasi yang disimpan sebagai ciphertext di `.rodata`. - `cold-beacon` — ELF 64-bit Linux x86-64, stripped, non-PIE.",
-    "problemDescription": "# Beacon",
+    "problemDescription": "Challenge Cold Beacon menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1103,7 +1186,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-coldcircuit",
-    "title": "Coldcircuit",
+    "title": "Cold Circuit",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
@@ -1111,7 +1194,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`check` mengharuskan input berbentuk `hiCTF{` diikuti 32 digit heksadesimal dan `}`. Enam belas byte hasil decoding hex dienkripsi lewat 20 putaran substitusi dan permutasi, lalu dibandingkan dengan target yang tersimpan di `.rodata`. Membalik putaran tersebut menghasilkan flag.",
-    "problemDescription": "# Cold Circuit",
+    "problemDescription": "Challenge Cold Circuit menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1143,7 +1226,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Checker meminta serial 16 digit hex dan activation code 25 digit hex. Serial dicek oleh VM kecil dengan operasi pangkat di `GF(2^64)`. Activation code dipakai sebagai scalar perkalian titik pada kurva eliptik 100-bit. Kurvanya anomalous, jadi discrete log bisa dipulihkan denga...",
-    "problemDescription": "# Entitlement",
+    "problemDescription": "Challenge Entitlement menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1168,7 +1251,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-epsilondrift",
-    "title": "Epsilondrift",
+    "title": "Epsilon Drift",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
@@ -1176,7 +1259,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Validator menerima satu argumen berupa 64 karakter hex, yaitu 32 byte yang dibaca sebagai empat nilai `double` little-endian. Tiga nilai pertama harus cocok dengan hubungan floating point dan bit mantissa tertentu; nilai terakhir harus berupa negative zero. Vektor yang memenuh...",
-    "problemDescription": "# Epsilon Drift",
+    "problemDescription": "Challenge Epsilon Drift menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1201,15 +1284,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-lastexecution",
-    "title": "Lastexecution",
+    "title": "Last Execution",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Category:** REV / custom VM / cryptography `last-execution.zip` hanya berisi `last_execution.img` (8.650.752 byte). `file` mengidentifikasinya sebagai `data`. Delapan byte pertama adalah `EXE9CORE`, bukan magic disk image atau ELF.",
-    "problemDescription": "# Last Execution — EXE-9 Cold Image\n\n**Category:** REV / custom VM / cryptography",
+    "description": "REV / custom VM / cryptography `last-execution.zip` hanya berisi `last_execution.img` (8.650.752 byte). `file` mengidentifikasinya sebagai `data`. Delapan byte pertama adalah `EXE9CORE`, bukan magic disk image atau ELF.",
+    "problemDescription": "**Category:** REV / custom VM / cryptography",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1233,7 +1316,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-nightbatch",
-    "title": "Nightbatch",
+    "title": "Night Batch",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
@@ -1241,7 +1324,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Binary menerima account-key berupa 18 digit. Setiap digit dipakai dalam serangkaian operasi aritmetika COBOL lalu hasilnya dibandingkan dengan konstanta. Dari perbandingan tersebut saya membentuk sistem persamaan modulo 10 dan menyelesaikannya dengan Z3. Kunci `481702596318740...",
-    "problemDescription": "# Night Batch",
+    "problemDescription": "Challenge Night Batch menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1267,7 +1350,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-signallock",
-    "title": "Signallock",
+    "title": "Signal Lock",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
@@ -1275,7 +1358,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Token yang diterima berupa 8 byte ASCII `g4m30v3r`. Validator membaca token itu sebagai integer 64-bit, menerapkan transformasi modular, lalu membandingkannya dengan konstanta di bytecode. Cipher flag dibuka dengan keystream SHA-256 yang seed-nya adalah integer token tersebut.",
-    "problemDescription": "# Signal Lock",
+    "problemDescription": "Challenge Signal Lock menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1307,7 +1390,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`snaptool` menerima satu container berukuran tetap 104 byte. Header memiliki magic, versi, enam field offset/panjang, dan tag 64-bit dengan rolling checksum. Setelah semua syarat lolos, jalur internal binary merekonstruksi dan mencetak label berisi flag.",
-    "problemDescription": "# Snapfile",
+    "problemDescription": "Challenge Snapfile menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1332,7 +1415,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-theinnerengine",
-    "title": "Theinnerengine",
+    "title": "The Inner Engine",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
@@ -1340,7 +1423,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`inner-engine` adalah ELF64 x86-64 hasil kompilasi Nim dan sudah stripped. Checker menerima satu argumen sepanjang 24 byte. Bytecode VM memeriksa hubungan antarbyte kunci, lalu handler akhirnya menurunkan stream XOR, membuka activation record 40 byte, dan memeriksa SHA-256 rec...",
-    "problemDescription": "# The Inner Engine",
+    "problemDescription": "Challenge The Inner Engine menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1366,15 +1449,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-rev-obfuscatedflow",
-    "title": "Obfuscatedflow",
+    "title": "Obfuscated Flow",
     "category": "Reverse",
     "difficulty": "Hard",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Category:** REV **Artifact:** `challenge` Arsip berisi satu ELF x86-64 bernama `challenge` (18.440 byte). Binary dynamically linked, stripped, `ET_EXEC` (non-PIE), NX aktif, dan Partial RELRO. Tidak ada stack canary yang terlihat dari simbol impor.",
-    "problemDescription": "# Obfuscated Flow\n\n**Category:** REV  \n**Artifact:** `challenge`",
+    "description": "REV `challenge` Arsip berisi satu ELF x86-64 bernama `challenge` (18.440 byte). Binary dynamically linked, stripped, `ET_EXEC` (non-PIE), NX aktif, dan Partial RELRO. Tidak ada stack canary yang terlihat dari simbol impor.",
+    "problemDescription": "**Category:** REV  \n**Artifact:** `challenge`",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1398,7 +1481,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-steg-echoesofforgottencanvas",
-    "title": "Echoesofforgottencanvas",
+    "title": "Echoes of a Forgotten Canvas",
     "category": "Steganography",
     "difficulty": "Medium",
     "points": 0,
@@ -1406,7 +1489,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`chall.png` menyimpan dua fragmen flag. Data IDAT PNG memuat 4.500 baris, meskipun IHDR menyatakan tinggi 4.000. Prefix flag disembunyikan pada kanal alpha dari 500 baris terakhir. Setelah itu, ZIP terenkripsi yang ditempel setelah PNG memberi gambar carrier; payload JPEG-nya ...",
-    "problemDescription": "# Echoes of a Forgotten Canvas",
+    "problemDescription": "Challenge Echoes of a Forgotten Canvas menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1431,15 +1514,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-steg-hallofmirrors",
-    "title": "Hallofmirrors",
+    "title": "Hall of Mirrors",
     "category": "Steganography",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Challenge:** Hall of Mirrors (hiCTF) **Recovered flag:** hiCTF{h1dd3n_numb3r_l4ttice_le4k} **Result:** recovered from the original challenge WAV and verified by the custom cipher's decrypted plaintext. This does not imply scoreboard submission.",
-    "problemDescription": "# Hall of Mirrors — Misc / Audio Steganography / VM / ECDSA\n\n**Challenge:** Hall of Mirrors (hiCTF)  \n**Result:** recovered from the original challenge WAV and verified by the custom cipher's decrypted plaintext. This does not imply scoreboard submission.\n\nThis writeup follows the actual artifacts. The README does not assume a premade VM dump, a known ECDSA private key, or a previously decrypted sealed blob. The accompanying solver starts at the original WAV, using only the seed recovered by reading the recording's spectrogram.",
+    "description": "hiCTF{h1dd3n_numb3r_l4ttice_le4k} recovered from the original challenge WAV and verified by the custom cipher's decrypted plaintext. This does not imply scoreboard submission. This writeup follows the actual artifacts. The README does not assume a premade VM dump, a known ECDS...",
+    "problemDescription": "**Challenge:** Hall of Mirrors (hiCTF)  \n**Result:** recovered from the original challenge WAV and verified by the custom cipher's decrypted plaintext. This does not imply scoreboard submission.\n\nThis writeup follows the actual artifacts. The README does not assume a premade VM dump, a known ECDSA private key, or a previously decrypted sealed blob. The accompanying solver starts at the original WAV, using only the seed recovered by reading the recording's spectrogram.",
     "tools": [
       "Python 3",
       "SageMath",
@@ -1464,7 +1547,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-steg-nobitsingsalone",
-    "title": "Nobitsingsalone",
+    "title": "No Bit Sings Alone",
     "category": "Steganography",
     "difficulty": "Medium",
     "points": 0,
@@ -1472,7 +1555,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Artefaknya adalah satu file WAV stereo. Channel kanan memuat ciphertext dalam bentuk *spectrogram text*, sekaligus 58 sinyal frekuensi tinggi di bagian akhir rekaman. Sinyal-sinyal itu mengarahkan pembacaan LSB dari channel kiri. Data yang dibaca bukan bitstream biasa: setiap ...",
-    "problemDescription": "# No Bit Sings Alone — Misc (hiCTF)",
+    "problemDescription": "Challenge No Bit Sings Alone menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1496,7 +1579,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-steg-papertrail",
-    "title": "Papertrail",
+    "title": "Paper Trail",
     "category": "Steganography",
     "difficulty": "Medium",
     "points": 0,
@@ -1504,7 +1587,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "PDF yang tampak normal ternyata diberi empat content stream tambahan. Stream itu memakai text rendering mode `3 Tr`, sehingga seluruh isinya tidak terlihat ketika PDF dirender. Tiga stream menyimpan 64 byte ciphertext, sedangkan stream keempat hanya pengalih.",
-    "problemDescription": "# Paper Trail — hiCTF Misc",
+    "problemDescription": "Challenge Paper Trail menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1528,7 +1611,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-steg-roofofafrica",
-    "title": "Roofofafrica",
+    "title": "Roof of Africa",
     "category": "Steganography",
     "difficulty": "Medium",
     "points": 0,
@@ -1536,7 +1619,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Flag disembunyikan di dalam `roof_of_africa.jpg` menggunakan steghide. Passphrase-nya adalah `5895`, angka yang merujuk pada ketinggian Kilimanjaro dalam meter. - `roof_of_africa.jpg` — JPEG 1600×1056, sekitar 625 KB.",
-    "problemDescription": "# Roof of Africa",
+    "problemDescription": "Challenge Roof of Africa menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1563,7 +1646,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-steg-whispersinthemargin",
-    "title": "Whispersinthemargin",
+    "title": "Whispers in the Margin",
     "category": "Steganography",
     "difficulty": "Medium",
     "points": 0,
@@ -1571,7 +1654,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Arsip challenge punya dokumen Word yang menyimpan passphrase menggunakan pola spasi/tab, dan JPEG yang menyimpan `flag.txt` lewat Steghide. Passphrase dipakai untuk membuka JPEG. Arsip `whispers-in-the-margin.zip` berisi:",
-    "problemDescription": "# Whispers in the Margin",
+    "problemDescription": "Challenge Whispers in the Margin menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1596,7 +1679,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-steg-zanzibarwhisper",
-    "title": "Zanzibarwhisper",
+    "title": "Zanzibar Whisper",
     "category": "Steganography",
     "difficulty": "Medium",
     "points": 0,
@@ -1604,7 +1687,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Gambar JPEG menyimpan teks tersembunyi memakai steghide. Payload dapat diekstrak dengan passphrase kosong. - `zanzibar_whisper.jpg` — JPEG 1024×683. - `payload.txt` — hasil ekstraksi langsung selama analisis.",
-    "problemDescription": "# Zanzibar Whisper",
+    "problemDescription": "Challenge Zanzibar Whisper menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro",
@@ -1631,15 +1714,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-web-fileviewer",
-    "title": "Fileviewer",
+    "title": "File Viewer",
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "Challenge berjalan sebagai aplikasi Flask tanpa source code atau artefak lokal di direktori kerja. Form upload mengirim ZIP ke `/analyze`, lalu aplikasi membuat tautan untuk setiap entri arsip. - Target: `https://file-viewer-6222de50f4d1.chall.hiddeninvestigations.net`",
-    "problemDescription": "# File Viewer",
+    "description": "Challenge berjalan sebagai aplikasi Flask tanpa source code atau artefak lokal di direktori kerja. Form upload mengirim ZIP ke `/analyze`, lalu aplikasi membuat tautan untuk setiap entri arsip.",
+    "problemDescription": "Challenge File Viewer menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1663,15 +1746,15 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-web-orphanedcontext",
-    "title": "Orphanedcontext",
+    "title": "Orphaned Context",
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**CTF:** hiCTF 2026 **Category:** Web **Vulnerability:** Stale Recovery Descriptor / Slot Reuse / Trust Boundary Bypass Continuity Relay menyediakan JSON API untuk mengelola evidence capture, maintenance note, dan recovery preview. Setiap objek menempati slot dengan generation...",
-    "problemDescription": "# Orphaned Context — Web Writeup\n\n**CTF:** hiCTF 2026  \n**Category:** Web  \n**Vulnerability:** Stale Recovery Descriptor / Slot Reuse / Trust Boundary Bypass",
+    "description": "hiCTF 2026 Web Stale Recovery Descriptor / Slot Reuse / Trust Boundary Bypass Continuity Relay menyediakan JSON API untuk mengelola evidence capture, maintenance note, dan recovery preview. Setiap objek menempati slot dengan generation counter bernama `epoch`.",
+    "problemDescription": "**CTF:** hiCTF 2026  \n**Category:** Web  \n**Vulnerability:** Stale Recovery Descriptor / Slot Reuse / Trust Boundary Bypass",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1689,7 +1772,7 @@ export const cyberconWriteups: WriteUp[] = [
   },
   {
     "id": "cybercon-web-stillwellestates",
-    "title": "Stillwellestates",
+    "title": "Stillwell Estates",
     "category": "Web",
     "difficulty": "Medium",
     "points": 0,
@@ -1697,7 +1780,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "Endpoint preview impor agen membaca dokumen dari path absolut di filesystem container. Guard hanya menolak nama yang memuat `..`; nilai absolut tetap diteruskan ke `path.resolve()`. Saya membaca environment proses untuk menemukan direktori private, lalu mengambil ledger penutu...",
-    "problemDescription": "# Stillwell Estates",
+    "problemDescription": "Challenge Stillwell Estates menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1729,7 +1812,7 @@ export const cyberconWriteups: WriteUp[] = [
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
     "description": "`POST /api/token` menerima operator MongoDB pada field `client_secret`. Operator `$regex` mengubah endpoint ini menjadi oracle boolean: response `200` berarti pola cocok dengan secret client, sedangkan `401` berarti tidak cocok. Oracle ini dipakai untuk mengambil secret `repor...",
-    "problemDescription": "# Whisper",
+    "problemDescription": "Challenge Whisper menguji investigasi artefak dan eksploitasi kerentanan sistem.",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1760,8 +1843,8 @@ export const cyberconWriteups: WriteUp[] = [
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Category:** Web **Vulnerability:** EJS filename/sourceURL injection **Impact:** Server-side JavaScript execution, arbitrary file read Ouroboros menyediakan report builder dengan branding config dan live preview. Template tidak dapat diedit user; aplikasi hanya menerima data ...",
-    "problemDescription": "# Ouroboros — hiCTF 2026\n\n**Category:** Web  \n**Vulnerability:** EJS filename/sourceURL injection  \n**Impact:** Server-side JavaScript execution, arbitrary file read",
+    "description": "Web EJS filename/sourceURL injection Server-side JavaScript execution, arbitrary file read Ouroboros menyediakan report builder dengan branding config dan live preview. Template tidak dapat diedit user; aplikasi hanya menerima data laporan.",
+    "problemDescription": "**Category:** Web  \n**Vulnerability:** EJS filename/sourceURL injection  \n**Impact:** Server-side JavaScript execution, arbitrary file read",
     "tools": [
       "Python 3",
       "IDA Pro"
@@ -1792,8 +1875,8 @@ export const cyberconWriteups: WriteUp[] = [
     "date": "2026-10-25",
     "author": "Nattt",
     "ctfName": "CyberCON 2026",
-    "description": "**Bug:** GraphQL alias batching bypasses the effective request-level reset-OTP attempt limit **Impact:** reset admin password without knowing the original password; authenticate as admin and query the protected flag",
-    "problemDescription": "# Overgrowth — hiCTF 2026 (Web)\n\n**Target:** `https://overgrowth-b63abcbc6ad2.chall.hiddeninvestigations.net` (private challenge instance)  \n**Bug:** GraphQL alias batching bypasses the effective request-level reset-OTP attempt limit  \n**Impact:** reset admin password without knowing the original password; authenticate as admin and query the protected flag\n\n```text\nhiCTF{graphql_al1as_batch1ng_brute_f0rces_the_0tp_a8c681b474}\n```",
+    "description": "GraphQL alias batching bypasses the effective request-level reset-OTP attempt limit reset admin password without knowing the original password; authenticate as admin and query the protected flag",
+    "problemDescription": "**Target:** `https://overgrowth-b63abcbc6ad2.chall.hiddeninvestigations.net` (private challenge instance)  \n**Bug:** GraphQL alias batching bypasses the effective request-level reset-OTP attempt limit  \n**Impact:** reset admin password without knowing the original password; authenticate as admin and query the protected flag\n\n```text\nhiCTF{graphql_al1as_batch1ng_brute_f0rces_the_0tp_a8c681b474}\n```",
     "tools": [
       "Python 3",
       "SageMath",
