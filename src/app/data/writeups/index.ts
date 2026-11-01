@@ -11,6 +11,7 @@ import { citctfWriteups } from "./events/citctf";
 import { compfest18Writeups } from "./events/compfest_18";
 import { cryovaultWriteups } from "./events/cryovault";
 import { cyberbreakerQualWriteups } from "./events/cyberbreaker_qual";
+import { cyberconWriteups } from "./events/cybercon";
 import { dalCtf2026Writeups } from "./events/dal_ctf_2026";
 import { flagyardWriteups } from "./events/flagyard";
 import { fortidWriteups } from "./events/fortid";
@@ -67,6 +68,7 @@ export const writeups: WriteUp[] = [
   ...compfest18Writeups,
   ...cryovaultWriteups,
   ...cyberbreakerQualWriteups,
+  ...cyberconWriteups,
   ...dalCtf2026Writeups,
   ...flagyardWriteups,
   ...fortidWriteups,

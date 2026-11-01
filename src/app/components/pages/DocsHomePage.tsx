@@ -22,6 +22,7 @@ const EVENT_PLACES: Record<string, string> = {
   FlagYard: 'Participant',
   HackTheBox: 'Participant',
   JerseyCTF: 'Participant',
+  'CyberCON 2026': 'Participant',
 };
 
 /* ------------------------------------------------------------------ */
